@@ -8,6 +8,7 @@ or Application Default Credentials (ADC).
 from __future__ import annotations
 
 import os
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -97,6 +98,60 @@ class GoogleDriveService:
         self._service = build("drive", "v3", credentials=credentials)
         return self._service
 
+    def _get_or_create_date_folder(self, service: Any, parent_id: str) -> str:
+        """
+        Check if a folder named with the current date (YYYY-MM-DD) exists, or create it.
+
+        Args:
+            service: Google Drive API service resource client.
+            parent_id: The main folder ID.
+
+        Returns:
+            The ID of the date folder.
+        """
+        folder_name = datetime.now().strftime("%Y-%m-%d")
+
+        # Search for an existing date folder under the parent folder
+        query = (
+            f"name = '{folder_name}' and "
+            f"'{parent_id}' in parents and "
+            f"mimeType = 'application/vnd.google-apps.folder' and "
+            f"trashed = false"
+        )
+
+        try:
+            results = (
+                service.files()
+                .list(q=query, fields="files(id, name)")
+                .execute()
+            )
+            files = results.get("files", [])
+
+            if files:
+                folder_id = files[0]["id"]
+                logger.debug(f"Found existing date subfolder '{folder_name}' (ID: {folder_id})")
+                return str(folder_id)
+
+            # Create the date subfolder if not found
+            logger.info(f"Creating new date subfolder '{folder_name}' under parent '{parent_id}'")
+            file_metadata = {
+                "name": folder_name,
+                "mimeType": "application/vnd.google-apps.folder",
+                "parents": [parent_id],
+            }
+            folder = (
+                service.files()
+                .create(body=file_metadata, fields="id")
+                .execute()
+            )
+            return str(folder.get("id"))
+
+        except Exception as e:
+            logger.error(f"Failed to check/create date subfolder '{folder_name}' on Drive: {e}")
+            # Fallback to the main parent folder if subfolder creation fails
+            logger.warning(f"Falling back to upload directly to parent folder '{parent_id}'")
+            return parent_id
+
     def upload_file(
         self,
         local_path: Path,
@@ -104,7 +159,7 @@ class GoogleDriveService:
         folder_id: str | None = None,
     ) -> str:
         """
-        Upload a local file to a Google Drive folder.
+        Upload a local file to a Google Drive folder inside a date-named subfolder.
 
         Args:
             local_path: Absolute Path to the local file to upload.
@@ -122,8 +177,8 @@ class GoogleDriveService:
         if not local_path.exists():
             raise FileNotFoundError(f"Local file not found for upload: {local_path}")
 
-        target_folder = folder_id or self._settings.google_drive_folder_id
-        if not target_folder:
+        main_folder = folder_id or self._settings.google_drive_folder_id
+        if not main_folder:
             raise ConfigurationError(
                 "No Google Drive folder ID specified. Add GOOGLE_DRIVE_FOLDER_ID to your .env file."
             )
@@ -131,8 +186,11 @@ class GoogleDriveService:
         filename = remote_filename or local_path.name
         service = self._get_service()
 
+        # Get or create date-named subfolder (YYYY-MM-DD) inside the main folder
+        target_folder = self._get_or_create_date_folder(service, main_folder)
+
         logger.info(
-            f"Uploading file '{filename}' ({local_path.stat().st_size} bytes) to Drive folder '{target_folder}'"
+            f"Uploading file '{filename}' ({local_path.stat().st_size} bytes) to target Drive folder '{target_folder}'"
         )
 
         file_metadata = {
@@ -177,3 +235,4 @@ class GoogleDriveService:
                 f"Google Drive upload failed. Make sure the folder '{target_folder}' "
                 f"is shared with your Service Account email as Editor. Error: {e}"
             ) from e
+

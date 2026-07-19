@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-07-19T19:20:22.805720+00:00",
+  "generated_at": "2026-07-19T19:24:38.215798+00:00",
   "generator": "scripts/build_graph.py",
   "static_only": true,
   "scan_roots": [
@@ -8,8 +8,8 @@
     "scripts",
     "tests"
   ],
-  "node_count": 131,
-  "edge_count": 442,
+  "node_count": 132,
+  "edge_count": 456,
   "nodes": [
     {
       "id": "etsy_pipeline",
@@ -350,6 +350,7 @@
         "__init__",
         "_get_credentials",
         "_get_service",
+        "_get_or_create_date_folder",
         "upload_file"
       ],
       "public_methods": [
@@ -377,6 +378,16 @@
       "class": "GoogleDriveService"
     },
     {
+      "id": "etsy_pipeline.services.google_drive.GoogleDriveService._get_or_create_date_folder",
+      "kind": "function",
+      "module": "etsy_pipeline.services.google_drive",
+      "docstring_summary": "Check if a folder named with the current date (YYYY-MM-DD) exists, or create it.",
+      "signature": "(self, service, parent_id)",
+      "is_public": false,
+      "is_async": false,
+      "class": "GoogleDriveService"
+    },
+    {
       "id": "etsy_pipeline.services.google_drive.GoogleDriveService._get_service",
       "kind": "function",
       "module": "etsy_pipeline.services.google_drive",
@@ -390,7 +401,7 @@
       "id": "etsy_pipeline.services.google_drive.GoogleDriveService.upload_file",
       "kind": "function",
       "module": "etsy_pipeline.services.google_drive",
-      "docstring_summary": "Upload a local file to a Google Drive folder.",
+      "docstring_summary": "Upload a local file to a Google Drive folder inside a date-named subfolder.",
       "signature": "(self, local_path, remote_filename, folder_id)",
       "is_public": true,
       "is_async": false,
@@ -1818,6 +1829,12 @@
     },
     {
       "from": "etsy_pipeline.services.google_drive",
+      "to": "datetime.datetime",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive",
       "to": "etsy_pipeline.config.settings.Settings",
       "kind": "import",
       "static_only": true
@@ -1946,6 +1963,90 @@
       "note": "name-only; may not resolve to correct module without runtime context"
     },
     {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService._get_or_create_date_folder",
+      "to": "create",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService._get_or_create_date_folder",
+      "to": "debug",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService._get_or_create_date_folder",
+      "to": "error",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService._get_or_create_date_folder",
+      "to": "execute",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService._get_or_create_date_folder",
+      "to": "files",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService._get_or_create_date_folder",
+      "to": "get",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService._get_or_create_date_folder",
+      "to": "info",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService._get_or_create_date_folder",
+      "to": "list",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService._get_or_create_date_folder",
+      "to": "now",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService._get_or_create_date_folder",
+      "to": "str",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService._get_or_create_date_folder",
+      "to": "strftime",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService._get_or_create_date_folder",
+      "to": "warning",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
       "from": "etsy_pipeline.services.google_drive.GoogleDriveService._get_service",
       "to": "_get_credentials",
       "kind": "call",
@@ -1990,6 +2091,13 @@
     {
       "from": "etsy_pipeline.services.google_drive.GoogleDriveService.upload_file",
       "to": "RuntimeError",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService.upload_file",
+      "to": "_get_or_create_date_folder",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
