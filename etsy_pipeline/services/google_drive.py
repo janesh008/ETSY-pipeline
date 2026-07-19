@@ -11,8 +11,9 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-import google.auth
-from google.oauth2 import service_account
+from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 
@@ -46,39 +47,77 @@ class GoogleDriveService:
 
     def _get_credentials(self) -> Any:
         """
-        Resolve GCP credentials for Google Drive operations.
+        Resolve user credentials for Google Drive operations using OAuth 2.0.
 
-        Supports:
-        1. Explicit Service Account JSON file path from Settings.
-        2. Application Default Credentials (ADC) environment variables.
+        Looks for client secrets in the configured path. If an active token.json exists,
+        loads it. Otherwise, triggers a local browser sign-in flow once.
 
         Returns:
             Configured Google Credentials object.
-        """
-        # If a service account JSON is configured, authenticate using that file
-        if self._settings.google_drive_service_account_json:
-            json_path = Path(self._settings.google_drive_service_account_json)
-            if not json_path.exists():
-                raise ConfigurationError(
-                    f"Google Drive Service Account JSON not found at: {json_path}. Check your .env file."
-                )
 
-            logger.debug(f"Loading Drive credentials from Service Account file: {json_path}")
-            return service_account.Credentials.from_service_account_file(
-                str(json_path),
-                scopes=DRIVE_SCOPES,
+        Raises:
+            ConfigurationError: If no client credentials JSON file is configured.
+        """
+        client_secrets_path = self._settings.google_drive_client_sec_json
+        token_path = self._settings.google_drive_token_json
+
+        if not client_secrets_path:
+            raise ConfigurationError(
+                "GOOGLE_DRIVE_CLIENT_SEC_JSON is not configured. "
+                "Download your OAuth client ID credentials from the GCP console and set it in your .env file."
             )
 
-        # Fallback to Application Default Credentials
-        logger.debug("Attempting to load Drive credentials from Application Default Credentials (ADC)")
-        try:
-            credentials, _ = google.auth.default(scopes=DRIVE_SCOPES)
-            return credentials
-        except google.auth.exceptions.DefaultCredentialsError as e:
+        client_secrets_file = Path(client_secrets_path)
+        if not client_secrets_file.exists():
             raise ConfigurationError(
-                "Default credentials not found. Run 'gcloud auth application-default login' "
-                "or specify GCP_SERVICE_ACCOUNT_JSON in your .env file."
-            ) from e
+                f"Google Drive Client Secrets file not found at: {client_secrets_file.resolve()}. "
+                f"Please download your credentials.json file and place it there."
+            )
+
+        creds = None
+        # The file token.json stores the user's access and refresh tokens, and is
+        # created automatically when the authorization flow completes for the first time.
+        token_file = Path(token_path)
+        if token_file.exists():
+            try:
+                creds = Credentials.from_authorized_user_file(str(token_file), DRIVE_SCOPES)
+                logger.debug(f"Loaded existing GDrive OAuth token session from: {token_file}")
+            except Exception as e:
+                logger.warning(f"Failed to load existing token file: {e}. Re-authenticating...")
+
+        # If there are no (valid) credentials available, let the user log in.
+        if not creds or not creds.valid:
+            if creds and creds.expired and creds.refresh_token:
+                logger.info("GDrive access token expired. Refreshing token...")
+                try:
+                    creds.refresh(Request())
+                    # Save refreshed token
+                    token_file.parent.mkdir(parents=True, exist_ok=True)
+                    token_file.write_text(creds.to_json())
+                    logger.debug("GDrive access token refreshed and saved.")
+                    return creds
+                except Exception as e:
+                    logger.warning(f"Failed to refresh GDrive access token: {e}. Restarting login flow.")
+
+            logger.info("No active GDrive OAuth session. Triggering browser login flow...")
+            try:
+                flow = InstalledAppFlow.from_client_secrets_file(
+                    str(client_secrets_file),
+                    scopes=DRIVE_SCOPES,
+                )
+                creds = flow.run_local_server(port=0)
+
+                # Save the credentials for the next run
+                token_file.parent.mkdir(parents=True, exist_ok=True)
+                token_file.write_text(creds.to_json())
+                logger.info(f"GDrive OAuth session saved to: {token_file}")
+            except Exception as e:
+                raise RuntimeError(
+                    f"Failed to run OAuth 2.0 InstalledAppFlow: {e}. "
+                    f"Make sure you run this script in an environment where a web browser can open."
+                ) from e
+
+        return creds
 
     def _get_service(self) -> Any:
         """

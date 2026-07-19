@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-07-19T19:46:50.199230+00:00",
+  "generated_at": "2026-07-19T20:06:33.032281+00:00",
   "generator": "scripts/build_graph.py",
   "static_only": true,
   "scan_roots": [
@@ -8,8 +8,8 @@
     "scripts",
     "tests"
   ],
-  "node_count": 132,
-  "edge_count": 449,
+  "node_count": 134,
+  "edge_count": 477,
   "nodes": [
     {
       "id": "etsy_pipeline",
@@ -371,7 +371,7 @@
       "id": "etsy_pipeline.services.google_drive.GoogleDriveService._get_credentials",
       "kind": "function",
       "module": "etsy_pipeline.services.google_drive",
-      "docstring_summary": "Resolve GCP credentials for Google Drive operations.",
+      "docstring_summary": "Resolve user credentials for Google Drive operations using OAuth 2.0.",
       "signature": "(self)",
       "is_public": false,
       "is_async": false,
@@ -1103,6 +1103,24 @@
       "module": "scripts.run_prompts",
       "docstring_summary": "Save the raw prompt text and parsed prompts to files.",
       "signature": "(job, output_dir)",
+      "is_public": true,
+      "is_async": false
+    },
+    {
+      "id": "scripts.test_drive_upload",
+      "kind": "module",
+      "path": "scripts/test_drive_upload.py",
+      "docstring_summary": "",
+      "children": [
+        "scripts.test_drive_upload.main"
+      ]
+    },
+    {
+      "id": "scripts.test_drive_upload.main",
+      "kind": "function",
+      "module": "scripts.test_drive_upload",
+      "docstring_summary": "",
+      "signature": "()",
       "is_public": true,
       "is_async": false
     },
@@ -1859,13 +1877,19 @@
     },
     {
       "from": "etsy_pipeline.services.google_drive",
-      "to": "google.auth",
+      "to": "google.auth.transport.requests.Request",
       "kind": "import",
       "static_only": true
     },
     {
       "from": "etsy_pipeline.services.google_drive",
-      "to": "google.oauth2.service_account",
+      "to": "google.oauth2.credentials.Credentials",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive",
+      "to": "google_auth_oauthlib.flow.InstalledAppFlow",
       "kind": "import",
       "static_only": true
     },
@@ -1916,14 +1940,21 @@
     },
     {
       "from": "etsy_pipeline.services.google_drive.GoogleDriveService._get_credentials",
-      "to": "debug",
+      "to": "Request",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
     },
     {
       "from": "etsy_pipeline.services.google_drive.GoogleDriveService._get_credentials",
-      "to": "default",
+      "to": "RuntimeError",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService._get_credentials",
+      "to": "debug",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
@@ -1937,7 +1968,49 @@
     },
     {
       "from": "etsy_pipeline.services.google_drive.GoogleDriveService._get_credentials",
-      "to": "from_service_account_file",
+      "to": "from_authorized_user_file",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService._get_credentials",
+      "to": "from_client_secrets_file",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService._get_credentials",
+      "to": "info",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService._get_credentials",
+      "to": "mkdir",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService._get_credentials",
+      "to": "refresh",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService._get_credentials",
+      "to": "resolve",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService._get_credentials",
+      "to": "run_local_server",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
@@ -1945,6 +2018,27 @@
     {
       "from": "etsy_pipeline.services.google_drive.GoogleDriveService._get_credentials",
       "to": "str",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService._get_credentials",
+      "to": "to_json",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService._get_credentials",
+      "to": "warning",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService._get_credentials",
+      "to": "write_text",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
@@ -4147,6 +4241,119 @@
     {
       "from": "scripts.run_prompts.save_prompts_to_file",
       "to": "write_text",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.test_drive_upload",
+      "to": "etsy_pipeline.config.settings.get_settings",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "scripts.test_drive_upload",
+      "to": "etsy_pipeline.services.GoogleDriveService",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "scripts.test_drive_upload",
+      "to": "etsy_pipeline.utils.logging.get_logger",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "scripts.test_drive_upload",
+      "to": "etsy_pipeline.utils.logging.setup_logging",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "scripts.test_drive_upload",
+      "to": "pathlib.Path",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "scripts.test_drive_upload",
+      "to": "sys",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "scripts.test_drive_upload.main",
+      "to": "GoogleDriveService",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.test_drive_upload.main",
+      "to": "error",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.test_drive_upload.main",
+      "to": "exists",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.test_drive_upload.main",
+      "to": "exit",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.test_drive_upload.main",
+      "to": "get_logger",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.test_drive_upload.main",
+      "to": "get_settings",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.test_drive_upload.main",
+      "to": "info",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.test_drive_upload.main",
+      "to": "list",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.test_drive_upload.main",
+      "to": "rglob",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.test_drive_upload.main",
+      "to": "setup_logging",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.test_drive_upload.main",
+      "to": "upload_file",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"

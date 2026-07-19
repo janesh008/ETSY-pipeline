@@ -48,9 +48,13 @@ class Settings(BaseSettings):
         default="us-central1",
         description="GCP region for Vertex AI (e.g. us-central1)",
     )
-    google_drive_service_account_json: str | None = Field(
+    google_drive_client_sec_json: str | None = Field(
         default=None,
-        description="Optional local path to the Google Drive Service Account credentials JSON file",
+        description="Optional local path to the Google Drive OAuth 2.0 client secrets credentials JSON file",
+    )
+    google_drive_token_json: str = Field(
+        default="cred/token.json",
+        description="Local path where the Google Drive OAuth 2.0 user credentials session token will be saved/loaded",
     )
     google_drive_folder_id: str = Field(
         default="",
