@@ -1,446 +1,158 @@
-You are a Senior Staff Software Engineer and AI Systems Architect.
+# Etsy Asset Generation Pipeline
+
+[![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
+[![Type Checked: mypy](https://img.shields.io/badge/type%20checked-mypy-blue.svg)](https://github.com/python/mypy)
+[![Python Version](https://img.shields.io/badge/python-3.11%2B-blue)](https://www.python.org/)
+
+A production-grade, modular, and scalable Python pipeline designed to automate the end-to-end generation, processing, and listing preparation of digital PNG clipart bundles for Etsy.
+
+Designed for future deployment on Google Cloud Platform (GCP) and future orchestration by autonomous AI agents.
+
+---
+
+## 🏛️ Architecture Overview
+
+The system is designed with a strict separation of concerns, decoupling configuration, orchestration, data models, and business logic.
+
+```mermaid
+graph TD
+    CLI[scripts/run_prompts.py] -->|1. Creates Job & calls run| Pipeline[pipeline/orchestrator.py]
+    API[Future FastAPI Endpoint] -->|1. Creates Job & calls run| Pipeline
+    
+    subgraph Pipeline Orchestration
+        Pipeline -->|2. Executed sequentially| PromptWorker[workers/prompt_worker.py]
+        Pipeline -->|3. Next stage| ImageWorker[Future ImageWorker]
+        Pipeline -->|4. Next stage| BGWorker[Future BackgroundWorker]
+        Pipeline -->|...| OtherWorkers[...]
+    end
+    
+    subgraph Shared State
+        Job[(models/job.py)]
+    end
+    
+    Pipeline <-->|Mutates state on| Job
+    PromptWorker <-->|Reads inputs / writes prompts to| Job
+```
+
+### Key Architectural Patterns
+* **Job-Centered State (`Job` Model):** A single Pydantic object holds all inputs, intermediate outputs, execution logs, and statuses. This object is mutated sequentially by each worker stage. There are no global variables.
+* **Encapsulated Workers:** Every pipeline stage is implemented inside a self-contained `Worker` class exposing a single `run(job) -> job` entry point. Workers are stateless across job runs.
+* **Zero-Logic Orchestrator:** The `Pipeline` class sequences workers, manages job state transitions, and records failures. It contains zero business logic.
+* **Agent-Legible & Self-Documenting:** Contains lightweight `CONTEXT.md` files at every package level and an AST-generated static code graph at `.repo-graph/graph.json` to allow developers and AI agents to understand the repository structure instantly.
+
+---
+
+## 🔄 The Clipart Pipeline
+
+The pipeline consists of 8 consecutive stages:
+
+```mermaid
+flowchart LR
+    P[Prompt Gen] --> I[Image Gen] --> B[BG Removal] --> U[Upscaling] --> M[Mockup Gen] --> MD[Metadata Gen] --> C[CSV Gen] --> E[Etsy Upload]
+```
+
+1. **Prompt Generation:** Uses Gemini 2.5 Flash + structured prompt-engineering skills to generate a batch of section-organized CLIP/diffusion prompts.
+2. **Image Generation (ComfyUI):** Renders the prompts into high-resolution clipart designs using a local or cloud ComfyUI instance.
+3. **Background Removal (rembg):** Removes backgrounds to produce transparent PNG files.
+4. **Image Upscaling:** Upscales assets using scaling networks (e.g. Real-ESRGAN/UltraSharp) to print-ready resolution.
+5. **Mockup Generation:** Creates beautiful product listing mockups and showcases.
+6. **Metadata Generation (Gemini):** Automatically generates SEO-optimized listing titles, description sections, and 13 categorized tags.
+7. **CSV Generation:** Bundles listing outputs into bulk-import CSV structures.
+8. **Etsy Upload:** Uploads listings directly via the Etsy Seller API.
+
+---
+
+## 📁 Repository Structure
+
+```
+etsy-pipeline/
+├── .repo-graph/
+│   └── graph.json              # AST-generated static code graph
+├── etsy_pipeline/              # Core installable Python package
+│   ├── config/                 # Pydantic Settings & env-var loading
+│   ├── models/                 # Shared data models (Job, StageResult)
+│   ├── pipeline/               # Workflow Orchestrator
+│   ├── resources/              # Self-contained prompt templates (SKILL.md)
+│   ├── utils/                  # Exceptions, custom JSON & console logging
+│   └── workers/                # Stage-specific Worker implementations
+├── plans/                      # Persisted design and feature plans
+├── scripts/                    # CLI entry points and developer tools
+├── tests/                      # Pytest unit and integration test suite
+├── pyproject.toml              # Build & dependency configuration
+└── AGENTS.md                   # AI Agent workflow and coding guidelines
+```
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+* Python 3.11 or later
+* (Optional) [Google Cloud SDK (gcloud CLI)](https://cloud.google.com/sdk/docs/install) for Vertex AI mode
+
+### 1. Installation
+Clone the repository and install it in editable mode with development dependencies:
+
+```bash
+git clone https://github.com/janesh008/ETSY-pipeline.git
+cd ETSY-pipeline
+pip install -e ".[dev]"
+```
+
+### 2. Configuration
+Copy the environment template and fill in your details:
 
-Your goal is NOT to rewrite my code from scratch.
+```bash
+cp .env.example .env
+```
 
-Your goal is to convert my existing Google Colab notebook into a production-grade, modular, scalable AI pipeline that will later be deployed on Google Cloud Platform.
+Open `.env` and configure your settings:
+* **Vertex AI Mode (Recommended):** Set `USE_VERTEX_AI=True` and specify your `GCP_PROJECT_ID` and `GCP_LOCATION`. Run `gcloud auth application-default login` to authenticate.
+* **API Key Mode:** Set `USE_VERTEX_AI=False` and fill in `GOOGLE_API_KEY`.
 
-VERY IMPORTANT:
+---
 
-Do NOT change the business logic.
+## 💻 CLI Usage
 
-Do NOT optimize prompts.
+Run the prompt generation stage directly from the CLI:
 
-Do NOT change the algorithms.
+```bash
+python -m scripts.run_prompts --theme "Lilo & Stitch" --event "Normal"
+```
 
-Do NOT replace libraries unless absolutely necessary.
+### Available Arguments:
+* `--theme`: Cartoon/character theme name (required, e.g. `"Mickey Mouse"`)
+* `--event`: Event theme (defaults to `"Normal"`, e.g. `"birthday"`, `"baby shower"`)
+* `--style`: Optional style hint override (e.g. `"watercolor"`, `"3D"`)
+* `--count`: Optional prompt count override
 
-Only improve architecture and code organization.
+Outputs are generated inside the configured `./output/` directory, saving both raw Gemini responses and parsed text files.
 
-=========================================================
-PROJECT CONTEXT
-=========================================================
+---
 
-I have a Google Colab notebook that currently performs an end-to-end Etsy asset generation pipeline.
+## 🛠️ Developer Commands
 
-Current pipeline:
+### Code Formatting & Linting
+Run Ruff to format and lint check code:
+```bash
+ruff format .
+ruff check .
+```
 
-Gemini 2.5 Flash 
-↓
+### Static Type Checking
+Verify type annotations:
+```bash
+mypy etsy_pipeline
+```
 
-Prompt Generation (in my current pipeline there is no module need to newly create this module and also we have the skill file for prompt generation that thing we need to use here and model is gemini 2.5 flash)
+### Run Tests
+Execute unit tests (excludes real API calls):
+```bash
+pytest tests/ -v -k "not integration"
+```
 
-↓
-
-ComfyUI
-(Image Generation)
-
-↓
-
-Background Removal
-(rembg)
-
-↓
-
-Image Upscaling
-
-↓
-
-Mockup Generation
-(Python)
-
-↓
-
-Gemini 2.5 Flash
-
-↓
-
-Etsy Metadata Generation (In my current pipeline there is no module need to newly create this module and also we have the skill file for metagata generation that thing we need to use here and model is gemini 2.5 flash)
-
-↓
-
-CSV Generation (need to newly create this module)
-
-↓
-
-Etsy Listing Upload (need to newly create this module) 
-
-The notebook currently works.
-
-I want to convert it into a production codebase.
-
-=========================================================
-LONG TERM GOAL
-=========================================================
-
-This project will eventually run on GCP.
-
-Infrastructure:
-
-Vertex AI
-Gemini 2.5 Flash
-
-Compute Engine GPU VM
-
-Cloud Storage
-
-FastAPI
-
-Docker
-
-Later:
-
-Manager Agent
-
-Prompt Agent
-
-Image Agent
-
-Metadata Agent
-
-Quality Agent
-
-SEO Agent
-
-Therefore the architecture MUST be future-proof.
-
-=========================================================
-ABSOLUTE REQUIREMENTS
-=========================================================
-
-Do NOT build an agent system now.
-
-Do NOT use LangGraph.
-
-Do NOT use CrewAI.
-
-Do NOT use AutoGen.
-
-Do NOT use Vertex AI Agent.
-
-Do NOT introduce unnecessary frameworks.
-
-This version should only prepare the codebase for future agents.
-
-=========================================================
-WHAT I WANT
-=========================================================
-
-Refactor the notebook into a modular Python package.
-
-Every pipeline stage should become an independent module.
-
-Each module should expose exactly ONE public entry function.
-
-Example:
-
-generate_images(job)
-
-remove_background(job)
-
-upscale(job)
-
-create_mockups(job)
-
-generate_metadata(job)
-
-create_csv(job)
-
-upload_etsy(job)
-
-No stage should directly call another stage.
-
-=========================================================
-CREATE A JOB OBJECT
-=========================================================
-
-Create a Job model that stores everything shared across the pipeline.
-
-For example:
-
-theme
-
-prompts
-
-generated images
-
-background removed images
-
-upscaled images
-
-mockups
-
-metadata
-
-csv path
-
-logs
-
-status
-
-errors
-
-execution timestamps
-
-This Job object should be passed between modules.
-
-No global variables.
-
-=========================================================
-PIPELINE ORCHESTRATOR
-=========================================================
-
-Create a Pipeline class.
-
-Pipeline.run(job)
-
-should execute:
-
-Prompt Generation
-
-↓
-
-Image Generation
-
-↓
-
-Background Removal
-
-↓
-
-Upscaling
-
-↓
-
-Mockup
-
-↓
-
-Metadata
-
-↓
-
-CSV
-
-↓
-
-Etsy Upload
-
-The Pipeline should contain zero business logic.
-
-It should only orchestrate.
-
-=========================================================
-WORKERS
-=========================================================
-
-Every module should internally contain a Worker.
-
-Example
-
-ImageWorker
-
-BackgroundWorker
-
-UpscaleWorker
-
-MockupWorker
-
-MetadataWorker
-
-CSVWorker
-
-EtsyWorker
-
-The Worker contains all implementation.
-
-=========================================================
-FUTURE AGENT COMPATIBILITY
-=========================================================
-
-Every Worker should later be easily wrapped by an AI Agent.
-
-Example:
-
-class ImageAgent:
-
-    execute(job):
-
-        ImageWorker.run(job)
-
-Do NOT build the agents.
-
-Only make the workers compatible.
-
-=========================================================
-DIRECTORY STRUCTURE
-=========================================================
-
-Create a professional folder structure.
-
-Example
-
-project/
-
-api/
-
-pipeline/
-
-workers/
-
-models/
-
-services/
-
-config/
-
-utils/
-
-tests/
-
-docker/
-
-scripts/
-
-Do NOT create giant files.
-
-=========================================================
-CONFIGURATION
-=========================================================
-
-Move every hardcoded value into config.
-
-Examples
-
-API Keys
-
-Paths
-
-GPU settings
-
-Model names
-
-Output folders
-
-Drive locations
-
-Environment variables
-
-=========================================================
-LOGGING
-=========================================================
-
-Replace print()
-
-with structured logging.
-
-=========================================================
-ERROR HANDLING
-=========================================================
-
-Every stage should
-
-raise meaningful exceptions
-
-log failures
-
-return proper status
-
-Pipeline should stop safely.
-
-=========================================================
-TYPE HINTS
-=========================================================
-
-Use full type hints.
-
-=========================================================
-DOCSTRINGS
-=========================================================
-
-Document every public function.
-
-=========================================================
-GOOGLE CLOUD READY
-=========================================================
-
-Do NOT use
-
-google.colab
-
-Notebook-only features
-
-Interactive widgets
-
-Cell magic
-
-Shell commands inside Python
-
-Replace notebook-specific code with standard Python.
-
-=========================================================
-DOCKER READY
-=========================================================
-
-The project should later support
-
-docker compose up
-
-without major changes.
-
-=========================================================
-FASTAPI READY
-=========================================================
-
-The Pipeline should later be callable like
-
-pipeline.run(job)
-
-inside a FastAPI endpoint.
-
-=========================================================
-OUTPUT FORMAT
-=========================================================
-
-First:
-
-Explain the proposed architecture.
-
-Second:
-
-Show the complete folder structure.
-
-Third:
-
-Explain every folder.
-
-Fourth:
-
-Explain every module.
-
-Fifth:
-
-Generate the Job model.
-
-Sixth:
-
-Generate the Pipeline class.
-
-Seventh:
-
-Refactor one notebook section at a time.
-
-Never refactor everything at once.
-
-Wait after every stage for review.
-
-=========================================================
-IMPORTANT
-=========================================================
-
-Do not prioritize writing code.
-
-Prioritize architecture.
-
-The goal is maintainability for the next 5+ years.
-
-Act like a Staff Engineer reviewing a production AI platform.
+### Regenerate Code Graph
+The code graph is generated statically using AST and is automatically updated during git commits:
+```bash
+python scripts/build_graph.py
+```
