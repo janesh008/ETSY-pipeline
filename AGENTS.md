@@ -38,6 +38,8 @@ Before writing or modifying any code, follow this sequence for every feature req
 
 5. **Save the plan, then implement.** On approval, save the plan as a Markdown file at `plans/YYYY-MM-DD-<short-slug>.md` (see [`plans/_template.md`](plans/_template.md)) *before* writing any code. Only then begin implementation, following the saved plan. If the approach changes mid-implementation, update the plan file to match — it should always reflect what was actually built, not just what was intended.
 
+6. **Git Pushes:** Committing files locally to track progress is allowed. However, **never run `git push`** to the remote repository (GitHub) automatically. Only push the code to GitHub when the user explicitly requests it in their message.
+
 This applies regardless of which agent is executing — plan files are plain Markdown with no tool-specific syntax, so any agent can read past plans for context on prior decisions.
 
 ---

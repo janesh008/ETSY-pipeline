@@ -187,7 +187,7 @@ def main() -> None:
 
     else:
         print("\n" + "=" * 60)
-        print("❌ PROMPT GENERATION FAILED")
+        print("[FAIL] PROMPT GENERATION FAILED")
         print("=" * 60)
         print(job.to_summary())
         if job.errors:
