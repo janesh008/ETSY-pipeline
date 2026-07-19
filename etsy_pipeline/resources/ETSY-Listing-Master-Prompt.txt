@@ -1,0 +1,220 @@
+# Etsy Listing Generator — Pixel Bar Studio Edition (Master Prompt)
+
+Generates a complete, SEO-optimized Etsy listing (title, full description, and 13 keyword-scored tags) from image inputs. Built specifically for **digital clipart/PNG asset bundles**, ensuring a strict character limit, a mandatory tag distribution, and a specific PDF/Drive delivery method.
+
+---
+
+## STEP 1 — ANALYZE THE SOURCE
+
+**Extract all of the following from the provided mockup images:**
+- **Product type:** Digital Clipart / Watercolor PNGs, Backgrounds, Scenes, Props & Seamless Patterns
+- **Visual style / aesthetic:** (e.g., whimsical, watercolor, pastel, storybook, action-packed, etc.)
+- **Subject / theme:** (e.g., specific character, animals, fantasy, superhero, nursery, etc.)
+- **Total Asset Count:** (Extract the number shown in the main cover image, e.g., "138 Premium". This count must be referenced as characters + backgrounds + props + patterns combined.)
+- **Visible text or typography:** (Exact words shown in the central mockup)
+- **Color palette:** (Dominant hues and accent colors)
+- **Target audience:** (e.g., Small Business Owners, POD sellers, Party Planners, Scrapbookers, Parents)
+- **Mood / emotional appeal:** (e.g., magical, nostalgic, energetic, romantic)
+- **Unique differentiator:** (What makes this bundle stand out from generic competitors)
+
+After analysis, write a **General Description** — 3–4 sentences covering: what the product is, who it's for, what the design looks like, and what makes it distinctive. 
+
+> ⚠️ If source is ambiguous, state your inferences clearly before proceeding. Do not guess silently.
+
+---
+
+## STEP 2 — GENERATE THE ETSY TITLE
+
+### Hard Rules
+- **Maximum 140 characters** (Etsy's limit — never exceed)
+- **First 40 characters** must contain the single highest-value long-tail keyword phrase (this is the search preview window buyers see)
+- Must include **at least 3 distinct long-tail keyword phrases** embedded naturally across the title
+- Separate keyword clusters with `,` or `|` for readability
+- No ALL CAPS. No filler adjectives (beautiful, amazing, cute). No keyword repetition.
+- Every word must earn its place — either it's a keyword or it connects two keywords
+
+### Title Output Format
+```
+[Primary Long-Tail Phrase — 40 chars max], [Secondary Long-Tail Phrase] | [Third Long-Tail Phrase]
+```
+
+---
+
+## STEP 3 — GENERATE THE ETSY DESCRIPTION
+
+The description must answer every pre-purchase question a buyer might have. Follow this exact **8-section structure**:
+
+### Section 1: Hook (2–3 sentences)
+Lead with emotional appeal or the buyer's identity. Who is this for? Why will they love it? Make them feel seen.
+
+### Section 2: Product Details (bullet list)
+- **Product Type:** Digital Watercolor Clipart Set, Backgrounds, Props & Seamless Patterns (Commercial Use License included)
+- **Included Files:** [Exact Number from image] individual high-resolution PNG images (transparent backgrounds) + 9 Seamless Tileable Pattern PNGs.
+- **Resolution:** High-resolution, print-ready for sublimation, printing, and digital crafts.
+- **File Format:** Instant Zip Download via Google Drive Link. **The link is provided inside the PDF file included with your purchase.**
+- **License:** Permitted for personal use and small commercial use (up to 500 physical products sold per design).
+- **Please Note:** Colors may vary slightly due to different monitor settings and printer calibrations.
+
+### Section 3: HOW TO DOWNLOAD (NEW FIXED SECTION)
+- Add the item to your cart and complete your purchase
+- After payment, your files will be available in Etsy → Purchases & Reviews
+- Download the files and start creating immediately
+
+### Section 4: Design Description (3–4 sentences)
+Describe exactly what the design looks like — colors, composition, characters, props, scenes, and patterns. Convey the mood and aesthetic. Help the buyer visualize it on their products.
+
+### Section 5: Perfect For (bullet list)
+List every relevant use case, occasion, and recipient type (6–10 bullet points):
+- Designing Sublimation tumblers, mugs, and apparel (POD).
+- Creating Birthday Party Invitations, banners, and cake toppers.
+- Crafting Nursery Wall Art, canvas prints, and posters.
+- Making Scrapbook layouts, Journals, and Planner stickers.
+- Designing custom fabric prints, wrapping paper, and digital paper packs.
+- Creating educational flashcards and storytelling visuals for kids.
+- Crafting handmade greeting cards, stationery, and themed decor.
+
+### Section 6: Why Pixel Bar Studio (3–4 sentences)
+Brand voice: Confident, niche-savvy, creator-focused. Speak to quality, uniqueness, and the value of getting a massive, cohesive bundle via instant download. 
+
+### Section 7: SEO Reinforcement Paragraph (2–3 sentences)
+Naturally weave in 3–5 primary keywords from the title. This helps Etsy's search algorithm index the listing correctly. Write it as a readable sentence, not a keyword dump.
+
+### Section 8: Call to Action (1–2 sentences)
+Invite them to act. Remind them of the instant PDF/Drive download.
+
+---
+
+## STEP 4 — GENERATE 13 ETSY TAGS (WITH KEYWORD SCORE TIERS)
+
+### Tag Rules
+- Each tag: **maximum 20 characters** (Etsy hard limit — count carefully!)
+- All **13 tags** must be present
+- No duplicate words across tags (maximize coverage)
+- Tags are multi-word phrases — never a single generic word
+- Every tag must serve a distinct search angle
+
+### ⚡ MANDATORY KEYWORD SCORE TIER DISTRIBUTION
+
+Tags must be distributed across three tiers based on estimated Etsy keyword score:
+
+| Tier | Keyword Score | Count Required | Strategy |
+|---|---|---|---|
+| 🔥 HIGH | Score 200+ | **At least 5 tags** | Broad, high-demand buyer-intent phrases. Anchor tags. |
+| ⚡ MID | Score 30–100 | **3–4 tags** | Niche-specific. Lower competition. Good for ranking on page 1. |
+| 🎯 LOW | Score under 30 | **3–4 tags** | Hyper-niche, ultra-specific. Almost no competition for highly-targeted buyers. |
+
+### Tag Category Coverage
+Cover as many of these as the product allows: Product+Theme, Gift+Recipient, Occasion, Aesthetic Label, Niche Community, Design Visual, Use Case.
+
+---
+
+## OUTPUT FORMAT
+
+Deliver results in this exact structure every time:
+
+---
+
+### 🔍 ANALYSIS SUMMARY
+**Product:** Digital Clipart / Watercolor PNGs, Backgrounds, Props & Patterns (Delivered via PDF Drive Link)
+**Aesthetic:** [style]
+**Theme:** [subject]
+**Target Audience:** [who]
+**Unique Angle:** [differentiator]
+
+**General Description:**
+[3–4 sentence general description]
+
+---
+
+### 🏷️ ETSY TITLE
+`[Full title — max 140 characters]`
+
+**Character count:** [X/140]
+**Long-tail phrases identified:**
+- Phrase 1 (chars 1–40): [phrase]
+- Phrase 2: [phrase]
+- Phrase 3: [phrase]
+
+---
+
+### 📝 ETSY DESCRIPTION
+
+**— HOOK —**
+[Hook text]
+
+**— PRODUCT DETAILS —**
+[Bullet list]
+
+**— HOW TO DOWNLOAD —**
+[Fixed bullet list]
+
+**— DESIGN DESCRIPTION —**
+[Design text]
+
+**— PERFECT FOR —**
+[Bullet list]
+
+**— WHY PIXEL BAR STUDIO —**
+[Brand voice text]
+
+**— SEO REINFORCEMENT —**
+[SEO paragraph]
+
+**— CALL TO ACTION —**
+[CTA text]
+
+---
+
+### 🔖 ETSY TAGS (13)
+
+🔥 HIGH SCORE TAGS (200+ keyword score) — Broad, high-demand buyer-intent phrases:
+1. [tag] *(~[estimated score])* - **[XX characters]**
+2. [tag] *(~[estimated score])* - **[XX characters]**
+3. [tag] *(~[estimated score])* - **[XX characters]**
+4. [tag] *(~[estimated score])* - **[XX characters]**
+5. [tag] *(~[estimated score])* - **[XX characters]**
+
+⚡ MID SCORE TAGS (30–100 keyword score) — Niche-specific, lower competition:
+6. [tag] *(~[estimated score])* - **[XX characters]**
+7. [tag] *(~[estimated score])* - **[XX characters]**
+8. [tag] *(~[estimated score])* - **[XX characters]**
+9. [tag] *(~[estimated score])* - **[XX characters]**
+
+🎯 LOW SCORE TAGS (under 30 keyword score) — Hyper-targeted, near-zero competition:
+10. [tag] *(~[estimated score])* - **[XX characters]**
+11. [tag] *(~[estimated score])* - **[XX characters]**
+12. [tag] *(~[estimated score])* - **[XX characters]**
+13. [tag] *(~[estimated score])* - **[XX characters]**
+
+---
+
+## PRE-OUTPUT QUALITY CHECKLIST
+
+Run through every item before delivering output:
+
+**Title:**
+- [ ] Under 140 characters (count verified)
+- [ ] First 40 characters contain the strongest long-tail phrase
+- [ ] At least 3 distinct long-tail phrases present
+- [ ] No ALL CAPS, no filler adjectives, no keyword repetition
+
+**Description:**
+- [ ] All 8 sections present
+- [ ] Product details mention the specific asset count from the image
+- [ ] PDF / Google Drive link delivery explicitly stated
+- [ ] "HOW TO DOWNLOAD" section present and formatted correctly
+- [ ] Design described visually (characters, props, scenes, patterns)
+- [ ] At least 6 "Perfect For" bullet points
+- [ ] Pixel Bar Studio brand voice in Section 6
+- [ ] SEO paragraph contains 3–5 title keywords naturally
+- [ ] CTA present and sharp
+
+**Tags:**
+- [ ] Exactly 13 tags
+- [ ] **Every tag is 20 characters or under** (verified and listed in output)
+- [ ] At least 5 tags in HIGH tier (200+ score)
+- [ ] 3–4 tags in MID tier (30–100 score)
+- [ ] 3–4 tags in LOW tier (under 30 score)
+- [ ] No tag is a single generic word
+- [ ] Minimal word repetition across tags
+- [ ] Coverage spans at least 6 different tag categories

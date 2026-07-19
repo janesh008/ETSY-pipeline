@@ -1,0 +1,3948 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-07-19T17:58:03.797911+00:00",
+  "generator": "scripts/build_graph.py",
+  "static_only": true,
+  "scan_roots": [
+    "etsy_pipeline",
+    "scripts",
+    "tests"
+  ],
+  "node_count": 123,
+  "edge_count": 389,
+  "nodes": [
+    {
+      "id": "etsy_pipeline",
+      "kind": "module",
+      "path": "etsy_pipeline/__init__.py",
+      "docstring_summary": "Etsy Pipeline — Production-grade Etsy asset generation pipeline.",
+      "children": []
+    },
+    {
+      "id": "etsy_pipeline.config",
+      "kind": "module",
+      "path": "etsy_pipeline/config/__init__.py",
+      "docstring_summary": "Config package — application configuration and settings.",
+      "children": []
+    },
+    {
+      "id": "etsy_pipeline.config.settings",
+      "kind": "module",
+      "path": "etsy_pipeline/config/settings.py",
+      "docstring_summary": "Application settings — loaded from environment variables and .env file.",
+      "children": [
+        "etsy_pipeline.config.settings.Settings",
+        "etsy_pipeline.config.settings.get_settings"
+      ]
+    },
+    {
+      "id": "etsy_pipeline.config.settings.Settings",
+      "kind": "class",
+      "module": "etsy_pipeline.config.settings",
+      "docstring_summary": "Central configuration for the Etsy pipeline.",
+      "methods": [
+        "project_root"
+      ],
+      "public_methods": [
+        "project_root"
+      ]
+    },
+    {
+      "id": "etsy_pipeline.config.settings.Settings.project_root",
+      "kind": "function",
+      "module": "etsy_pipeline.config.settings",
+      "docstring_summary": "Return the resolved project root path.",
+      "signature": "(self)",
+      "is_public": true,
+      "is_async": false,
+      "class": "Settings"
+    },
+    {
+      "id": "etsy_pipeline.config.settings.get_settings",
+      "kind": "function",
+      "module": "etsy_pipeline.config.settings",
+      "docstring_summary": "Get the singleton Settings instance.",
+      "signature": "()",
+      "is_public": true,
+      "is_async": false
+    },
+    {
+      "id": "etsy_pipeline.models",
+      "kind": "module",
+      "path": "etsy_pipeline/models/__init__.py",
+      "docstring_summary": "Models package — shared data models for the pipeline.",
+      "children": []
+    },
+    {
+      "id": "etsy_pipeline.models.job",
+      "kind": "module",
+      "path": "etsy_pipeline/models/job.py",
+      "docstring_summary": "Job model — the shared state object passed between all pipeline stages.",
+      "children": [
+        "etsy_pipeline.models.job.JobStatus",
+        "etsy_pipeline.models.job.StageStatus",
+        "etsy_pipeline.models.job.StageResult",
+        "etsy_pipeline.models.job.Job"
+      ]
+    },
+    {
+      "id": "etsy_pipeline.models.job.Job",
+      "kind": "class",
+      "module": "etsy_pipeline.models.job",
+      "docstring_summary": "Central state object passed between all pipeline stages.",
+      "methods": [
+        "add_log",
+        "add_error",
+        "total_prompt_count",
+        "active_sections",
+        "get_output_dir",
+        "to_summary"
+      ],
+      "public_methods": [
+        "add_log",
+        "add_error",
+        "total_prompt_count",
+        "active_sections",
+        "get_output_dir",
+        "to_summary"
+      ]
+    },
+    {
+      "id": "etsy_pipeline.models.job.Job.active_sections",
+      "kind": "function",
+      "module": "etsy_pipeline.models.job",
+      "docstring_summary": "List of sections that have at least one prompt.",
+      "signature": "(self)",
+      "is_public": true,
+      "is_async": false,
+      "class": "Job"
+    },
+    {
+      "id": "etsy_pipeline.models.job.Job.add_error",
+      "kind": "function",
+      "module": "etsy_pipeline.models.job",
+      "docstring_summary": "Record an error message.",
+      "signature": "(self, error)",
+      "is_public": true,
+      "is_async": false,
+      "class": "Job"
+    },
+    {
+      "id": "etsy_pipeline.models.job.Job.add_log",
+      "kind": "function",
+      "module": "etsy_pipeline.models.job",
+      "docstring_summary": "Append a timestamped log entry.",
+      "signature": "(self, message)",
+      "is_public": true,
+      "is_async": false,
+      "class": "Job"
+    },
+    {
+      "id": "etsy_pipeline.models.job.Job.get_output_dir",
+      "kind": "function",
+      "module": "etsy_pipeline.models.job",
+      "docstring_summary": "Get the output directory for this job.",
+      "signature": "(self, output_root)",
+      "is_public": true,
+      "is_async": false,
+      "class": "Job"
+    },
+    {
+      "id": "etsy_pipeline.models.job.Job.to_summary",
+      "kind": "function",
+      "module": "etsy_pipeline.models.job",
+      "docstring_summary": "Generate a human-readable summary of the job state.",
+      "signature": "(self)",
+      "is_public": true,
+      "is_async": false,
+      "class": "Job"
+    },
+    {
+      "id": "etsy_pipeline.models.job.Job.total_prompt_count",
+      "kind": "function",
+      "module": "etsy_pipeline.models.job",
+      "docstring_summary": "Total number of prompts across all sections.",
+      "signature": "(self)",
+      "is_public": true,
+      "is_async": false,
+      "class": "Job"
+    },
+    {
+      "id": "etsy_pipeline.models.job.JobStatus",
+      "kind": "class",
+      "module": "etsy_pipeline.models.job",
+      "docstring_summary": "Status of a pipeline job.",
+      "methods": [],
+      "public_methods": []
+    },
+    {
+      "id": "etsy_pipeline.models.job.StageResult",
+      "kind": "class",
+      "module": "etsy_pipeline.models.job",
+      "docstring_summary": "Result of a single pipeline stage execution.",
+      "methods": [
+        "mark_running",
+        "mark_completed",
+        "mark_failed",
+        "duration_seconds"
+      ],
+      "public_methods": [
+        "mark_running",
+        "mark_completed",
+        "mark_failed",
+        "duration_seconds"
+      ]
+    },
+    {
+      "id": "etsy_pipeline.models.job.StageResult.duration_seconds",
+      "kind": "function",
+      "module": "etsy_pipeline.models.job",
+      "docstring_summary": "Calculate duration in seconds, if both timestamps exist.",
+      "signature": "(self)",
+      "is_public": true,
+      "is_async": false,
+      "class": "StageResult"
+    },
+    {
+      "id": "etsy_pipeline.models.job.StageResult.mark_completed",
+      "kind": "function",
+      "module": "etsy_pipeline.models.job",
+      "docstring_summary": "Mark this stage as completed.",
+      "signature": "(self)",
+      "is_public": true,
+      "is_async": false,
+      "class": "StageResult"
+    },
+    {
+      "id": "etsy_pipeline.models.job.StageResult.mark_failed",
+      "kind": "function",
+      "module": "etsy_pipeline.models.job",
+      "docstring_summary": "Mark this stage as failed with an error message.",
+      "signature": "(self, error_message)",
+      "is_public": true,
+      "is_async": false,
+      "class": "StageResult"
+    },
+    {
+      "id": "etsy_pipeline.models.job.StageResult.mark_running",
+      "kind": "function",
+      "module": "etsy_pipeline.models.job",
+      "docstring_summary": "Mark this stage as running.",
+      "signature": "(self, worker_id)",
+      "is_public": true,
+      "is_async": false,
+      "class": "StageResult"
+    },
+    {
+      "id": "etsy_pipeline.models.job.StageStatus",
+      "kind": "class",
+      "module": "etsy_pipeline.models.job",
+      "docstring_summary": "Status of an individual pipeline stage within a job.",
+      "methods": [],
+      "public_methods": []
+    },
+    {
+      "id": "etsy_pipeline.pipeline",
+      "kind": "module",
+      "path": "etsy_pipeline/pipeline/__init__.py",
+      "docstring_summary": "Pipeline package — orchestration layer for pipeline execution.",
+      "children": []
+    },
+    {
+      "id": "etsy_pipeline.pipeline.orchestrator",
+      "kind": "module",
+      "path": "etsy_pipeline/pipeline/orchestrator.py",
+      "docstring_summary": "Pipeline orchestrator — sequences pipeline stages with zero business logic.",
+      "children": [
+        "etsy_pipeline.pipeline.orchestrator.Pipeline"
+      ]
+    },
+    {
+      "id": "etsy_pipeline.pipeline.orchestrator.Pipeline",
+      "kind": "class",
+      "module": "etsy_pipeline.pipeline.orchestrator",
+      "docstring_summary": "Orchestrates the Etsy asset generation pipeline.",
+      "methods": [
+        "__init__",
+        "run",
+        "run_stage"
+      ],
+      "public_methods": [
+        "run",
+        "run_stage"
+      ]
+    },
+    {
+      "id": "etsy_pipeline.pipeline.orchestrator.Pipeline.__init__",
+      "kind": "function",
+      "module": "etsy_pipeline.pipeline.orchestrator",
+      "docstring_summary": "Initialize the Pipeline with all worker instances.",
+      "signature": "(self, settings)",
+      "is_public": false,
+      "is_async": false,
+      "class": "Pipeline"
+    },
+    {
+      "id": "etsy_pipeline.pipeline.orchestrator.Pipeline.run",
+      "kind": "function",
+      "module": "etsy_pipeline.pipeline.orchestrator",
+      "docstring_summary": "Execute the full pipeline on a Job.",
+      "signature": "(self, job)",
+      "is_public": true,
+      "is_async": false,
+      "class": "Pipeline"
+    },
+    {
+      "id": "etsy_pipeline.pipeline.orchestrator.Pipeline.run_stage",
+      "kind": "function",
+      "module": "etsy_pipeline.pipeline.orchestrator",
+      "docstring_summary": "Run a single stage by name.",
+      "signature": "(self, job, stage_name)",
+      "is_public": true,
+      "is_async": false,
+      "class": "Pipeline"
+    },
+    {
+      "id": "etsy_pipeline.services",
+      "kind": "module",
+      "path": "etsy_pipeline/services/__init__.py",
+      "docstring_summary": "Services package — external service abstractions (Gemini, GCS, etc.).",
+      "children": []
+    },
+    {
+      "id": "etsy_pipeline.utils",
+      "kind": "module",
+      "path": "etsy_pipeline/utils/__init__.py",
+      "docstring_summary": "Utils package — shared utilities, logging, and exceptions.",
+      "children": []
+    },
+    {
+      "id": "etsy_pipeline.utils.exceptions",
+      "kind": "module",
+      "path": "etsy_pipeline/utils/exceptions.py",
+      "docstring_summary": "Custom exceptions for the Etsy pipeline.",
+      "children": [
+        "etsy_pipeline.utils.exceptions.PipelineError",
+        "etsy_pipeline.utils.exceptions.PromptGenerationError",
+        "etsy_pipeline.utils.exceptions.PromptParsingError",
+        "etsy_pipeline.utils.exceptions.PromptValidationError",
+        "etsy_pipeline.utils.exceptions.ImageGenerationError",
+        "etsy_pipeline.utils.exceptions.BackgroundRemovalError",
+        "etsy_pipeline.utils.exceptions.UpscalingError",
+        "etsy_pipeline.utils.exceptions.MockupGenerationError",
+        "etsy_pipeline.utils.exceptions.MetadataGenerationError",
+        "etsy_pipeline.utils.exceptions.CSVGenerationError",
+        "etsy_pipeline.utils.exceptions.EtsyUploadError",
+        "etsy_pipeline.utils.exceptions.ConfigurationError",
+        "etsy_pipeline.utils.exceptions.SkillFileError"
+      ]
+    },
+    {
+      "id": "etsy_pipeline.utils.exceptions.BackgroundRemovalError",
+      "kind": "class",
+      "module": "etsy_pipeline.utils.exceptions",
+      "docstring_summary": "Raised when background removal via rembg fails.",
+      "methods": [
+        "__init__"
+      ],
+      "public_methods": []
+    },
+    {
+      "id": "etsy_pipeline.utils.exceptions.BackgroundRemovalError.__init__",
+      "kind": "function",
+      "module": "etsy_pipeline.utils.exceptions",
+      "docstring_summary": "",
+      "signature": "(self, message, job_id)",
+      "is_public": false,
+      "is_async": false,
+      "class": "BackgroundRemovalError"
+    },
+    {
+      "id": "etsy_pipeline.utils.exceptions.CSVGenerationError",
+      "kind": "class",
+      "module": "etsy_pipeline.utils.exceptions",
+      "docstring_summary": "Raised when CSV generation fails.",
+      "methods": [
+        "__init__"
+      ],
+      "public_methods": []
+    },
+    {
+      "id": "etsy_pipeline.utils.exceptions.CSVGenerationError.__init__",
+      "kind": "function",
+      "module": "etsy_pipeline.utils.exceptions",
+      "docstring_summary": "",
+      "signature": "(self, message, job_id)",
+      "is_public": false,
+      "is_async": false,
+      "class": "CSVGenerationError"
+    },
+    {
+      "id": "etsy_pipeline.utils.exceptions.ConfigurationError",
+      "kind": "class",
+      "module": "etsy_pipeline.utils.exceptions",
+      "docstring_summary": "Raised when required configuration is missing or invalid.",
+      "methods": [
+        "__init__"
+      ],
+      "public_methods": []
+    },
+    {
+      "id": "etsy_pipeline.utils.exceptions.ConfigurationError.__init__",
+      "kind": "function",
+      "module": "etsy_pipeline.utils.exceptions",
+      "docstring_summary": "",
+      "signature": "(self, message)",
+      "is_public": false,
+      "is_async": false,
+      "class": "ConfigurationError"
+    },
+    {
+      "id": "etsy_pipeline.utils.exceptions.EtsyUploadError",
+      "kind": "class",
+      "module": "etsy_pipeline.utils.exceptions",
+      "docstring_summary": "Raised when Etsy listing upload fails.",
+      "methods": [
+        "__init__"
+      ],
+      "public_methods": []
+    },
+    {
+      "id": "etsy_pipeline.utils.exceptions.EtsyUploadError.__init__",
+      "kind": "function",
+      "module": "etsy_pipeline.utils.exceptions",
+      "docstring_summary": "",
+      "signature": "(self, message, job_id)",
+      "is_public": false,
+      "is_async": false,
+      "class": "EtsyUploadError"
+    },
+    {
+      "id": "etsy_pipeline.utils.exceptions.ImageGenerationError",
+      "kind": "class",
+      "module": "etsy_pipeline.utils.exceptions",
+      "docstring_summary": "Raised when image generation via ComfyUI fails.",
+      "methods": [
+        "__init__"
+      ],
+      "public_methods": []
+    },
+    {
+      "id": "etsy_pipeline.utils.exceptions.ImageGenerationError.__init__",
+      "kind": "function",
+      "module": "etsy_pipeline.utils.exceptions",
+      "docstring_summary": "",
+      "signature": "(self, message, job_id)",
+      "is_public": false,
+      "is_async": false,
+      "class": "ImageGenerationError"
+    },
+    {
+      "id": "etsy_pipeline.utils.exceptions.MetadataGenerationError",
+      "kind": "class",
+      "module": "etsy_pipeline.utils.exceptions",
+      "docstring_summary": "Raised when Etsy metadata generation fails.",
+      "methods": [
+        "__init__"
+      ],
+      "public_methods": []
+    },
+    {
+      "id": "etsy_pipeline.utils.exceptions.MetadataGenerationError.__init__",
+      "kind": "function",
+      "module": "etsy_pipeline.utils.exceptions",
+      "docstring_summary": "",
+      "signature": "(self, message, job_id)",
+      "is_public": false,
+      "is_async": false,
+      "class": "MetadataGenerationError"
+    },
+    {
+      "id": "etsy_pipeline.utils.exceptions.MockupGenerationError",
+      "kind": "class",
+      "module": "etsy_pipeline.utils.exceptions",
+      "docstring_summary": "Raised when mockup generation fails.",
+      "methods": [
+        "__init__"
+      ],
+      "public_methods": []
+    },
+    {
+      "id": "etsy_pipeline.utils.exceptions.MockupGenerationError.__init__",
+      "kind": "function",
+      "module": "etsy_pipeline.utils.exceptions",
+      "docstring_summary": "",
+      "signature": "(self, message, job_id)",
+      "is_public": false,
+      "is_async": false,
+      "class": "MockupGenerationError"
+    },
+    {
+      "id": "etsy_pipeline.utils.exceptions.PipelineError",
+      "kind": "class",
+      "module": "etsy_pipeline.utils.exceptions",
+      "docstring_summary": "Base exception for all pipeline errors.",
+      "methods": [
+        "__init__",
+        "__str__"
+      ],
+      "public_methods": []
+    },
+    {
+      "id": "etsy_pipeline.utils.exceptions.PipelineError.__init__",
+      "kind": "function",
+      "module": "etsy_pipeline.utils.exceptions",
+      "docstring_summary": "",
+      "signature": "(self, message, stage, job_id)",
+      "is_public": false,
+      "is_async": false,
+      "class": "PipelineError"
+    },
+    {
+      "id": "etsy_pipeline.utils.exceptions.PipelineError.__str__",
+      "kind": "function",
+      "module": "etsy_pipeline.utils.exceptions",
+      "docstring_summary": "",
+      "signature": "(self)",
+      "is_public": false,
+      "is_async": false,
+      "class": "PipelineError"
+    },
+    {
+      "id": "etsy_pipeline.utils.exceptions.PromptGenerationError",
+      "kind": "class",
+      "module": "etsy_pipeline.utils.exceptions",
+      "docstring_summary": "Raised when prompt generation fails.",
+      "methods": [
+        "__init__"
+      ],
+      "public_methods": []
+    },
+    {
+      "id": "etsy_pipeline.utils.exceptions.PromptGenerationError.__init__",
+      "kind": "function",
+      "module": "etsy_pipeline.utils.exceptions",
+      "docstring_summary": "",
+      "signature": "(self, message, job_id)",
+      "is_public": false,
+      "is_async": false,
+      "class": "PromptGenerationError"
+    },
+    {
+      "id": "etsy_pipeline.utils.exceptions.PromptParsingError",
+      "kind": "class",
+      "module": "etsy_pipeline.utils.exceptions",
+      "docstring_summary": "Raised when the raw Gemini response cannot be parsed into sections.",
+      "methods": [],
+      "public_methods": []
+    },
+    {
+      "id": "etsy_pipeline.utils.exceptions.PromptValidationError",
+      "kind": "class",
+      "module": "etsy_pipeline.utils.exceptions",
+      "docstring_summary": "Raised when parsed prompts fail validation (missing sections, too few prompts, etc.).",
+      "methods": [],
+      "public_methods": []
+    },
+    {
+      "id": "etsy_pipeline.utils.exceptions.SkillFileError",
+      "kind": "class",
+      "module": "etsy_pipeline.utils.exceptions",
+      "docstring_summary": "Raised when the SKILL.md file cannot be loaded or parsed.",
+      "methods": [
+        "__init__"
+      ],
+      "public_methods": []
+    },
+    {
+      "id": "etsy_pipeline.utils.exceptions.SkillFileError.__init__",
+      "kind": "function",
+      "module": "etsy_pipeline.utils.exceptions",
+      "docstring_summary": "",
+      "signature": "(self, message)",
+      "is_public": false,
+      "is_async": false,
+      "class": "SkillFileError"
+    },
+    {
+      "id": "etsy_pipeline.utils.exceptions.UpscalingError",
+      "kind": "class",
+      "module": "etsy_pipeline.utils.exceptions",
+      "docstring_summary": "Raised when image upscaling fails.",
+      "methods": [
+        "__init__"
+      ],
+      "public_methods": []
+    },
+    {
+      "id": "etsy_pipeline.utils.exceptions.UpscalingError.__init__",
+      "kind": "function",
+      "module": "etsy_pipeline.utils.exceptions",
+      "docstring_summary": "",
+      "signature": "(self, message, job_id)",
+      "is_public": false,
+      "is_async": false,
+      "class": "UpscalingError"
+    },
+    {
+      "id": "etsy_pipeline.utils.logging",
+      "kind": "module",
+      "path": "etsy_pipeline/utils/logging.py",
+      "docstring_summary": "Structured logging setup for the Etsy pipeline.",
+      "children": [
+        "etsy_pipeline.utils.logging._ConsoleFormatter",
+        "etsy_pipeline.utils.logging._JsonFormatter",
+        "etsy_pipeline.utils.logging.setup_logging",
+        "etsy_pipeline.utils.logging.get_logger"
+      ]
+    },
+    {
+      "id": "etsy_pipeline.utils.logging._ConsoleFormatter",
+      "kind": "class",
+      "module": "etsy_pipeline.utils.logging",
+      "docstring_summary": "Colored console formatter for development.",
+      "methods": [
+        "format"
+      ],
+      "public_methods": [
+        "format"
+      ]
+    },
+    {
+      "id": "etsy_pipeline.utils.logging._ConsoleFormatter.format",
+      "kind": "function",
+      "module": "etsy_pipeline.utils.logging",
+      "docstring_summary": "",
+      "signature": "(self, record)",
+      "is_public": true,
+      "is_async": false,
+      "class": "_ConsoleFormatter"
+    },
+    {
+      "id": "etsy_pipeline.utils.logging._JsonFormatter",
+      "kind": "class",
+      "module": "etsy_pipeline.utils.logging",
+      "docstring_summary": "Structured JSON formatter for production.",
+      "methods": [
+        "format"
+      ],
+      "public_methods": [
+        "format"
+      ]
+    },
+    {
+      "id": "etsy_pipeline.utils.logging._JsonFormatter.format",
+      "kind": "function",
+      "module": "etsy_pipeline.utils.logging",
+      "docstring_summary": "",
+      "signature": "(self, record)",
+      "is_public": true,
+      "is_async": false,
+      "class": "_JsonFormatter"
+    },
+    {
+      "id": "etsy_pipeline.utils.logging.get_logger",
+      "kind": "function",
+      "module": "etsy_pipeline.utils.logging",
+      "docstring_summary": "Get a logger for a specific module.",
+      "signature": "(name)",
+      "is_public": true,
+      "is_async": false
+    },
+    {
+      "id": "etsy_pipeline.utils.logging.setup_logging",
+      "kind": "function",
+      "module": "etsy_pipeline.utils.logging",
+      "docstring_summary": "Configure root logging for the pipeline.",
+      "signature": "(level, log_format)",
+      "is_public": true,
+      "is_async": false
+    },
+    {
+      "id": "etsy_pipeline.workers",
+      "kind": "module",
+      "path": "etsy_pipeline/workers/__init__.py",
+      "docstring_summary": "Workers package — independent processing modules for each pipeline stage.",
+      "children": []
+    },
+    {
+      "id": "etsy_pipeline.workers.prompt_worker",
+      "kind": "module",
+      "path": "etsy_pipeline/workers/prompt_worker.py",
+      "docstring_summary": "PromptWorker — generates image generation prompts using Gemini 2.5 Flash.",
+      "children": [
+        "etsy_pipeline.workers.prompt_worker.PromptWorker",
+        "etsy_pipeline.workers.prompt_worker.generate_prompts"
+      ]
+    },
+    {
+      "id": "etsy_pipeline.workers.prompt_worker.PromptWorker",
+      "kind": "class",
+      "module": "etsy_pipeline.workers.prompt_worker",
+      "docstring_summary": "Generates image generation prompts for Etsy clipart bundles.",
+      "methods": [
+        "__init__",
+        "run",
+        "_load_skill_file",
+        "_strip_frontmatter",
+        "_build_user_message",
+        "_get_client",
+        "_call_gemini",
+        "_parse_response",
+        "_extract_prompts_from_section",
+        "_extract_roster",
+        "_validate_prompts"
+      ],
+      "public_methods": [
+        "run"
+      ]
+    },
+    {
+      "id": "etsy_pipeline.workers.prompt_worker.PromptWorker.__init__",
+      "kind": "function",
+      "module": "etsy_pipeline.workers.prompt_worker",
+      "docstring_summary": "Initialize the PromptWorker.",
+      "signature": "(self, settings)",
+      "is_public": false,
+      "is_async": false,
+      "class": "PromptWorker"
+    },
+    {
+      "id": "etsy_pipeline.workers.prompt_worker.PromptWorker._build_user_message",
+      "kind": "function",
+      "module": "etsy_pipeline.workers.prompt_worker",
+      "docstring_summary": "Build the user message for Gemini from the Job's theme parameters.",
+      "signature": "(self, job)",
+      "is_public": false,
+      "is_async": false,
+      "class": "PromptWorker"
+    },
+    {
+      "id": "etsy_pipeline.workers.prompt_worker.PromptWorker._call_gemini",
+      "kind": "function",
+      "module": "etsy_pipeline.workers.prompt_worker",
+      "docstring_summary": "Call Gemini 2.5 Flash with the SKILL.md system instruction.",
+      "signature": "(self, system_instruction, user_message, job)",
+      "is_public": false,
+      "is_async": false,
+      "class": "PromptWorker"
+    },
+    {
+      "id": "etsy_pipeline.workers.prompt_worker.PromptWorker._extract_prompts_from_section",
+      "kind": "function",
+      "module": "etsy_pipeline.workers.prompt_worker",
+      "docstring_summary": "Extract individual prompts from a section's content.",
+      "signature": "(self, section_content)",
+      "is_public": false,
+      "is_async": false,
+      "class": "PromptWorker"
+    },
+    {
+      "id": "etsy_pipeline.workers.prompt_worker.PromptWorker._extract_roster",
+      "kind": "function",
+      "module": "etsy_pipeline.workers.prompt_worker",
+      "docstring_summary": "Extract the character roster from the preamble text.",
+      "signature": "(self, preamble)",
+      "is_public": false,
+      "is_async": false,
+      "class": "PromptWorker"
+    },
+    {
+      "id": "etsy_pipeline.workers.prompt_worker.PromptWorker._get_client",
+      "kind": "function",
+      "module": "etsy_pipeline.workers.prompt_worker",
+      "docstring_summary": "Get or create the Gemini client.",
+      "signature": "(self)",
+      "is_public": false,
+      "is_async": false,
+      "class": "PromptWorker"
+    },
+    {
+      "id": "etsy_pipeline.workers.prompt_worker.PromptWorker._load_skill_file",
+      "kind": "function",
+      "module": "etsy_pipeline.workers.prompt_worker",
+      "docstring_summary": "Load and cache the SKILL.md content, stripping YAML frontmatter.",
+      "signature": "(self)",
+      "is_public": false,
+      "is_async": false,
+      "class": "PromptWorker"
+    },
+    {
+      "id": "etsy_pipeline.workers.prompt_worker.PromptWorker._parse_response",
+      "kind": "function",
+      "module": "etsy_pipeline.workers.prompt_worker",
+      "docstring_summary": "Parse the raw Gemini response into section-organized prompts.",
+      "signature": "(self, raw_text)",
+      "is_public": false,
+      "is_async": false,
+      "class": "PromptWorker"
+    },
+    {
+      "id": "etsy_pipeline.workers.prompt_worker.PromptWorker._strip_frontmatter",
+      "kind": "function",
+      "module": "etsy_pipeline.workers.prompt_worker",
+      "docstring_summary": "Remove YAML frontmatter from markdown content.",
+      "signature": "(self, content)",
+      "is_public": false,
+      "is_async": false,
+      "class": "PromptWorker"
+    },
+    {
+      "id": "etsy_pipeline.workers.prompt_worker.PromptWorker._validate_prompts",
+      "kind": "function",
+      "module": "etsy_pipeline.workers.prompt_worker",
+      "docstring_summary": "Validate parsed prompts against SKILL.md rules.",
+      "signature": "(self, prompts, job_id)",
+      "is_public": false,
+      "is_async": false,
+      "class": "PromptWorker"
+    },
+    {
+      "id": "etsy_pipeline.workers.prompt_worker.PromptWorker.run",
+      "kind": "function",
+      "module": "etsy_pipeline.workers.prompt_worker",
+      "docstring_summary": "Generate prompts for the given job.",
+      "signature": "(self, job)",
+      "is_public": true,
+      "is_async": false,
+      "class": "PromptWorker"
+    },
+    {
+      "id": "etsy_pipeline.workers.prompt_worker.generate_prompts",
+      "kind": "function",
+      "module": "etsy_pipeline.workers.prompt_worker",
+      "docstring_summary": "Module-level entry point for prompt generation.",
+      "signature": "(job)",
+      "is_public": true,
+      "is_async": false
+    },
+    {
+      "id": "etsy_pipeline.workers.prompt_worker_config",
+      "kind": "module",
+      "path": "etsy_pipeline/workers/prompt_worker_config.py",
+      "docstring_summary": "Prompt worker configuration — constants and settings specific to prompt generation.",
+      "children": []
+    },
+    {
+      "id": "scripts.build_graph",
+      "kind": "module",
+      "path": "scripts/build_graph.py",
+      "docstring_summary": "AST-based static code graph generator for the etsy_pipeline codebase.",
+      "children": [
+        "scripts.build_graph._get_docstring_summary",
+        "scripts.build_graph._is_public",
+        "scripts.build_graph._module_id",
+        "scripts.build_graph._collect_calls",
+        "scripts.build_graph.GraphBuilder",
+        "scripts.build_graph._graph_hash",
+        "scripts.build_graph.main"
+      ]
+    },
+    {
+      "id": "scripts.build_graph.GraphBuilder",
+      "kind": "class",
+      "module": "scripts.build_graph",
+      "docstring_summary": "Builds a JSON code graph by walking Python source files via the AST.",
+      "methods": [
+        "__init__",
+        "scan",
+        "_process_file",
+        "_process_class",
+        "_process_function",
+        "to_dict"
+      ],
+      "public_methods": [
+        "scan",
+        "to_dict"
+      ]
+    },
+    {
+      "id": "scripts.build_graph.GraphBuilder.__init__",
+      "kind": "function",
+      "module": "scripts.build_graph",
+      "docstring_summary": "Initialize an empty graph builder.",
+      "signature": "(self)",
+      "is_public": false,
+      "is_async": false,
+      "class": "GraphBuilder"
+    },
+    {
+      "id": "scripts.build_graph.GraphBuilder._process_class",
+      "kind": "function",
+      "module": "scripts.build_graph",
+      "docstring_summary": "Extract a class node and all its method nodes.",
+      "signature": "(self, class_node, mod_id)",
+      "is_public": false,
+      "is_async": false,
+      "class": "GraphBuilder"
+    },
+    {
+      "id": "scripts.build_graph.GraphBuilder._process_file",
+      "kind": "function",
+      "module": "scripts.build_graph",
+      "docstring_summary": "Parse a single Python file and extract its graph contributions.",
+      "signature": "(self, path)",
+      "is_public": false,
+      "is_async": false,
+      "class": "GraphBuilder"
+    },
+    {
+      "id": "scripts.build_graph.GraphBuilder._process_function",
+      "kind": "function",
+      "module": "scripts.build_graph",
+      "docstring_summary": "Extract a function/method node and its outbound call edges.",
+      "signature": "(self, func_node, mod_id, parent_class)",
+      "is_public": false,
+      "is_async": false,
+      "class": "GraphBuilder"
+    },
+    {
+      "id": "scripts.build_graph.GraphBuilder.scan",
+      "kind": "function",
+      "module": "scripts.build_graph",
+      "docstring_summary": "Walk all configured scan roots and build the graph.",
+      "signature": "(self)",
+      "is_public": true,
+      "is_async": false,
+      "class": "GraphBuilder"
+    },
+    {
+      "id": "scripts.build_graph.GraphBuilder.to_dict",
+      "kind": "function",
+      "module": "scripts.build_graph",
+      "docstring_summary": "Serialize the graph to a JSON-compatible dictionary.",
+      "signature": "(self)",
+      "is_public": true,
+      "is_async": false,
+      "class": "GraphBuilder"
+    },
+    {
+      "id": "scripts.build_graph._collect_calls",
+      "kind": "function",
+      "module": "scripts.build_graph",
+      "docstring_summary": "Extract called names from a function body (best-effort, static only).",
+      "signature": "(func_node)",
+      "is_public": false,
+      "is_async": false
+    },
+    {
+      "id": "scripts.build_graph._get_docstring_summary",
+      "kind": "function",
+      "module": "scripts.build_graph",
+      "docstring_summary": "Return the first line of a node's docstring, or empty string.",
+      "signature": "(node)",
+      "is_public": false,
+      "is_async": false
+    },
+    {
+      "id": "scripts.build_graph._graph_hash",
+      "kind": "function",
+      "module": "scripts.build_graph",
+      "docstring_summary": "Compute a stable hash of graph content, excluding the timestamp.",
+      "signature": "(graph)",
+      "is_public": false,
+      "is_async": false
+    },
+    {
+      "id": "scripts.build_graph._is_public",
+      "kind": "function",
+      "module": "scripts.build_graph",
+      "docstring_summary": "Return True if a name is considered part of the public interface.",
+      "signature": "(name)",
+      "is_public": false,
+      "is_async": false
+    },
+    {
+      "id": "scripts.build_graph._module_id",
+      "kind": "function",
+      "module": "scripts.build_graph",
+      "docstring_summary": "Convert a file path to a dotted module identifier.",
+      "signature": "(path)",
+      "is_public": false,
+      "is_async": false
+    },
+    {
+      "id": "scripts.build_graph.main",
+      "kind": "function",
+      "module": "scripts.build_graph",
+      "docstring_summary": "CLI entry point for the graph generator.",
+      "signature": "()",
+      "is_public": true,
+      "is_async": false
+    },
+    {
+      "id": "scripts.run_prompts",
+      "kind": "module",
+      "path": "scripts/run_prompts.py",
+      "docstring_summary": "CLI entry point for running the prompt generation stage.",
+      "children": [
+        "scripts.run_prompts.parse_args",
+        "scripts.run_prompts.save_prompts_to_file",
+        "scripts.run_prompts.main"
+      ]
+    },
+    {
+      "id": "scripts.run_prompts.main",
+      "kind": "function",
+      "module": "scripts.run_prompts",
+      "docstring_summary": "Main entry point.",
+      "signature": "()",
+      "is_public": true,
+      "is_async": false
+    },
+    {
+      "id": "scripts.run_prompts.parse_args",
+      "kind": "function",
+      "module": "scripts.run_prompts",
+      "docstring_summary": "Parse command-line arguments.",
+      "signature": "()",
+      "is_public": true,
+      "is_async": false
+    },
+    {
+      "id": "scripts.run_prompts.save_prompts_to_file",
+      "kind": "function",
+      "module": "scripts.run_prompts",
+      "docstring_summary": "Save the raw prompt text and parsed prompts to files.",
+      "signature": "(job, output_dir)",
+      "is_public": true,
+      "is_async": false
+    },
+    {
+      "id": "tests",
+      "kind": "module",
+      "path": "tests/__init__.py",
+      "docstring_summary": "Tests package.",
+      "children": []
+    },
+    {
+      "id": "tests.test_prompt_worker",
+      "kind": "module",
+      "path": "tests/test_prompt_worker.py",
+      "docstring_summary": "Unit and integration tests for the PromptWorker.",
+      "children": [
+        "tests.test_prompt_worker.worker",
+        "tests.test_prompt_worker.sample_job",
+        "tests.test_prompt_worker.sample_gemini_response",
+        "tests.test_prompt_worker.TestParseResponse",
+        "tests.test_prompt_worker.TestValidatePrompts",
+        "tests.test_prompt_worker.TestStripFrontmatter",
+        "tests.test_prompt_worker.TestBuildUserMessage",
+        "tests.test_prompt_worker.TestPromptWorkerIntegration"
+      ]
+    },
+    {
+      "id": "tests.test_prompt_worker.TestBuildUserMessage",
+      "kind": "class",
+      "module": "tests.test_prompt_worker",
+      "docstring_summary": "Test user message construction.",
+      "methods": [
+        "test_basic_message",
+        "test_style_hint_included",
+        "test_count_included"
+      ],
+      "public_methods": [
+        "test_basic_message",
+        "test_style_hint_included",
+        "test_count_included"
+      ]
+    },
+    {
+      "id": "tests.test_prompt_worker.TestBuildUserMessage.test_basic_message",
+      "kind": "function",
+      "module": "tests.test_prompt_worker",
+      "docstring_summary": "Verify basic message includes theme and event.",
+      "signature": "(self, worker, sample_job)",
+      "is_public": true,
+      "is_async": false,
+      "class": "TestBuildUserMessage"
+    },
+    {
+      "id": "tests.test_prompt_worker.TestBuildUserMessage.test_count_included",
+      "kind": "function",
+      "module": "tests.test_prompt_worker",
+      "docstring_summary": "Verify prompt count is included when provided.",
+      "signature": "(self, worker)",
+      "is_public": true,
+      "is_async": false,
+      "class": "TestBuildUserMessage"
+    },
+    {
+      "id": "tests.test_prompt_worker.TestBuildUserMessage.test_style_hint_included",
+      "kind": "function",
+      "module": "tests.test_prompt_worker",
+      "docstring_summary": "Verify style hint is included when provided.",
+      "signature": "(self, worker)",
+      "is_public": true,
+      "is_async": false,
+      "class": "TestBuildUserMessage"
+    },
+    {
+      "id": "tests.test_prompt_worker.TestParseResponse",
+      "kind": "class",
+      "module": "tests.test_prompt_worker",
+      "docstring_summary": "Test the _parse_response method.",
+      "methods": [
+        "test_parses_all_sections",
+        "test_active_sections_have_prompts",
+        "test_inactive_sections_are_empty",
+        "test_prompts_are_clean_strings",
+        "test_roster_extraction",
+        "test_empty_response_raises_error",
+        "test_garbage_response_raises_error"
+      ],
+      "public_methods": [
+        "test_parses_all_sections",
+        "test_active_sections_have_prompts",
+        "test_inactive_sections_are_empty",
+        "test_prompts_are_clean_strings",
+        "test_roster_extraction",
+        "test_empty_response_raises_error",
+        "test_garbage_response_raises_error"
+      ]
+    },
+    {
+      "id": "tests.test_prompt_worker.TestParseResponse.test_active_sections_have_prompts",
+      "kind": "function",
+      "module": "tests.test_prompt_worker",
+      "docstring_summary": "Verify active sections contain at least 10 prompts.",
+      "signature": "(self, worker, sample_gemini_response)",
+      "is_public": true,
+      "is_async": false,
+      "class": "TestParseResponse"
+    },
+    {
+      "id": "tests.test_prompt_worker.TestParseResponse.test_empty_response_raises_error",
+      "kind": "function",
+      "module": "tests.test_prompt_worker",
+      "docstring_summary": "Verify empty response raises PromptParsingError.",
+      "signature": "(self, worker)",
+      "is_public": true,
+      "is_async": false,
+      "class": "TestParseResponse"
+    },
+    {
+      "id": "tests.test_prompt_worker.TestParseResponse.test_garbage_response_raises_error",
+      "kind": "function",
+      "module": "tests.test_prompt_worker",
+      "docstring_summary": "Verify non-structured response raises PromptParsingError.",
+      "signature": "(self, worker)",
+      "is_public": true,
+      "is_async": false,
+      "class": "TestParseResponse"
+    },
+    {
+      "id": "tests.test_prompt_worker.TestParseResponse.test_inactive_sections_are_empty",
+      "kind": "function",
+      "module": "tests.test_prompt_worker",
+      "docstring_summary": "Verify inactive sections have empty prompt lists.",
+      "signature": "(self, worker, sample_gemini_response)",
+      "is_public": true,
+      "is_async": false,
+      "class": "TestParseResponse"
+    },
+    {
+      "id": "tests.test_prompt_worker.TestParseResponse.test_parses_all_sections",
+      "kind": "function",
+      "module": "tests.test_prompt_worker",
+      "docstring_summary": "Verify all locked sections are present in parsed output.",
+      "signature": "(self, worker, sample_gemini_response)",
+      "is_public": true,
+      "is_async": false,
+      "class": "TestParseResponse"
+    },
+    {
+      "id": "tests.test_prompt_worker.TestParseResponse.test_prompts_are_clean_strings",
+      "kind": "function",
+      "module": "tests.test_prompt_worker",
+      "docstring_summary": "Verify prompts are clean single-line strings without numbering.",
+      "signature": "(self, worker, sample_gemini_response)",
+      "is_public": true,
+      "is_async": false,
+      "class": "TestParseResponse"
+    },
+    {
+      "id": "tests.test_prompt_worker.TestParseResponse.test_roster_extraction",
+      "kind": "function",
+      "module": "tests.test_prompt_worker",
+      "docstring_summary": "Verify character roster is extracted from preamble.",
+      "signature": "(self, worker, sample_gemini_response)",
+      "is_public": true,
+      "is_async": false,
+      "class": "TestParseResponse"
+    },
+    {
+      "id": "tests.test_prompt_worker.TestPromptWorkerIntegration",
+      "kind": "class",
+      "module": "tests.test_prompt_worker",
+      "docstring_summary": "Integration tests that call the actual Gemini API.",
+      "methods": [
+        "test_full_prompt_generation"
+      ],
+      "public_methods": [
+        "test_full_prompt_generation"
+      ]
+    },
+    {
+      "id": "tests.test_prompt_worker.TestPromptWorkerIntegration.test_full_prompt_generation",
+      "kind": "function",
+      "module": "tests.test_prompt_worker",
+      "docstring_summary": "Test full prompt generation with Gemini API.",
+      "signature": "(self)",
+      "is_public": true,
+      "is_async": false,
+      "class": "TestPromptWorkerIntegration"
+    },
+    {
+      "id": "tests.test_prompt_worker.TestStripFrontmatter",
+      "kind": "class",
+      "module": "tests.test_prompt_worker",
+      "docstring_summary": "Test YAML frontmatter removal.",
+      "methods": [
+        "test_strips_frontmatter",
+        "test_no_frontmatter_unchanged"
+      ],
+      "public_methods": [
+        "test_strips_frontmatter",
+        "test_no_frontmatter_unchanged"
+      ]
+    },
+    {
+      "id": "tests.test_prompt_worker.TestStripFrontmatter.test_no_frontmatter_unchanged",
+      "kind": "function",
+      "module": "tests.test_prompt_worker",
+      "docstring_summary": "Verify content without frontmatter is returned unchanged.",
+      "signature": "(self, worker)",
+      "is_public": true,
+      "is_async": false,
+      "class": "TestStripFrontmatter"
+    },
+    {
+      "id": "tests.test_prompt_worker.TestStripFrontmatter.test_strips_frontmatter",
+      "kind": "function",
+      "module": "tests.test_prompt_worker",
+      "docstring_summary": "Verify frontmatter is removed from content.",
+      "signature": "(self, worker)",
+      "is_public": true,
+      "is_async": false,
+      "class": "TestStripFrontmatter"
+    },
+    {
+      "id": "tests.test_prompt_worker.TestValidatePrompts",
+      "kind": "class",
+      "module": "tests.test_prompt_worker",
+      "docstring_summary": "Test the _validate_prompts method.",
+      "methods": [
+        "test_valid_prompts_pass",
+        "test_all_empty_sections_raises_error",
+        "test_missing_sections_are_added"
+      ],
+      "public_methods": [
+        "test_valid_prompts_pass",
+        "test_all_empty_sections_raises_error",
+        "test_missing_sections_are_added"
+      ]
+    },
+    {
+      "id": "tests.test_prompt_worker.TestValidatePrompts.test_all_empty_sections_raises_error",
+      "kind": "function",
+      "module": "tests.test_prompt_worker",
+      "docstring_summary": "Verify all-empty prompts raises PromptValidationError.",
+      "signature": "(self, worker)",
+      "is_public": true,
+      "is_async": false,
+      "class": "TestValidatePrompts"
+    },
+    {
+      "id": "tests.test_prompt_worker.TestValidatePrompts.test_missing_sections_are_added",
+      "kind": "function",
+      "module": "tests.test_prompt_worker",
+      "docstring_summary": "Verify missing sections are added as empty lists.",
+      "signature": "(self, worker)",
+      "is_public": true,
+      "is_async": false,
+      "class": "TestValidatePrompts"
+    },
+    {
+      "id": "tests.test_prompt_worker.TestValidatePrompts.test_valid_prompts_pass",
+      "kind": "function",
+      "module": "tests.test_prompt_worker",
+      "docstring_summary": "Verify valid prompts pass validation.",
+      "signature": "(self, worker, sample_gemini_response)",
+      "is_public": true,
+      "is_async": false,
+      "class": "TestValidatePrompts"
+    },
+    {
+      "id": "tests.test_prompt_worker.sample_gemini_response",
+      "kind": "function",
+      "module": "tests.test_prompt_worker",
+      "docstring_summary": "Sample Gemini response mimicking SKILL.md output format.",
+      "signature": "()",
+      "is_public": true,
+      "is_async": false
+    },
+    {
+      "id": "tests.test_prompt_worker.sample_job",
+      "kind": "function",
+      "module": "tests.test_prompt_worker",
+      "docstring_summary": "Create a sample Job for testing.",
+      "signature": "()",
+      "is_public": true,
+      "is_async": false
+    },
+    {
+      "id": "tests.test_prompt_worker.worker",
+      "kind": "function",
+      "module": "tests.test_prompt_worker",
+      "docstring_summary": "Create a PromptWorker instance for testing.",
+      "signature": "()",
+      "is_public": true,
+      "is_async": false
+    }
+  ],
+  "edges": [
+    {
+      "from": "etsy_pipeline.config.settings",
+      "to": "__future__.annotations",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.config.settings",
+      "to": "functools.lru_cache",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.config.settings",
+      "to": "pathlib.Path",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.config.settings",
+      "to": "pydantic.Field",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.config.settings",
+      "to": "pydantic_settings.BaseSettings",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.config.settings",
+      "to": "pydantic_settings.SettingsConfigDict",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.config.settings.get_settings",
+      "to": "Settings",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.config.settings.get_settings",
+      "to": "lru_cache",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.models.job",
+      "to": "__future__.annotations",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.models.job",
+      "to": "datetime.UTC",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.models.job",
+      "to": "datetime.datetime",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.models.job",
+      "to": "enum.StrEnum",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.models.job",
+      "to": "pathlib.Path",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.models.job",
+      "to": "pydantic.BaseModel",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.models.job",
+      "to": "pydantic.Field",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.models.job",
+      "to": "typing.Any",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.models.job",
+      "to": "uuid",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.models.job.Job.active_sections",
+      "to": "items",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.models.job.Job.add_error",
+      "to": "add_log",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.models.job.Job.add_error",
+      "to": "append",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.models.job.Job.add_log",
+      "to": "append",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.models.job.Job.add_log",
+      "to": "isoformat",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.models.job.Job.add_log",
+      "to": "now",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.models.job.Job.get_output_dir",
+      "to": "Path",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.models.job.Job.get_output_dir",
+      "to": "replace",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.models.job.Job.to_summary",
+      "to": "isoformat",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.models.job.Job.to_summary",
+      "to": "join",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.models.job.Job.to_summary",
+      "to": "len",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.models.job.Job.total_prompt_count",
+      "to": "len",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.models.job.Job.total_prompt_count",
+      "to": "sum",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.models.job.Job.total_prompt_count",
+      "to": "values",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.models.job.StageResult.duration_seconds",
+      "to": "total_seconds",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.models.job.StageResult.mark_completed",
+      "to": "now",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.models.job.StageResult.mark_failed",
+      "to": "now",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.models.job.StageResult.mark_running",
+      "to": "now",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.pipeline.orchestrator",
+      "to": "__future__.annotations",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.pipeline.orchestrator",
+      "to": "etsy_pipeline.config.settings.Settings",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.pipeline.orchestrator",
+      "to": "etsy_pipeline.config.settings.get_settings",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.pipeline.orchestrator",
+      "to": "etsy_pipeline.models.job.Job",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.pipeline.orchestrator",
+      "to": "etsy_pipeline.models.job.JobStatus",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.pipeline.orchestrator",
+      "to": "etsy_pipeline.utils.exceptions.PipelineError",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.pipeline.orchestrator",
+      "to": "etsy_pipeline.utils.logging.get_logger",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.pipeline.orchestrator",
+      "to": "etsy_pipeline.utils.logging.setup_logging",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.pipeline.orchestrator",
+      "to": "etsy_pipeline.workers.prompt_worker.PromptWorker",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.pipeline.orchestrator.Pipeline.__init__",
+      "to": "PromptWorker",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.pipeline.orchestrator.Pipeline.__init__",
+      "to": "get_settings",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.pipeline.orchestrator.Pipeline.__init__",
+      "to": "info",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.pipeline.orchestrator.Pipeline.__init__",
+      "to": "setup_logging",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.pipeline.orchestrator.Pipeline.run",
+      "to": "add_error",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.pipeline.orchestrator.Pipeline.run",
+      "to": "add_log",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.pipeline.orchestrator.Pipeline.run",
+      "to": "error",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.pipeline.orchestrator.Pipeline.run",
+      "to": "info",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.pipeline.orchestrator.Pipeline.run",
+      "to": "mark_failed",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.pipeline.orchestrator.Pipeline.run",
+      "to": "run",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.pipeline.orchestrator.Pipeline.run",
+      "to": "str",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.pipeline.orchestrator.Pipeline.run_stage",
+      "to": "ValueError",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.pipeline.orchestrator.Pipeline.run_stage",
+      "to": "get",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.pipeline.orchestrator.Pipeline.run_stage",
+      "to": "info",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.pipeline.orchestrator.Pipeline.run_stage",
+      "to": "keys",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.pipeline.orchestrator.Pipeline.run_stage",
+      "to": "list",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.pipeline.orchestrator.Pipeline.run_stage",
+      "to": "run",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.utils.exceptions.BackgroundRemovalError.__init__",
+      "to": "__init__",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.utils.exceptions.BackgroundRemovalError.__init__",
+      "to": "super",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.utils.exceptions.CSVGenerationError.__init__",
+      "to": "__init__",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.utils.exceptions.CSVGenerationError.__init__",
+      "to": "super",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.utils.exceptions.ConfigurationError.__init__",
+      "to": "__init__",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.utils.exceptions.ConfigurationError.__init__",
+      "to": "super",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.utils.exceptions.EtsyUploadError.__init__",
+      "to": "__init__",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.utils.exceptions.EtsyUploadError.__init__",
+      "to": "super",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.utils.exceptions.ImageGenerationError.__init__",
+      "to": "__init__",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.utils.exceptions.ImageGenerationError.__init__",
+      "to": "super",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.utils.exceptions.MetadataGenerationError.__init__",
+      "to": "__init__",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.utils.exceptions.MetadataGenerationError.__init__",
+      "to": "super",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.utils.exceptions.MockupGenerationError.__init__",
+      "to": "__init__",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.utils.exceptions.MockupGenerationError.__init__",
+      "to": "super",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.utils.exceptions.PipelineError.__init__",
+      "to": "__init__",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.utils.exceptions.PipelineError.__init__",
+      "to": "super",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.utils.exceptions.PipelineError.__str__",
+      "to": "__str__",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.utils.exceptions.PipelineError.__str__",
+      "to": "append",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.utils.exceptions.PipelineError.__str__",
+      "to": "join",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.utils.exceptions.PipelineError.__str__",
+      "to": "super",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.utils.exceptions.PromptGenerationError.__init__",
+      "to": "__init__",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.utils.exceptions.PromptGenerationError.__init__",
+      "to": "super",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.utils.exceptions.SkillFileError.__init__",
+      "to": "__init__",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.utils.exceptions.SkillFileError.__init__",
+      "to": "super",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.utils.exceptions.UpscalingError.__init__",
+      "to": "__init__",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.utils.exceptions.UpscalingError.__init__",
+      "to": "super",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.utils.logging",
+      "to": "__future__.annotations",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.utils.logging",
+      "to": "datetime.UTC",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.utils.logging",
+      "to": "datetime.datetime",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.utils.logging",
+      "to": "json",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.utils.logging",
+      "to": "logging",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.utils.logging",
+      "to": "sys",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.utils.logging",
+      "to": "typing.Any",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.utils.logging._ConsoleFormatter.format",
+      "to": "formatException",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.utils.logging._ConsoleFormatter.format",
+      "to": "get",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.utils.logging._ConsoleFormatter.format",
+      "to": "getMessage",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.utils.logging._ConsoleFormatter.format",
+      "to": "ljust",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.utils.logging._ConsoleFormatter.format",
+      "to": "now",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.utils.logging._ConsoleFormatter.format",
+      "to": "split",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.utils.logging._ConsoleFormatter.format",
+      "to": "strftime",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.utils.logging._JsonFormatter.format",
+      "to": "dumps",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.utils.logging._JsonFormatter.format",
+      "to": "formatException",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.utils.logging._JsonFormatter.format",
+      "to": "getMessage",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.utils.logging._JsonFormatter.format",
+      "to": "getattr",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.utils.logging._JsonFormatter.format",
+      "to": "hasattr",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.utils.logging._JsonFormatter.format",
+      "to": "isoformat",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.utils.logging._JsonFormatter.format",
+      "to": "now",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.utils.logging.get_logger",
+      "to": "getLogger",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.utils.logging.setup_logging",
+      "to": "StreamHandler",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.utils.logging.setup_logging",
+      "to": "_ConsoleFormatter",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.utils.logging.setup_logging",
+      "to": "_JsonFormatter",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.utils.logging.setup_logging",
+      "to": "addHandler",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.utils.logging.setup_logging",
+      "to": "getLogger",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.utils.logging.setup_logging",
+      "to": "getattr",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.utils.logging.setup_logging",
+      "to": "setFormatter",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.utils.logging.setup_logging",
+      "to": "setLevel",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.utils.logging.setup_logging",
+      "to": "upper",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker",
+      "to": "__future__.annotations",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker",
+      "to": "etsy_pipeline.config.settings.Settings",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker",
+      "to": "etsy_pipeline.config.settings.get_settings",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker",
+      "to": "etsy_pipeline.models.job.Job",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker",
+      "to": "etsy_pipeline.utils.exceptions.ConfigurationError",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker",
+      "to": "etsy_pipeline.utils.exceptions.PromptGenerationError",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker",
+      "to": "etsy_pipeline.utils.exceptions.PromptParsingError",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker",
+      "to": "etsy_pipeline.utils.exceptions.PromptValidationError",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker",
+      "to": "etsy_pipeline.utils.exceptions.SkillFileError",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker",
+      "to": "etsy_pipeline.utils.logging.get_logger",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker",
+      "to": "etsy_pipeline.workers.prompt_worker_config.COUNT_CLAUSE_TEMPLATE",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker",
+      "to": "etsy_pipeline.workers.prompt_worker_config.INACTIVE_SECTION_MARKER",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker",
+      "to": "etsy_pipeline.workers.prompt_worker_config.LOCKED_SECTIONS",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker",
+      "to": "etsy_pipeline.workers.prompt_worker_config.MIN_PROMPTS_PER_SECTION",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker",
+      "to": "etsy_pipeline.workers.prompt_worker_config.SECTIONS_CLAUSE_TEMPLATE",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker",
+      "to": "etsy_pipeline.workers.prompt_worker_config.STYLE_CLAUSE_TEMPLATE",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker",
+      "to": "etsy_pipeline.workers.prompt_worker_config.USER_MESSAGE_TEMPLATE",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker",
+      "to": "google.genai",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker",
+      "to": "google.genai.types",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker",
+      "to": "pathlib.Path",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker",
+      "to": "re",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker.__init__",
+      "to": "get_settings",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._build_user_message",
+      "to": "format",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._build_user_message",
+      "to": "join",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._call_gemini",
+      "to": "GenerateContentConfig",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._call_gemini",
+      "to": "PromptGenerationError",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._call_gemini",
+      "to": "_get_client",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._call_gemini",
+      "to": "generate_content",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._call_gemini",
+      "to": "info",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._call_gemini",
+      "to": "len",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._extract_prompts_from_section",
+      "to": "append",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._extract_prompts_from_section",
+      "to": "compile",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._extract_prompts_from_section",
+      "to": "end",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._extract_prompts_from_section",
+      "to": "enumerate",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._extract_prompts_from_section",
+      "to": "finditer",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._extract_prompts_from_section",
+      "to": "join",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._extract_prompts_from_section",
+      "to": "len",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._extract_prompts_from_section",
+      "to": "list",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._extract_prompts_from_section",
+      "to": "split",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._extract_prompts_from_section",
+      "to": "start",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._extract_prompts_from_section",
+      "to": "strip",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._extract_roster",
+      "to": "compile",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._extract_roster",
+      "to": "finditer",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._extract_roster",
+      "to": "group",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._extract_roster",
+      "to": "strip",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._get_client",
+      "to": "Client",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._get_client",
+      "to": "ConfigurationError",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._get_client",
+      "to": "info",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._load_skill_file",
+      "to": "Path",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._load_skill_file",
+      "to": "SkillFileError",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._load_skill_file",
+      "to": "_strip_frontmatter",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._load_skill_file",
+      "to": "debug",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._load_skill_file",
+      "to": "exists",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._load_skill_file",
+      "to": "len",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._load_skill_file",
+      "to": "read_text",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._load_skill_file",
+      "to": "strip",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._parse_response",
+      "to": "PromptParsingError",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._parse_response",
+      "to": "_extract_prompts_from_section",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._parse_response",
+      "to": "_extract_roster",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._parse_response",
+      "to": "compile",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._parse_response",
+      "to": "debug",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._parse_response",
+      "to": "end",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._parse_response",
+      "to": "enumerate",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._parse_response",
+      "to": "escape",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._parse_response",
+      "to": "finditer",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._parse_response",
+      "to": "group",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._parse_response",
+      "to": "items",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._parse_response",
+      "to": "join",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._parse_response",
+      "to": "len",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._parse_response",
+      "to": "list",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._parse_response",
+      "to": "lower",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._parse_response",
+      "to": "replace",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._parse_response",
+      "to": "start",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._parse_response",
+      "to": "strip",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._parse_response",
+      "to": "sum",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._parse_response",
+      "to": "values",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._strip_frontmatter",
+      "to": "sub",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._validate_prompts",
+      "to": "PromptValidationError",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._validate_prompts",
+      "to": "append",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._validate_prompts",
+      "to": "info",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._validate_prompts",
+      "to": "items",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._validate_prompts",
+      "to": "keys",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._validate_prompts",
+      "to": "len",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._validate_prompts",
+      "to": "set",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._validate_prompts",
+      "to": "strip",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._validate_prompts",
+      "to": "sum",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._validate_prompts",
+      "to": "values",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._validate_prompts",
+      "to": "warning",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker.run",
+      "to": "PromptGenerationError",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker.run",
+      "to": "_build_user_message",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker.run",
+      "to": "_call_gemini",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker.run",
+      "to": "_load_skill_file",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker.run",
+      "to": "_parse_response",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker.run",
+      "to": "_validate_prompts",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker.run",
+      "to": "add_error",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker.run",
+      "to": "add_log",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker.run",
+      "to": "debug",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker.run",
+      "to": "error",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker.run",
+      "to": "info",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker.run",
+      "to": "items",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker.run",
+      "to": "len",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker.run",
+      "to": "mark_completed",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker.run",
+      "to": "mark_failed",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker.run",
+      "to": "mark_running",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker.run",
+      "to": "sum",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker.run",
+      "to": "values",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.generate_prompts",
+      "to": "PromptWorker",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.generate_prompts",
+      "to": "run",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker_config",
+      "to": "__future__.annotations",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "scripts.build_graph",
+      "to": "__future__.annotations",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "scripts.build_graph",
+      "to": "argparse.ArgumentParser",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "scripts.build_graph",
+      "to": "ast",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "scripts.build_graph",
+      "to": "datetime.UTC",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "scripts.build_graph",
+      "to": "datetime.datetime",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "scripts.build_graph",
+      "to": "hashlib",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "scripts.build_graph",
+      "to": "json",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "scripts.build_graph",
+      "to": "pathlib.Path",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "scripts.build_graph",
+      "to": "sys",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "scripts.build_graph",
+      "to": "typing.Any",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "scripts.build_graph.GraphBuilder._process_class",
+      "to": "_get_docstring_summary",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph.GraphBuilder._process_class",
+      "to": "_is_public",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph.GraphBuilder._process_class",
+      "to": "_process_function",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph.GraphBuilder._process_class",
+      "to": "append",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph.GraphBuilder._process_class",
+      "to": "isinstance",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph.GraphBuilder._process_class",
+      "to": "iter_child_nodes",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph.GraphBuilder._process_file",
+      "to": "_get_docstring_summary",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph.GraphBuilder._process_file",
+      "to": "_module_id",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph.GraphBuilder._process_file",
+      "to": "_process_class",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph.GraphBuilder._process_file",
+      "to": "_process_function",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph.GraphBuilder._process_file",
+      "to": "append",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph.GraphBuilder._process_file",
+      "to": "isinstance",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph.GraphBuilder._process_file",
+      "to": "iter_child_nodes",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph.GraphBuilder._process_file",
+      "to": "join",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph.GraphBuilder._process_file",
+      "to": "parse",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph.GraphBuilder._process_file",
+      "to": "read_text",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph.GraphBuilder._process_file",
+      "to": "relative_to",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph.GraphBuilder._process_file",
+      "to": "replace",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph.GraphBuilder._process_file",
+      "to": "split",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph.GraphBuilder._process_file",
+      "to": "str",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph.GraphBuilder._process_function",
+      "to": "_collect_calls",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph.GraphBuilder._process_function",
+      "to": "_get_docstring_summary",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph.GraphBuilder._process_function",
+      "to": "_is_public",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph.GraphBuilder._process_function",
+      "to": "append",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph.GraphBuilder._process_function",
+      "to": "isinstance",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph.GraphBuilder._process_function",
+      "to": "join",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph.GraphBuilder._process_function",
+      "to": "set",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph.GraphBuilder._process_function",
+      "to": "sorted",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph.GraphBuilder.scan",
+      "to": "_module_id",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph.GraphBuilder.scan",
+      "to": "_process_file",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph.GraphBuilder.scan",
+      "to": "exists",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph.GraphBuilder.scan",
+      "to": "extend",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph.GraphBuilder.scan",
+      "to": "rglob",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph.GraphBuilder.scan",
+      "to": "sorted",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph.GraphBuilder.to_dict",
+      "to": "get",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph.GraphBuilder.to_dict",
+      "to": "isoformat",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph.GraphBuilder.to_dict",
+      "to": "len",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph.GraphBuilder.to_dict",
+      "to": "now",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph.GraphBuilder.to_dict",
+      "to": "relative_to",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph.GraphBuilder.to_dict",
+      "to": "replace",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph.GraphBuilder.to_dict",
+      "to": "sorted",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph.GraphBuilder.to_dict",
+      "to": "str",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph._collect_calls",
+      "to": "append",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph._collect_calls",
+      "to": "isinstance",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph._collect_calls",
+      "to": "walk",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph._get_docstring_summary",
+      "to": "get_docstring",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph._get_docstring_summary",
+      "to": "splitlines",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph._get_docstring_summary",
+      "to": "strip",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph._graph_hash",
+      "to": "dumps",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph._graph_hash",
+      "to": "encode",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph._graph_hash",
+      "to": "hexdigest",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph._graph_hash",
+      "to": "items",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph._graph_hash",
+      "to": "sha256",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph._is_public",
+      "to": "startswith",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph._module_id",
+      "to": "join",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph._module_id",
+      "to": "list",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph._module_id",
+      "to": "relative_to",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph._module_id",
+      "to": "with_suffix",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph.main",
+      "to": "ArgumentParser",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph.main",
+      "to": "GraphBuilder",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph.main",
+      "to": "_graph_hash",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph.main",
+      "to": "add_argument",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph.main",
+      "to": "dumps",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph.main",
+      "to": "exists",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph.main",
+      "to": "exit",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph.main",
+      "to": "loads",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph.main",
+      "to": "mkdir",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph.main",
+      "to": "parse_args",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph.main",
+      "to": "print",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph.main",
+      "to": "read_text",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph.main",
+      "to": "scan",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph.main",
+      "to": "splitlines",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph.main",
+      "to": "to_dict",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.build_graph.main",
+      "to": "write_text",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.run_prompts",
+      "to": "__future__.annotations",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "scripts.run_prompts",
+      "to": "argparse",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "scripts.run_prompts",
+      "to": "etsy_pipeline.config.settings.get_settings",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "scripts.run_prompts",
+      "to": "etsy_pipeline.models.job.Job",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "scripts.run_prompts",
+      "to": "etsy_pipeline.models.job.JobStatus",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "scripts.run_prompts",
+      "to": "etsy_pipeline.pipeline.orchestrator.Pipeline",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "scripts.run_prompts",
+      "to": "etsy_pipeline.utils.logging.get_logger",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "scripts.run_prompts",
+      "to": "etsy_pipeline.utils.logging.setup_logging",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "scripts.run_prompts",
+      "to": "pathlib.Path",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "scripts.run_prompts",
+      "to": "sys",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "scripts.run_prompts.main",
+      "to": "Job",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.run_prompts.main",
+      "to": "Pipeline",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.run_prompts.main",
+      "to": "exit",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.run_prompts.main",
+      "to": "get_output_dir",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.run_prompts.main",
+      "to": "get_settings",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.run_prompts.main",
+      "to": "info",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.run_prompts.main",
+      "to": "items",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.run_prompts.main",
+      "to": "len",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.run_prompts.main",
+      "to": "parse_args",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.run_prompts.main",
+      "to": "print",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.run_prompts.main",
+      "to": "run",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.run_prompts.main",
+      "to": "save_prompts_to_file",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.run_prompts.main",
+      "to": "setup_logging",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.run_prompts.main",
+      "to": "to_summary",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.run_prompts.parse_args",
+      "to": "ArgumentParser",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.run_prompts.parse_args",
+      "to": "add_argument",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.run_prompts.parse_args",
+      "to": "parse_args",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.run_prompts.save_prompts_to_file",
+      "to": "append",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.run_prompts.save_prompts_to_file",
+      "to": "enumerate",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.run_prompts.save_prompts_to_file",
+      "to": "info",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.run_prompts.save_prompts_to_file",
+      "to": "items",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.run_prompts.save_prompts_to_file",
+      "to": "join",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.run_prompts.save_prompts_to_file",
+      "to": "mkdir",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.run_prompts.save_prompts_to_file",
+      "to": "replace",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.run_prompts.save_prompts_to_file",
+      "to": "write_text",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_prompt_worker",
+      "to": "__future__.annotations",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "tests.test_prompt_worker",
+      "to": "etsy_pipeline.models.job.Job",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "tests.test_prompt_worker",
+      "to": "etsy_pipeline.models.job.JobStatus",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "tests.test_prompt_worker",
+      "to": "etsy_pipeline.utils.exceptions.PromptParsingError",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "tests.test_prompt_worker",
+      "to": "etsy_pipeline.utils.exceptions.PromptValidationError",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "tests.test_prompt_worker",
+      "to": "etsy_pipeline.workers.prompt_worker.PromptWorker",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "tests.test_prompt_worker",
+      "to": "etsy_pipeline.workers.prompt_worker_config.LOCKED_SECTIONS",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "tests.test_prompt_worker",
+      "to": "pytest",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "tests.test_prompt_worker.TestBuildUserMessage.test_basic_message",
+      "to": "_build_user_message",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_prompt_worker.TestBuildUserMessage.test_count_included",
+      "to": "Job",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_prompt_worker.TestBuildUserMessage.test_count_included",
+      "to": "_build_user_message",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_prompt_worker.TestBuildUserMessage.test_style_hint_included",
+      "to": "Job",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_prompt_worker.TestBuildUserMessage.test_style_hint_included",
+      "to": "_build_user_message",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_prompt_worker.TestParseResponse.test_active_sections_have_prompts",
+      "to": "_parse_response",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_prompt_worker.TestParseResponse.test_active_sections_have_prompts",
+      "to": "len",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_prompt_worker.TestParseResponse.test_empty_response_raises_error",
+      "to": "_parse_response",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_prompt_worker.TestParseResponse.test_empty_response_raises_error",
+      "to": "raises",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_prompt_worker.TestParseResponse.test_garbage_response_raises_error",
+      "to": "_parse_response",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_prompt_worker.TestParseResponse.test_garbage_response_raises_error",
+      "to": "raises",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_prompt_worker.TestParseResponse.test_inactive_sections_are_empty",
+      "to": "_parse_response",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_prompt_worker.TestParseResponse.test_inactive_sections_are_empty",
+      "to": "len",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_prompt_worker.TestParseResponse.test_parses_all_sections",
+      "to": "_parse_response",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_prompt_worker.TestParseResponse.test_prompts_are_clean_strings",
+      "to": "_parse_response",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_prompt_worker.TestParseResponse.test_prompts_are_clean_strings",
+      "to": "isinstance",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_prompt_worker.TestParseResponse.test_prompts_are_clean_strings",
+      "to": "items",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_prompt_worker.TestParseResponse.test_prompts_are_clean_strings",
+      "to": "startswith",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_prompt_worker.TestParseResponse.test_prompts_are_clean_strings",
+      "to": "strip",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_prompt_worker.TestParseResponse.test_roster_extraction",
+      "to": "_parse_response",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_prompt_worker.TestPromptWorkerIntegration.test_full_prompt_generation",
+      "to": "Job",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_prompt_worker.TestPromptWorkerIntegration.test_full_prompt_generation",
+      "to": "PromptWorker",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_prompt_worker.TestPromptWorkerIntegration.test_full_prompt_generation",
+      "to": "len",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_prompt_worker.TestPromptWorkerIntegration.test_full_prompt_generation",
+      "to": "run",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_prompt_worker.TestStripFrontmatter.test_no_frontmatter_unchanged",
+      "to": "_strip_frontmatter",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_prompt_worker.TestStripFrontmatter.test_strips_frontmatter",
+      "to": "_strip_frontmatter",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_prompt_worker.TestStripFrontmatter.test_strips_frontmatter",
+      "to": "startswith",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_prompt_worker.TestStripFrontmatter.test_strips_frontmatter",
+      "to": "strip",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_prompt_worker.TestValidatePrompts.test_all_empty_sections_raises_error",
+      "to": "_validate_prompts",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_prompt_worker.TestValidatePrompts.test_all_empty_sections_raises_error",
+      "to": "raises",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_prompt_worker.TestValidatePrompts.test_missing_sections_are_added",
+      "to": "_validate_prompts",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_prompt_worker.TestValidatePrompts.test_valid_prompts_pass",
+      "to": "_parse_response",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_prompt_worker.TestValidatePrompts.test_valid_prompts_pass",
+      "to": "_validate_prompts",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_prompt_worker.sample_job",
+      "to": "Job",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_prompt_worker.worker",
+      "to": "PromptWorker",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    }
+  ]
+}

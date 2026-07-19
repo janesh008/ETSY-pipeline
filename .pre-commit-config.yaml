@@ -1,0 +1,45 @@
+repos:
+  # ---------------------------------------------------------------------------
+  # 1. Ruff — lint + format (replaces flake8, isort, black, pyupgrade)
+  #    Runs --fix first so auto-fixable issues are resolved before checking.
+  # ---------------------------------------------------------------------------
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.5.7
+    hooks:
+      - id: ruff
+        name: ruff lint (auto-fix)
+        args: [--fix, --exit-non-zero-on-fix]
+        files: ^(etsy_pipeline|scripts|tests)/.*\.py$
+      - id: ruff-format
+        name: ruff format
+        files: ^(etsy_pipeline|scripts|tests)/.*\.py$
+
+  # ---------------------------------------------------------------------------
+  # 2. mypy — static type checking (warn-only; config in pyproject.toml)
+  # ---------------------------------------------------------------------------
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.10.1
+    hooks:
+      - id: mypy
+        name: mypy type check
+        args: [--config-file=pyproject.toml]
+        files: ^etsy_pipeline/.*\.py$
+        additional_dependencies:
+          - pydantic>=2.0.0
+          - pydantic-settings>=2.0.0
+          - google-genai>=1.0.0
+          - python-dotenv>=1.0.0
+
+  # ---------------------------------------------------------------------------
+  # 3. Code graph — regenerate .repo-graph/graph.json when Python files change
+  #    Uses 'system' so it runs with the repo's own Python environment.
+  # ---------------------------------------------------------------------------
+  - repo: local
+    hooks:
+      - id: build-repo-graph
+        name: regenerate code graph
+        language: system
+        entry: python scripts/build_graph.py
+        files: ^(etsy_pipeline|scripts|tests)/.*\.py$
+        pass_filenames: false
+        stages: [pre-commit]

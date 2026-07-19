@@ -1,0 +1,96 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "etsy-pipeline"
+version = "0.1.0"
+description = "Production-grade Etsy asset generation pipeline for Pixel Bar Studio"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+
+dependencies = [
+    "google-genai>=1.0.0",
+    "pydantic>=2.0.0",
+    "pydantic-settings>=2.0.0",
+    "python-dotenv>=1.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "ruff>=0.5.0",
+    "mypy>=1.10.0",
+    "pre-commit>=3.7.0",
+]
+
+[tool.setuptools.packages.find]
+include = ["etsy_pipeline*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "integration: marks tests that require external API calls (deselect with '-m \"not integration\"')",
+]
+
+# ---------------------------------------------------------------------------
+# Ruff — lint + format (Black-compatible, replaces flake8/isort/pyupgrade)
+# ---------------------------------------------------------------------------
+[tool.ruff]
+target-version = "py311"
+line-length = 88
+# Exclude generated artifacts and legacy colab code from linting
+exclude = [
+    ".git",
+    "__pycache__",
+    ".repo-graph",
+    "ETSY_main_colab",
+    "etsy mockup creator",
+    "*.egg-info",
+]
+
+[tool.ruff.lint]
+# Rule sets: pycodestyle(E/W), pyflakes(F), isort(I), pyupgrade(UP),
+#            bugbear(B), pep8-naming(N), flake8-annotations(ANN)
+select = ["E", "W", "F", "I", "UP", "B", "N"]
+ignore = [
+    "E501",   # line too long — ruff formatter handles this
+    "B008",   # do not perform function calls in default arguments (Pydantic Field)
+    "N805",   # first arg of classmethod should be cls — false-positive on Pydantic validators
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["etsy_pipeline"]
+
+[tool.ruff.format]
+# Black-compatible formatting
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+
+# ---------------------------------------------------------------------------
+# mypy — static type checking (warn-only initially; tighten per workstream)
+# ---------------------------------------------------------------------------
+[tool.mypy]
+python_version = "3.11"
+# Warn-only mode: surface issues but don't block CI yet
+warn_return_any = true
+warn_unused_configs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+# Don't fail on missing stubs for third-party libs (google-genai, pydantic)
+ignore_missing_imports = true
+# Require type annotations on all public functions
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+# Show error codes so suppressions are explicit
+show_error_codes = true
+# Exclude legacy and generated dirs
+exclude = [
+    "ETSY_main_colab/",
+    "etsy mockup creator/",
+    "\\.repo-graph/",
+]
+
