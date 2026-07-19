@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-07-19T17:58:03.797911+00:00",
+  "generated_at": "2026-07-19T19:20:22.805720+00:00",
   "generator": "scripts/build_graph.py",
   "static_only": true,
   "scan_roots": [
@@ -8,8 +8,8 @@
     "scripts",
     "tests"
   ],
-  "node_count": 123,
-  "edge_count": 389,
+  "node_count": 131,
+  "edge_count": 442,
   "nodes": [
     {
       "id": "etsy_pipeline",
@@ -254,6 +254,7 @@
       "path": "etsy_pipeline/pipeline/orchestrator.py",
       "docstring_summary": "Pipeline orchestrator — sequences pipeline stages with zero business logic.",
       "children": [
+        "etsy_pipeline.pipeline.orchestrator.Worker",
         "etsy_pipeline.pipeline.orchestrator.Pipeline"
       ]
     },
@@ -303,11 +304,97 @@
       "class": "Pipeline"
     },
     {
+      "id": "etsy_pipeline.pipeline.orchestrator.Worker",
+      "kind": "class",
+      "module": "etsy_pipeline.pipeline.orchestrator",
+      "docstring_summary": "Protocol for pipeline stage workers.",
+      "methods": [
+        "run"
+      ],
+      "public_methods": [
+        "run"
+      ]
+    },
+    {
+      "id": "etsy_pipeline.pipeline.orchestrator.Worker.run",
+      "kind": "function",
+      "module": "etsy_pipeline.pipeline.orchestrator",
+      "docstring_summary": "Run the worker logic on a Job.",
+      "signature": "(self, job)",
+      "is_public": true,
+      "is_async": false,
+      "class": "Worker"
+    },
+    {
       "id": "etsy_pipeline.services",
       "kind": "module",
       "path": "etsy_pipeline/services/__init__.py",
-      "docstring_summary": "Services package — external service abstractions (Gemini, GCS, etc.).",
+      "docstring_summary": "Services package initialization.",
       "children": []
+    },
+    {
+      "id": "etsy_pipeline.services.google_drive",
+      "kind": "module",
+      "path": "etsy_pipeline/services/google_drive.py",
+      "docstring_summary": "Google Drive Service — handles authentication and file uploads to Google Drive.",
+      "children": [
+        "etsy_pipeline.services.google_drive.GoogleDriveService"
+      ]
+    },
+    {
+      "id": "etsy_pipeline.services.google_drive.GoogleDriveService",
+      "kind": "class",
+      "module": "etsy_pipeline.services.google_drive",
+      "docstring_summary": "Handles authentication and file operations on Google Drive.",
+      "methods": [
+        "__init__",
+        "_get_credentials",
+        "_get_service",
+        "upload_file"
+      ],
+      "public_methods": [
+        "upload_file"
+      ]
+    },
+    {
+      "id": "etsy_pipeline.services.google_drive.GoogleDriveService.__init__",
+      "kind": "function",
+      "module": "etsy_pipeline.services.google_drive",
+      "docstring_summary": "Initialize the Google Drive service client.",
+      "signature": "(self, settings)",
+      "is_public": false,
+      "is_async": false,
+      "class": "GoogleDriveService"
+    },
+    {
+      "id": "etsy_pipeline.services.google_drive.GoogleDriveService._get_credentials",
+      "kind": "function",
+      "module": "etsy_pipeline.services.google_drive",
+      "docstring_summary": "Resolve GCP credentials for Google Drive operations.",
+      "signature": "(self)",
+      "is_public": false,
+      "is_async": false,
+      "class": "GoogleDriveService"
+    },
+    {
+      "id": "etsy_pipeline.services.google_drive.GoogleDriveService._get_service",
+      "kind": "function",
+      "module": "etsy_pipeline.services.google_drive",
+      "docstring_summary": "Get or initialize the Google Drive API client service.",
+      "signature": "(self)",
+      "is_public": false,
+      "is_async": false,
+      "class": "GoogleDriveService"
+    },
+    {
+      "id": "etsy_pipeline.services.google_drive.GoogleDriveService.upload_file",
+      "kind": "function",
+      "module": "etsy_pipeline.services.google_drive",
+      "docstring_summary": "Upload a local file to a Google Drive folder.",
+      "signature": "(self, local_path, remote_filename, folder_id)",
+      "is_public": true,
+      "is_async": false,
+      "class": "GoogleDriveService"
     },
     {
       "id": "etsy_pipeline.utils",
@@ -1587,6 +1674,12 @@
       "static_only": true
     },
     {
+      "from": "etsy_pipeline.pipeline.orchestrator",
+      "to": "typing.Protocol",
+      "kind": "import",
+      "static_only": true
+    },
+    {
       "from": "etsy_pipeline.pipeline.orchestrator.Pipeline.__init__",
       "to": "PromptWorker",
       "kind": "call",
@@ -1701,6 +1794,272 @@
     {
       "from": "etsy_pipeline.pipeline.orchestrator.Pipeline.run_stage",
       "to": "run",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services",
+      "to": "__future__.annotations",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.services",
+      "to": "etsy_pipeline.services.google_drive.GoogleDriveService",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive",
+      "to": "__future__.annotations",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive",
+      "to": "etsy_pipeline.config.settings.Settings",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive",
+      "to": "etsy_pipeline.config.settings.get_settings",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive",
+      "to": "etsy_pipeline.utils.exceptions.ConfigurationError",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive",
+      "to": "etsy_pipeline.utils.logging.get_logger",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive",
+      "to": "google.auth",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive",
+      "to": "google.oauth2.service_account",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive",
+      "to": "googleapiclient.discovery.build",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive",
+      "to": "googleapiclient.http.MediaFileUpload",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive",
+      "to": "os",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive",
+      "to": "pathlib.Path",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive",
+      "to": "typing.Any",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService.__init__",
+      "to": "get_settings",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService._get_credentials",
+      "to": "ConfigurationError",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService._get_credentials",
+      "to": "Path",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService._get_credentials",
+      "to": "debug",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService._get_credentials",
+      "to": "default",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService._get_credentials",
+      "to": "exists",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService._get_credentials",
+      "to": "from_service_account_file",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService._get_credentials",
+      "to": "resolve",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService._get_credentials",
+      "to": "str",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService._get_service",
+      "to": "_get_credentials",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService._get_service",
+      "to": "build",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService._get_service",
+      "to": "info",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService.upload_file",
+      "to": "ConfigurationError",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService.upload_file",
+      "to": "FileNotFoundError",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService.upload_file",
+      "to": "MediaFileUpload",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService.upload_file",
+      "to": "RuntimeError",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService.upload_file",
+      "to": "_get_service",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService.upload_file",
+      "to": "create",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService.upload_file",
+      "to": "error",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService.upload_file",
+      "to": "execute",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService.upload_file",
+      "to": "exists",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService.upload_file",
+      "to": "files",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService.upload_file",
+      "to": "get",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService.upload_file",
+      "to": "info",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService.upload_file",
+      "to": "stat",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService.upload_file",
+      "to": "str",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
@@ -2165,6 +2524,18 @@
     },
     {
       "from": "etsy_pipeline.workers.prompt_worker",
+      "to": "etsy_pipeline.workers.prompt_worker_config.GEMINI_2_5_FLASH_INPUT_PRICE_PER_TOKEN",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker",
+      "to": "etsy_pipeline.workers.prompt_worker_config.GEMINI_2_5_FLASH_OUTPUT_PRICE_PER_TOKEN",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker",
       "to": "etsy_pipeline.workers.prompt_worker_config.INACTIVE_SECTION_MARKER",
       "kind": "import",
       "static_only": true
@@ -2208,6 +2579,12 @@
     {
       "from": "etsy_pipeline.workers.prompt_worker",
       "to": "google.genai.types",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker",
+      "to": "os",
       "kind": "import",
       "static_only": true
     },
@@ -2268,6 +2645,13 @@
     {
       "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._call_gemini",
       "to": "generate_content",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._call_gemini",
+      "to": "get",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
@@ -2407,7 +2791,35 @@
     },
     {
       "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._get_client",
+      "to": "Path",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._get_client",
+      "to": "exists",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._get_client",
       "to": "info",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._get_client",
+      "to": "resolve",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._get_client",
+      "to": "str",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
@@ -3454,6 +3866,12 @@
     },
     {
       "from": "scripts.run_prompts",
+      "to": "etsy_pipeline.services.GoogleDriveService",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "scripts.run_prompts",
       "to": "etsy_pipeline.utils.logging.get_logger",
       "kind": "import",
       "static_only": true
@@ -3475,6 +3893,13 @@
       "to": "sys",
       "kind": "import",
       "static_only": true
+    },
+    {
+      "from": "scripts.run_prompts.main",
+      "to": "GoogleDriveService",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
     },
     {
       "from": "scripts.run_prompts.main",
@@ -3570,6 +3995,20 @@
     {
       "from": "scripts.run_prompts.main",
       "to": "to_summary",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.run_prompts.main",
+      "to": "upload_file",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.run_prompts.main",
+      "to": "warning",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"

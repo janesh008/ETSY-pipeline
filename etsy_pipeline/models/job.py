@@ -45,6 +45,7 @@ class StageResult(BaseModel):
     completed_at: datetime | None = None
     error_message: str | None = None
     worker_id: str | None = None
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
     def mark_running(self, worker_id: str | None = None) -> None:
         """Mark this stage as running."""

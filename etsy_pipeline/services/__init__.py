@@ -1,1 +1,7 @@
-"""Services package — external service abstractions (Gemini, GCS, etc.)."""
+"""Services package initialization."""
+
+from __future__ import annotations
+
+from etsy_pipeline.services.google_drive import GoogleDriveService
+
+__all__ = ["GoogleDriveService"]

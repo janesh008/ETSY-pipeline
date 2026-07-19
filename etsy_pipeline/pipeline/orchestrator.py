@@ -17,6 +17,8 @@ Future agent compatibility:
 
 from __future__ import annotations
 
+from typing import Protocol
+
 from etsy_pipeline.config.settings import Settings, get_settings
 from etsy_pipeline.models.job import Job, JobStatus
 from etsy_pipeline.utils.exceptions import PipelineError
@@ -24,6 +26,14 @@ from etsy_pipeline.utils.logging import get_logger, setup_logging
 from etsy_pipeline.workers.prompt_worker import PromptWorker
 
 logger = get_logger(__name__)
+
+
+class Worker(Protocol):
+    """Protocol for pipeline stage workers."""
+
+    def run(self, job: Job) -> Job:
+        """Run the worker logic on a Job."""
+        ...
 
 
 class Pipeline:
@@ -101,8 +111,8 @@ class Pipeline:
         job.add_log(f"Pipeline started for theme: {job.theme}")
 
         # Define the stage execution order
-        # Each entry: (stage_name, worker_run_method)
-        stages: list[tuple[str, object]] = [
+        # Each entry: (stage_name, worker)
+        stages: list[tuple[str, Worker]] = [
             ("prompt_generation", self._prompt_worker),
             # ("image_generation", self._image_worker),
             # ("bg_removal", self._bg_removal_worker),
@@ -168,7 +178,7 @@ class Pipeline:
         Returns:
             The updated Job.
         """
-        worker_map = {
+        worker_map: dict[str, Worker] = {
             "prompt_generation": self._prompt_worker,
             # "image_generation": self._image_worker,
             # ... future workers

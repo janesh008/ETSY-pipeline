@@ -26,6 +26,7 @@ if str(_PROJECT_ROOT) not in sys.path:
 from etsy_pipeline.config.settings import get_settings  # noqa: E402
 from etsy_pipeline.models.job import Job, JobStatus  # noqa: E402
 from etsy_pipeline.pipeline.orchestrator import Pipeline  # noqa: E402
+from etsy_pipeline.services import GoogleDriveService  # noqa: E402
 from etsy_pipeline.utils.logging import get_logger, setup_logging  # noqa: E402
 
 logger = get_logger(__name__)
@@ -150,12 +151,26 @@ def main() -> None:
         # Save prompts to files
         prompts_path = save_prompts_to_file(job, output_dir)
 
+        # Upload prompts to Google Drive if configured
+        drive_file_id = None
+        if settings.google_drive_folder_id and settings.google_drive_folder_id != "your-google-drive-folder-id":
+            try:
+                drive_service = GoogleDriveService(settings=settings)
+                # Upload the parsed prompts file to Google Drive
+                drive_file_id = drive_service.upload_file(prompts_path)
+            except Exception as e:
+                logger.warning(f"Failed to upload prompt file to Google Drive: {e}")
+        else:
+            logger.info("Google Drive Folder ID not configured. Skipping Drive upload.")
+
         # Print summary
         print("\n" + "=" * 60)
         print("✅ PROMPT GENERATION COMPLETE")
         print("=" * 60)
         print(job.to_summary())
-        print(f"\nPrompts saved to: {prompts_path}")
+        print(f"\nPrompts saved locally to: {prompts_path}")
+        if drive_file_id:
+            print(f"Uploaded to Google Drive (ID: {drive_file_id})")
         print(f"Output directory: {output_dir}")
 
         # Print prompt distribution

@@ -39,25 +39,22 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    # --- Google AI / Vertex AI ---
-    use_vertex_ai: bool = Field(
-        default=False,
-        description=(
-            "When True, use Vertex AI with Application Default Credentials. "
-            "When False, use Google AI API key. Set to True for GCP deployment."
-        ),
-    )
-    google_api_key: str = Field(
-        default="",
-        description="Google AI API key for Gemini (only used when USE_VERTEX_AI=False)",
-    )
+    # --- GCP / Vertex AI & Google Drive Settings ---
     gcp_project_id: str = Field(
         default="",
-        description="GCP project ID (required when USE_VERTEX_AI=True)",
+        description="GCP project ID for Vertex AI client",
     )
     gcp_location: str = Field(
         default="us-central1",
-        description="GCP region for Vertex AI (e.g., us-central1, europe-west1)",
+        description="GCP region for Vertex AI (e.g. us-central1)",
+    )
+    gcp_service_account_json: str | None = Field(
+        default=None,
+        description="Optional local path to a GCP Service Account credentials JSON file (falls back to ADC if None)",
+    )
+    google_drive_folder_id: str = Field(
+        default="",
+        description="Target Google Drive Folder ID for uploading generated assets",
     )
     gcs_bucket: str = Field(
         default="",

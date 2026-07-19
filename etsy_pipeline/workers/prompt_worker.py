@@ -16,6 +16,7 @@ Future agent compatibility:
 
 from __future__ import annotations
 
+import os
 import re
 from pathlib import Path
 
@@ -34,6 +35,8 @@ from etsy_pipeline.utils.exceptions import (
 from etsy_pipeline.utils.logging import get_logger
 from etsy_pipeline.workers.prompt_worker_config import (
     COUNT_CLAUSE_TEMPLATE,
+    GEMINI_2_5_FLASH_INPUT_PRICE_PER_TOKEN,
+    GEMINI_2_5_FLASH_OUTPUT_PRICE_PER_TOKEN,
     INACTIVE_SECTION_MARKER,
     LOCKED_SECTIONS,
     MIN_PROMPTS_PER_SECTION,
@@ -228,57 +231,51 @@ class PromptWorker:
         """
         Get or create the Gemini client.
 
-        Supports two modes:
-        - Vertex AI (USE_VERTEX_AI=True): Uses Application Default Credentials
-          via `gcloud auth application-default login`. Requires GCP_PROJECT_ID
-          and GCP_LOCATION.
-        - API Key (USE_VERTEX_AI=False): Uses GOOGLE_API_KEY directly.
+        Connects exclusively to Vertex AI (using GCP Application Default Credentials
+        or a locally configured Service Account JSON file).
 
         Returns:
             Configured genai.Client instance.
 
         Raises:
-            ConfigurationError: If required credentials are not configured.
+            ConfigurationError: If required GCP configuration is missing.
         """
         if self._client is not None:
             return self._client
 
-        if self._settings.use_vertex_ai:
-            # Vertex AI mode — uses Application Default Credentials
-            project = self._settings.gcp_project_id
-            location = self._settings.gcp_location
+        project = self._settings.gcp_project_id
+        location = self._settings.gcp_location
 
-            if not project:
-                raise ConfigurationError(
-                    "GCP_PROJECT_ID is required when USE_VERTEX_AI=True. "
-                    "Add it to your .env file."
-                )
-
-            logger.info(
-                f"Initializing Vertex AI client (project={project}, location={location})"
+        if not project:
+            raise ConfigurationError(
+                "GCP_PROJECT_ID is not configured. Add it to your .env file."
             )
-            self._client = genai.Client(
-                vertexai=True,
-                project=project,
-                location=location,
-            )
-        else:
-            # API Key mode — direct Google AI Studio access
-            api_key = self._settings.google_api_key
-            if not api_key:
+
+        # If a service account JSON path is specified, configure it as the Application Credentials
+        if self._settings.gcp_service_account_json:
+            json_path = Path(self._settings.gcp_service_account_json)
+            if not json_path.exists():
                 raise ConfigurationError(
-                    "GOOGLE_API_KEY is not set and USE_VERTEX_AI is False. "
-                    "Either set GOOGLE_API_KEY or enable USE_VERTEX_AI=True in your .env file."
+                    f"GCP Service Account JSON not found at: {json_path}. Check your .env file."
                 )
+            os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = str(json_path.resolve())
+            logger.info(f"Using Service Account JSON credentials: {json_path}")
 
-            logger.info("Initializing Google AI client (API key mode)")
-            self._client = genai.Client(api_key=api_key)
-
+        logger.info(
+            f"Initializing Vertex AI client (project={project}, location={location})"
+        )
+        self._client = genai.Client(
+            vertexai=True,
+            project=project,
+            location=location,
+        )
         return self._client
 
     def _call_gemini(self, system_instruction: str, user_message: str, job: Job) -> str:
         """
         Call Gemini 2.5 Flash with the SKILL.md system instruction.
+
+        Tracks input/output token usage and estimates Vertex AI billing cost.
 
         Args:
             system_instruction: The SKILL.md content as system instruction.
@@ -316,10 +313,35 @@ class PromptWorker:
                     job_id=job.job_id,
                 )
 
+            # --- Token Consumption & Cost Tracking ---
+            input_tokens = 0
+            output_tokens = 0
+            estimated_cost = 0.0
+
+            if response.usage_metadata:
+                input_tokens = response.usage_metadata.prompt_token_count or 0
+                output_tokens = response.usage_metadata.candidates_token_count or 0
+
+                # Calculate estimated cost based on rates in prompt_worker_config
+                estimated_cost = (
+                    (input_tokens * GEMINI_2_5_FLASH_INPUT_PRICE_PER_TOKEN) +
+                    (output_tokens * GEMINI_2_5_FLASH_OUTPUT_PRICE_PER_TOKEN)
+                )
+
             logger.info(
-                f"Gemini response received: {len(response.text)} chars",
+                f"Gemini response received: {len(response.text)} chars. "
+                f"Tokens consumed: {input_tokens} input, {output_tokens} output. "
+                f"Estimated billing cost: ${estimated_cost:.6f}",
                 extra={"job_id": job.job_id},
             )
+
+            # Store the billing/token metadata directly into the job's stage result metadata
+            stage_result = job.stages.get("prompt_generation")
+            if stage_result:
+                stage_result.metadata["input_tokens"] = input_tokens
+                stage_result.metadata["output_tokens"] = output_tokens
+                stage_result.metadata["estimated_cost_usd"] = estimated_cost
+
             return response.text
 
         except PromptGenerationError:

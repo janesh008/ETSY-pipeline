@@ -139,3 +139,15 @@ USER_MESSAGE_TEMPLATE: str = (
 STYLE_CLAUSE_TEMPLATE: str = " Use {style_hint} illustration style."
 COUNT_CLAUSE_TEMPLATE: str = " Generate approximately {prompt_count} prompts total."
 SECTIONS_CLAUSE_TEMPLATE: str = " Only generate these sections: {sections}."
+
+# =============================================================
+# VERTEX AI GEMINI PRICING RATES (Gemini 2.5 Flash standard rates)
+# =============================================================
+# Price in USD per 1 million tokens
+GEMINI_2_5_FLASH_INPUT_RATE_PER_M: float = 0.30
+GEMINI_2_5_FLASH_OUTPUT_RATE_PER_M: float = 2.50
+
+# Converted to price in USD per token
+GEMINI_2_5_FLASH_INPUT_PRICE_PER_TOKEN: float = GEMINI_2_5_FLASH_INPUT_RATE_PER_M / 1_000_000.0
+GEMINI_2_5_FLASH_OUTPUT_PRICE_PER_TOKEN: float = GEMINI_2_5_FLASH_OUTPUT_RATE_PER_M / 1_000_000.0
+

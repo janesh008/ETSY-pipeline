@@ -50,3 +50,11 @@ output/
 /ETSY_main_colab/
 /etsy mockup creator/
 
+# Credentials / Keys — NEVER commit these
+cred/
+creds/
+*.json
+!pyproject.toml
+!.repo-graph/graph.json
+!.pre-commit-config.yaml
+
