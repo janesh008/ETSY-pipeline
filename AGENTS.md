@@ -10,10 +10,10 @@ Before writing or searching code, orient yourself with these two cheap reads:
 
 1. **[`.repo-graph/graph.json`](.repo-graph/graph.json)** — machine-readable structural map (123 nodes, 386 edges as of last generation). Keys to look for: `nodes[].id`, `nodes[].docstring_summary`, `edges[].kind` (`"import"` or `"call"`). This tells you what calls what without opening any source file.
 
-2. **CONTEXT.md tree** — human-written onboarding notes at every folder level. Walk it top-down:
-   - [`CONTEXT.md`](CONTEXT.md) → [`etsy_pipeline/CONTEXT.md`](etsy_pipeline/CONTEXT.md)
-   - → [`config/`](etsy_pipeline/config/CONTEXT.md) | [`models/`](etsy_pipeline/models/CONTEXT.md) | [`pipeline/`](etsy_pipeline/pipeline/CONTEXT.md) | [`utils/`](etsy_pipeline/utils/CONTEXT.md) | [`workers/`](etsy_pipeline/workers/CONTEXT.md)
-   - → [`scripts/CONTEXT.md`](scripts/CONTEXT.md) | [`tests/CONTEXT.md`](tests/CONTEXT.md)
+2. **Hierarchical Living Documentation (`doc/` subfolders)** — Walk the project top-down using non-technical and technical guides:
+   - [Root Project Map (`doc/MASTER_MAP.md`)](file:///d:/Janesh/ETSY/ETSY-pipeline/doc/MASTER_MAP.md) — Walkthrough of the entire pipeline with clickable links to all files.
+   - [Technical Architecture (`doc/ARCHITECTURE.md`)](file:///d:/Janesh/ETSY/ETSY-pipeline/doc/ARCHITECTURE.md) — Technical layouts and GCP designs.
+   - Every folder has a `doc/` subdirectory containing `HIGH_LEVEL.md`, `SKILL.md`, and `DETAILED.md` describing that directory's scope, coding rules, and detailed behaviors. Refer to these to solve features or bugs.
 
 Only open full source files for the specific nodes you actually need to change.
 
