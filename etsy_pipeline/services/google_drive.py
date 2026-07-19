@@ -7,7 +7,6 @@ or Application Default Credentials (ADC).
 
 from __future__ import annotations
 
-import os
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -57,15 +56,13 @@ class GoogleDriveService:
             Configured Google Credentials object.
         """
         # If a service account JSON is configured, authenticate using that file
-        if self._settings.gcp_service_account_json:
-            json_path = Path(self._settings.gcp_service_account_json)
+        if self._settings.google_drive_service_account_json:
+            json_path = Path(self._settings.google_drive_service_account_json)
             if not json_path.exists():
                 raise ConfigurationError(
-                    f"GCP Service Account JSON not found at: {json_path}. Check your .env file."
+                    f"Google Drive Service Account JSON not found at: {json_path}. Check your .env file."
                 )
 
-            # Setup GOOGLE_APPLICATION_CREDENTIALS for nested API loaders
-            os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = str(json_path.resolve())
             logger.debug(f"Loading Drive credentials from Service Account file: {json_path}")
             return service_account.Credentials.from_service_account_file(
                 str(json_path),

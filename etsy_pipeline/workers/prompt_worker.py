@@ -16,7 +16,6 @@ Future agent compatibility:
 
 from __future__ import annotations
 
-import os
 import re
 from pathlib import Path
 
@@ -250,16 +249,6 @@ class PromptWorker:
             raise ConfigurationError(
                 "GCP_PROJECT_ID is not configured. Add it to your .env file."
             )
-
-        # If a service account JSON path is specified, configure it as the Application Credentials
-        if self._settings.gcp_service_account_json:
-            json_path = Path(self._settings.gcp_service_account_json)
-            if not json_path.exists():
-                raise ConfigurationError(
-                    f"GCP Service Account JSON not found at: {json_path}. Check your .env file."
-                )
-            os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = str(json_path.resolve())
-            logger.info(f"Using Service Account JSON credentials: {json_path}")
 
         logger.info(
             f"Initializing Vertex AI client (project={project}, location={location})"

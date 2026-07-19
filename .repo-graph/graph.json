@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-07-19T19:33:02.502344+00:00",
+  "generated_at": "2026-07-19T19:46:50.199230+00:00",
   "generator": "scripts/build_graph.py",
   "static_only": true,
   "scan_roots": [
@@ -9,7 +9,7 @@
     "tests"
   ],
   "node_count": 132,
-  "edge_count": 456,
+  "edge_count": 449,
   "nodes": [
     {
       "id": "etsy_pipeline",
@@ -1883,12 +1883,6 @@
     },
     {
       "from": "etsy_pipeline.services.google_drive",
-      "to": "os",
-      "kind": "import",
-      "static_only": true
-    },
-    {
-      "from": "etsy_pipeline.services.google_drive",
       "to": "pathlib.Path",
       "kind": "import",
       "static_only": true
@@ -1944,13 +1938,6 @@
     {
       "from": "etsy_pipeline.services.google_drive.GoogleDriveService._get_credentials",
       "to": "from_service_account_file",
-      "kind": "call",
-      "static_only": true,
-      "note": "name-only; may not resolve to correct module without runtime context"
-    },
-    {
-      "from": "etsy_pipeline.services.google_drive.GoogleDriveService._get_credentials",
-      "to": "resolve",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
@@ -2692,12 +2679,6 @@
     },
     {
       "from": "etsy_pipeline.workers.prompt_worker",
-      "to": "os",
-      "kind": "import",
-      "static_only": true
-    },
-    {
-      "from": "etsy_pipeline.workers.prompt_worker",
       "to": "pathlib.Path",
       "kind": "import",
       "static_only": true
@@ -2899,35 +2880,7 @@
     },
     {
       "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._get_client",
-      "to": "Path",
-      "kind": "call",
-      "static_only": true,
-      "note": "name-only; may not resolve to correct module without runtime context"
-    },
-    {
-      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._get_client",
-      "to": "exists",
-      "kind": "call",
-      "static_only": true,
-      "note": "name-only; may not resolve to correct module without runtime context"
-    },
-    {
-      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._get_client",
       "to": "info",
-      "kind": "call",
-      "static_only": true,
-      "note": "name-only; may not resolve to correct module without runtime context"
-    },
-    {
-      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._get_client",
-      "to": "resolve",
-      "kind": "call",
-      "static_only": true,
-      "note": "name-only; may not resolve to correct module without runtime context"
-    },
-    {
-      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._get_client",
-      "to": "str",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"

@@ -48,9 +48,9 @@ class Settings(BaseSettings):
         default="us-central1",
         description="GCP region for Vertex AI (e.g. us-central1)",
     )
-    gcp_service_account_json: str | None = Field(
+    google_drive_service_account_json: str | None = Field(
         default=None,
-        description="Optional local path to a GCP Service Account credentials JSON file (falls back to ADC if None)",
+        description="Optional local path to the Google Drive Service Account credentials JSON file",
     )
     google_drive_folder_id: str = Field(
         default="",
