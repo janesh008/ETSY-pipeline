@@ -26,7 +26,7 @@ if str(_PROJECT_ROOT) not in sys.path:
 from etsy_pipeline.config.settings import get_settings  # noqa: E402
 from etsy_pipeline.models.job import Job, JobStatus  # noqa: E402
 from etsy_pipeline.pipeline.orchestrator import Pipeline  # noqa: E402
-from etsy_pipeline.services import GCSStore  # noqa: E402
+from etsy_pipeline.services import GCSStore, MongoJobStore  # noqa: E402
 from etsy_pipeline.utils.logging import get_logger, setup_logging  # noqa: E402
 
 logger = get_logger(__name__)
@@ -163,6 +163,15 @@ def main() -> None:
                 logger.warning(f"Failed to upload prompt file to GCS: {e}")
         else:
             logger.info("GCS_BUCKET not configured. Skipping GCS upload.")
+
+        # Save Job to MongoDB so the Image Worker can pick it up
+        try:
+            mongo_store = MongoJobStore(settings=settings)
+            mongo_store.upsert_job(job)
+            logger.info(f"Job {job.job_id} successfully saved to MongoDB (PENDING image_generation)")
+        except Exception as e:
+            logger.error(f"Failed to save job to MongoDB: {e}")
+            logger.error("Is MONGO_URI set correctly in your .env?")
 
         # Print summary
         print("\n" + "=" * 60)
