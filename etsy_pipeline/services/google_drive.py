@@ -284,3 +284,100 @@ class GoogleDriveService:
                 f"Google Drive upload failed. Make sure the folder '{target_folder}' "
                 f"is shared with your Service Account email as Editor. Error: {e}"
             ) from e
+
+    def upload_folder(
+        self,
+        local_dir: Path | str,
+        folder_id: str | None = None,
+        remote_subfolder_name: str | None = None,
+    ) -> list[str]:
+        """
+        Upload all files in a local directory to Google Drive.
+
+        Optionally creates a subfolder (e.g. theme name) inside the target Drive folder
+        to group the uploaded files.
+
+        Args:
+            local_dir: Path to the local directory containing files to upload.
+            folder_id: Optional ID of the parent folder on Drive (defaults to settings).
+            remote_subfolder_name: Optional name for a subfolder to create on Drive to hold the files.
+
+        Returns:
+            List of Drive file IDs for the uploaded files.
+
+        Raises:
+            NotADirectoryError: If local_dir is not a valid directory.
+        """
+        local_path = Path(local_dir)
+        if not local_path.is_dir():
+            raise NotADirectoryError(f"Local path is not a directory: {local_path}")
+
+        main_folder = folder_id or self._settings.google_drive_folder_id
+        if not main_folder:
+            raise ConfigurationError(
+                "No Google Drive folder ID specified. Add GOOGLE_DRIVE_FOLDER_ID to your .env file."
+            )
+
+        service = self._get_service()
+
+        # Determine target folder (create subfolder if requested)
+        target_folder_id = main_folder
+        if remote_subfolder_name:
+            # Note: We use the existing parent folder (or date folder) logic
+            # For this batch delivery, we create a specific subfolder.
+            date_folder_id = self._get_or_create_date_folder(service, main_folder)
+
+            logger.info(
+                f"Creating/getting theme subfolder '{remote_subfolder_name}' in Drive"
+            )
+            query = (
+                f"name = '{remote_subfolder_name}' and "
+                f"'{date_folder_id}' in parents and "
+                f"mimeType = 'application/vnd.google-apps.folder' and "
+                f"trashed = false"
+            )
+            try:
+                results = (
+                    service.files().list(q=query, fields="files(id, name)").execute()
+                )
+                files = results.get("files", [])
+                if files:
+                    target_folder_id = files[0]["id"]
+                else:
+                    file_metadata = {
+                        "name": remote_subfolder_name,
+                        "mimeType": "application/vnd.google-apps.folder",
+                        "parents": [date_folder_id],
+                    }
+                    folder = (
+                        service.files()
+                        .create(body=file_metadata, fields="id")
+                        .execute()
+                    )
+                    target_folder_id = folder.get("id")
+            except Exception as e:
+                logger.error(
+                    f"Failed to create subfolder '{remote_subfolder_name}': {e}. Using date folder."
+                )
+                target_folder_id = date_folder_id
+        else:
+            target_folder_id = self._get_or_create_date_folder(service, main_folder)
+
+        uploaded_ids = []
+        # Upload all files in the directory
+        for file_path in sorted(local_path.iterdir()):
+            if not file_path.is_file():
+                continue
+
+            try:
+                file_id = self.upload_file(
+                    local_path=file_path, folder_id=target_folder_id
+                )
+                uploaded_ids.append(file_id)
+            except Exception as e:
+                logger.error(f"Failed to upload {file_path.name} in batch: {e}")
+
+        logger.info(
+            f"Batch uploaded {len(uploaded_ids)} files from {local_path.name} to Drive."
+        )
+        return uploaded_ids

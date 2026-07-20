@@ -26,7 +26,7 @@ if str(_PROJECT_ROOT) not in sys.path:
 from etsy_pipeline.config.settings import get_settings  # noqa: E402
 from etsy_pipeline.models.job import Job, JobStatus  # noqa: E402
 from etsy_pipeline.pipeline.orchestrator import Pipeline  # noqa: E402
-from etsy_pipeline.services import GoogleDriveService  # noqa: E402
+from etsy_pipeline.services import GCSStore  # noqa: E402
 from etsy_pipeline.utils.logging import get_logger, setup_logging  # noqa: E402
 
 logger = get_logger(__name__)
@@ -151,20 +151,18 @@ def main() -> None:
         # Save prompts to files
         prompts_path = save_prompts_to_file(job, output_dir)
 
-        # Upload prompts to Google Drive if configured
-        drive_file_id = None
-        if (
-            settings.google_drive_folder_id
-            and settings.google_drive_folder_id != "your-google-drive-folder-id"
-        ):
+        # Upload prompts to GCS if configured
+        gcs_file_uri = None
+        if settings.gcs_bucket and settings.gcs_bucket != "your-gcs-bucket-name":
             try:
-                drive_service = GoogleDriveService(settings=settings)
-                # Upload the parsed prompts file to Google Drive
-                drive_file_id = drive_service.upload_file(prompts_path)
+                gcs_store = GCSStore(settings=settings)
+                # Upload the parsed prompts file to GCS
+                gcs_path = GCSStore.make_prompt_path(job.date_folder, job.theme_slug)
+                gcs_file_uri = gcs_store.upload_file(prompts_path, gcs_path)
             except Exception as e:
-                logger.warning(f"Failed to upload prompt file to Google Drive: {e}")
+                logger.warning(f"Failed to upload prompt file to GCS: {e}")
         else:
-            logger.info("Google Drive Folder ID not configured. Skipping Drive upload.")
+            logger.info("GCS_BUCKET not configured. Skipping GCS upload.")
 
         # Print summary
         print("\n" + "=" * 60)
@@ -172,8 +170,8 @@ def main() -> None:
         print("=" * 60)
         print(job.to_summary())
         print(f"\nPrompts saved locally to: {prompts_path}")
-        if drive_file_id:
-            print(f"Uploaded to Google Drive (ID: {drive_file_id})")
+        if gcs_file_uri:
+            print(f"Uploaded to GCS: {gcs_file_uri}")
         print(f"Output directory: {output_dir}")
 
         # Print prompt distribution
