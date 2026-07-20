@@ -38,8 +38,8 @@ from etsy_pipeline.workers.image_worker_config import (
 if TYPE_CHECKING:
     from etsy_pipeline.config.settings import Settings
     from etsy_pipeline.models.job import Job
-    from etsy_pipeline.services.firestore_store import FirestoreJobStore
     from etsy_pipeline.services.gcs_store import GCSStore
+    from etsy_pipeline.services.mongo_store import MongoJobStore
 
 logger = get_logger(__name__)
 
@@ -66,18 +66,18 @@ class ImageWorker:
     def __init__(
         self,
         settings: Settings,
-        firestore_store: FirestoreJobStore | None = None,
+        mongo_store: MongoJobStore | None = None,
         gcs_store: GCSStore | None = None,
     ) -> None:
         """Initialise the ImageWorker.
 
         Args:
             settings: Loaded pipeline settings.
-            firestore_store: Optional pre-built FirestoreJobStore (injected for testing).
+            mongo_store: Optional pre-built MongoJobStore (injected for testing).
             gcs_store: Optional pre-built GCSStore (injected for testing).
         """
         self._settings = settings
-        self._firestore = firestore_store
+        self._mongo = mongo_store
         self._gcs = gcs_store
         self._workflow_template: dict[str, Any] | None = None
 
@@ -381,21 +381,21 @@ class ImageWorker:
         cost_usd: float,
         gpu_hours: float = 0.0,
     ) -> None:
-        """Push live progress to Firestore (no-op if Firestore is not configured)."""
-        if self._firestore is None:
-            if self._settings.gcp_project_id:
-                from etsy_pipeline.services.firestore_store import FirestoreJobStore
+        """Push live progress to MongoDB (no-op if MongoDB is not configured)."""
+        if self._mongo is None:
+            if self._settings.mongo_uri:
+                from etsy_pipeline.services.mongo_store import MongoJobStore
 
                 try:
-                    self._firestore = FirestoreJobStore(settings=self._settings)
+                    self._mongo = MongoJobStore(settings=self._settings)
                 except Exception as exc:
-                    logger.warning(f"[image_worker] Firestore init failed: {exc}")
+                    logger.warning(f"[image_worker] MongoDB init failed: {exc}")
                     return
             else:
                 return
 
         try:
-            self._firestore.update_stage_progress(
+            self._mongo.update_stage_progress(
                 job.job_id,
                 self.STAGE_NAME,
                 images_done=images_done,
@@ -404,4 +404,4 @@ class ImageWorker:
                 gpu_hours=gpu_hours,
             )
         except Exception as exc:
-            logger.warning(f"[image_worker] Firestore progress push failed: {exc}")
+            logger.warning(f"[image_worker] MongoDB progress push failed: {exc}")

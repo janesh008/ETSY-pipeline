@@ -54,6 +54,13 @@ Every stage transitions the corresponding worker's `StageResult` status in the `
 3.  `StageStatus.COMPLETED`: Worker completed successfully.
 4.  `StageStatus.FAILED`: Worker raised an exception; execution halted.
 
+## 💾 Distributed State Management (MongoDB)
+
+To support multiple VMs processing the same pipeline (e.g., a Prompt Generation VM and a GPU VM for image generation), the `Job` state is persisted to a central **MongoDB** database via the `MongoJobStore`. 
+
+- **Atomic Claims**: GPU workers use MongoDB's `find_one_and_update` to safely lock `PENDING` stages across distributed instances.
+- **Live Progress**: Long-running workers (like `image_worker`) push live progress updates (e.g. `images_done` and `cost_usd`) back to MongoDB incrementally.
+
 ---
 
 ## ☁️ Google Cloud Platform (GCP) Readiness

@@ -13,13 +13,23 @@ DISK_SIZE="120GB"          # Increased to handle OS + deep learning drivers + 25
 
 echo "🚀 Creating High-Performance GPU VM: $VM_NAME in $ZONE..."
 
-# Using Google's modern CUDA 12.1 Deep Learning Image optimized for the L4 architecture
+echo "🔍 Finding the latest Deep Learning image for Ubuntu 22.04..."
+IMAGE_NAME=$(gcloud compute images list \
+    --project=deeplearning-platform-release \
+    --filter="family ~ pytorch-.*-ubuntu-2204" \
+    --format="value(name)" \
+    --sort-by="~creationTimestamp" \
+    --limit=1)
+
+echo "✅ Using Image: $IMAGE_NAME"
+
+# Using Google's modern CUDA Deep Learning Image optimized for the L4 architecture
 gcloud compute instances create "$VM_NAME" \
     --zone="$ZONE" \
     --machine-type="$MACHINE_TYPE" \
     --accelerator="type=$GPU_TYPE,count=1" \
     --maintenance-policy="TERMINATE" \
-    --image-family="common-cu121-ubuntu-2204" \
+    --image="$IMAGE_NAME" \
     --image-project="deeplearning-platform-release" \
     --boot-disk-size="$DISK_SIZE" \
     --boot-disk-type="pd-ssd" \

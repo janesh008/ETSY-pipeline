@@ -69,6 +69,16 @@ class Settings(BaseSettings):
         description="Gemini model name for prompt/metadata generation",
     )
 
+    # --- MongoDB Settings ---
+    mongo_uri: str = Field(
+        default="mongodb://localhost:27017/",
+        description="MongoDB connection URI (e.g. Atlas string or localhost)",
+    )
+    mongo_db_name: str = Field(
+        default="etsy_pipeline",
+        description="Name of the MongoDB database to use for state management",
+    )
+
     # --- Paths ---
     output_root: str = Field(
         default=str(_PROJECT_ROOT / "output"),

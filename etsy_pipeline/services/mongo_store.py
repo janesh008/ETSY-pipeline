@@ -1,10 +1,9 @@
-"""Firestore Job Store — atomic job state persistence backed by Cloud Firestore.
+"""MongoDB Job Store — atomic job state persistence backed by MongoDB.
 
-Replaces the flat-file state.json + lock-file approach from the legacy
-queue_manager.py with Firestore atomic transactions. Safe across multiple
-VMs (Prompt VM, GPU VM, BG-Removal VM) running concurrently.
+Replaces the Firestore store with a MongoDB-compatible approach,
+using `find_one_and_update` for atomic claim operations across VMs.
 
-Responsibility: Read, write, and atomically claim pipeline job state in Firestore.
+Responsibility: Read, write, and atomically claim pipeline job state in MongoDB.
 """
 
 from __future__ import annotations
@@ -21,7 +20,7 @@ if TYPE_CHECKING:
 
 logger = get_logger(__name__)
 
-# Firestore collection name
+# MongoDB collection name
 _JOBS_COLLECTION = "jobs"
 
 
@@ -30,45 +29,53 @@ def _now_iso() -> str:
     return datetime.now(UTC).isoformat()
 
 
-class FirestoreJobStore:
-    """Atomic job state store backed by Cloud Firestore.
+class MongoJobStore:
+    """Atomic job state store backed by MongoDB.
 
-    Wraps the Google Cloud Firestore client to provide clean read/write/claim
-    operations for pipeline Job documents. All state mutations use transactions
-    to prevent race conditions across multiple worker VMs.
+    Wraps PyMongo to provide clean read/write/claim operations for pipeline Job documents.
+    State mutations use atomic operations (`$set`, `find_one_and_update`) to prevent
+    race conditions across multiple worker VMs.
 
     Usage::
 
-        store = FirestoreJobStore(settings=get_settings())
+        store = MongoJobStore(settings=get_settings())
         store.upsert_job(job)
         store.update_stage_progress(job_id, "image_generation", images_done=45, cost_usd=1.47)
         pending_jobs = store.list_jobs_by_stage_status("image_generation", "PENDING")
     """
 
     def __init__(self, settings: Settings) -> None:
-        """Initialise the Firestore client.
-
-        Uses Application Default Credentials (ADC) — on the GCP VM this is
-        the attached Service Account; locally it falls back to
-        ``GOOGLE_APPLICATION_CREDENTIALS`` or ``gcloud auth application-default login``.
+        """Initialise the MongoDB client.
 
         Args:
-            settings: Loaded pipeline settings (used for GCP project ID).
+            settings: Loaded pipeline settings (used for mongo_uri and db name).
         """
         try:
-            from google.cloud import firestore  # type: ignore[import-untyped]
+            from pymongo import MongoClient  # type: ignore[import-untyped]
         except ImportError as exc:
             raise ImportError(
-                "google-cloud-firestore is not installed. "
-                "Run: pip install google-cloud-firestore"
+                "pymongo is not installed. Run: pip install pymongo"
             ) from exc
 
         self._settings = settings
-        self._db = firestore.Client(project=settings.gcp_project_id or None)
+        self._client: MongoClient[Any] = MongoClient(settings.mongo_uri)
+        self._db = self._client[settings.mongo_db_name]
+        self._collection = self._db[_JOBS_COLLECTION]
+
+        # Create an index on job_id for faster lookups
+        self._collection.create_index("job_id", unique=True)
+
         self._worker_id = f"{socket.gethostname()}-{id(self)}"
+
+        # Redact password for logging
+        safe_uri = (
+            settings.mongo_uri.split("@")[-1]
+            if "@" in settings.mongo_uri
+            else settings.mongo_uri
+        )
         logger.info(
-            f"[firestore] Firestore client initialised "
-            f"(project={settings.gcp_project_id}, worker_id={self._worker_id})"
+            f"[mongo] MongoDB client initialised "
+            f"(uri=...{safe_uri[:15]}..., db={settings.mongo_db_name}, worker_id={self._worker_id})"
         )
 
     # ------------------------------------------------------------------
@@ -76,18 +83,21 @@ class FirestoreJobStore:
     # ------------------------------------------------------------------
 
     def upsert_job(self, job: Job) -> None:
-        """Create or fully overwrite a job document in Firestore.
+        """Create or fully overwrite a job document in MongoDB.
 
         Serialises the entire Job model (including all stage results) into a
-        Firestore document. Idempotent — safe to call multiple times.
+        MongoDB document. Idempotent — safe to call multiple times.
 
         Args:
             job: The Job instance to persist.
         """
-        doc_ref = self._db.collection(_JOBS_COLLECTION).document(job.job_id)
         data = self._job_to_dict(job)
-        doc_ref.set(data)
-        logger.info(f"[firestore] Upserted job {job.job_id} ({job.theme})")
+        self._collection.update_one(
+            {"job_id": job.job_id},
+            {"$set": data},
+            upsert=True,
+        )
+        logger.info(f"[mongo] Upserted job {job.job_id} ({job.theme})")
 
     def update_stage_status(
         self,
@@ -98,7 +108,7 @@ class FirestoreJobStore:
         error_message: str | None = None,
         worker_id: str | None = None,
     ) -> None:
-        """Update the status of a single stage field in Firestore.
+        """Update the status of a single stage field in MongoDB.
 
         Args:
             job_id: The unique job identifier.
@@ -107,7 +117,6 @@ class FirestoreJobStore:
             error_message: Optional error string (set when status is ``"FAILED"``).
             worker_id: Identifier of the claiming VM / process.
         """
-        doc_ref = self._db.collection(_JOBS_COLLECTION).document(job_id)
         updates: dict[str, Any] = {
             f"stages.{stage_name}.status": status,
             f"stages.{stage_name}.updated_at": _now_iso(),
@@ -120,8 +129,9 @@ class FirestoreJobStore:
             updates[f"stages.{stage_name}.completed_at"] = _now_iso()
         if error_message:
             updates[f"stages.{stage_name}.error_message"] = error_message
-        doc_ref.update(updates)
-        logger.debug(f"[firestore] {job_id}/{stage_name} → {status}")
+
+        self._collection.update_one({"job_id": job_id}, {"$set": updates})
+        logger.debug(f"[mongo] {job_id}/{stage_name} → {status}")
 
     def update_stage_progress(
         self,
@@ -137,7 +147,7 @@ class FirestoreJobStore:
         """Incrementally update progress and cost fields for a stage.
 
         Called frequently during image generation to push live progress
-        to Firestore (so the UI can show real-time updates without polling).
+        to MongoDB.
 
         Args:
             job_id: The unique job identifier.
@@ -148,7 +158,6 @@ class FirestoreJobStore:
             gpu_hours: GPU compute hours consumed so far.
             extra: Any additional key/value pairs to merge under ``stages.<stage_name>``.
         """
-        doc_ref = self._db.collection(_JOBS_COLLECTION).document(job_id)
         updates: dict[str, Any] = {"updated_at": _now_iso()}
         if images_done is not None:
             updates[f"stages.{stage_name}.images_done"] = images_done
@@ -161,17 +170,17 @@ class FirestoreJobStore:
         if extra:
             for k, v in extra.items():
                 updates[f"stages.{stage_name}.{k}"] = v
-        doc_ref.update(updates)
+
+        self._collection.update_one({"job_id": job_id}, {"$set": updates})
 
     # ------------------------------------------------------------------
-    # Atomic claim (replaces attempt_claim in queue_manager.py)
+    # Atomic claim
     # ------------------------------------------------------------------
 
     def try_claim_stage(self, job_id: str, stage_name: str) -> bool:
-        """Atomically claim a stage for this worker using a Firestore transaction.
+        """Atomically claim a stage for this worker using MongoDB find_one_and_update.
 
-        Replaces the lock-file ``attempt_claim()`` pattern from the legacy
-        ``queue_manager.py``. Safe across multiple concurrent VMs.
+        Safe across multiple concurrent VMs.
 
         A claim succeeds only when:
         - The stage is currently ``"PENDING"``.
@@ -184,49 +193,41 @@ class FirestoreJobStore:
         Returns:
             True if this worker successfully claimed the stage, False otherwise.
         """
-        from google.cloud import firestore  # type: ignore[import-untyped]
+        from pymongo import ReturnDocument  # type: ignore[import-untyped]
 
-        doc_ref = self._db.collection(_JOBS_COLLECTION).document(job_id)
+        # Build the atomic match query
+        query: dict[str, Any] = {
+            "job_id": job_id,
+            f"stages.{stage_name}.status": "PENDING",
+        }
 
-        @firestore.transactional
-        def _claim(transaction: Any) -> bool:
-            snapshot = doc_ref.get(transaction=transaction)
-            if not snapshot.exists:
-                return False
-            data = snapshot.to_dict() or {}
-            stages = data.get("stages", {})
-            stage = stages.get(stage_name, {})
+        # Check prerequisite in the atomic query if it exists
+        prerequisite = _STAGE_PREREQUISITES.get(stage_name)
+        if prerequisite:
+            query[f"stages.{prerequisite}.status"] = "COMPLETED"
 
-            # Must be PENDING
-            if stage.get("status") != "PENDING":
-                return False
+        # The updates to apply if the document matches the query
+        updates = {
+            "$set": {
+                f"stages.{stage_name}.status": "RUNNING",
+                f"stages.{stage_name}.started_at": _now_iso(),
+                f"stages.{stage_name}.worker_id": self._worker_id,
+                "updated_at": _now_iso(),
+            }
+        }
 
-            # Check prerequisite
-            prerequisite = _STAGE_PREREQUISITES.get(stage_name)
-            if prerequisite:
-                prereq_status = stages.get(prerequisite, {}).get("status")
-                if prereq_status != "COMPLETED":
-                    return False
+        # Atomically find and update. If it returns a document, we claimed it.
+        result = self._collection.find_one_and_update(
+            query, updates, return_document=ReturnDocument.AFTER
+        )
 
-            # Claim it
-            transaction.update(
-                doc_ref,
-                {
-                    f"stages.{stage_name}.status": "RUNNING",
-                    f"stages.{stage_name}.started_at": _now_iso(),
-                    f"stages.{stage_name}.worker_id": self._worker_id,
-                    "updated_at": _now_iso(),
-                },
+        if result:
+            logger.info(
+                f"[mongo] Claimed {job_id}/{stage_name} for worker {self._worker_id}"
             )
             return True
 
-        transaction = self._db.transaction()
-        result: bool = _claim(transaction)
-        if result:
-            logger.info(
-                f"[firestore] Claimed {job_id}/{stage_name} for worker {self._worker_id}"
-            )
-        return result
+        return False
 
     # ------------------------------------------------------------------
     # Query
@@ -235,7 +236,7 @@ class FirestoreJobStore:
     def list_jobs_by_stage_status(
         self, stage_name: str, status: str, limit: int = 50
     ) -> list[dict[str, Any]]:
-        """Return raw Firestore documents for jobs where a stage has a given status.
+        """Return raw MongoDB documents for jobs where a stage has a given status.
 
         Args:
             stage_name: Stage field to filter on (e.g. ``"image_generation"``).
@@ -245,13 +246,17 @@ class FirestoreJobStore:
         Returns:
             List of raw document dicts (job data).
         """
-        results = (
-            self._db.collection(_JOBS_COLLECTION)
-            .where(filter=_field_filter(f"stages.{stage_name}.status", "==", status))
-            .limit(limit)
-            .stream()
+        cursor = self._collection.find({f"stages.{stage_name}.status": status}).limit(
+            limit
         )
-        return [doc.to_dict() for doc in results]
+
+        # Convert cursor to list and remove MongoDB's internal _id to match dict shape
+        results = []
+        for doc in cursor:
+            doc.pop("_id", None)
+            results.append(doc)
+
+        return results
 
     def get_job_doc(self, job_id: str) -> dict[str, Any] | None:
         """Fetch a single job document by ID.
@@ -262,8 +267,10 @@ class FirestoreJobStore:
         Returns:
             Raw document dict, or None if not found.
         """
-        doc = self._db.collection(_JOBS_COLLECTION).document(job_id).get()
-        return doc.to_dict() if doc.exists else None
+        doc = self._collection.find_one({"job_id": job_id})
+        if doc:
+            doc.pop("_id", None)
+        return doc
 
     # ------------------------------------------------------------------
     # Internal helpers
@@ -271,7 +278,7 @@ class FirestoreJobStore:
 
     @staticmethod
     def _job_to_dict(job: Job) -> dict[str, Any]:
-        """Serialise a Job instance to a flat Firestore-compatible dict."""
+        """Serialise a Job instance to a flat MongoDB-compatible dict."""
         stages_data: dict[str, Any] = {}
         for stage_name, stage in job.stages.items():
             stages_data[stage_name] = {
@@ -320,16 +327,3 @@ _STAGE_PREREQUISITES: dict[str, str | None] = {
     "csv_generation": "metadata_generation",
     "etsy_upload": "csv_generation",
 }
-
-
-def _field_filter(field: str, op: str, value: Any) -> Any:
-    """Build a Firestore FieldFilter (SDK v2+ style)."""
-    try:
-        from google.cloud.firestore_v1.base_query import (
-            FieldFilter,  # type: ignore[import-untyped]
-        )
-
-        return FieldFilter(field, op, value)
-    except ImportError:
-        # Fallback for older SDK versions
-        return (field, op, value)

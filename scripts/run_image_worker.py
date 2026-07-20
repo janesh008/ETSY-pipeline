@@ -149,22 +149,20 @@ def run_local_mode(args: argparse.Namespace, settings: object) -> None:
 
 
 def run_daemon_mode(settings: object) -> None:
-    """Poll Firestore indefinitely for PENDING image_generation jobs."""
-    from etsy_pipeline.services.firestore_store import FirestoreJobStore
+    """Poll MongoDB indefinitely for PENDING image_generation jobs."""
+    from etsy_pipeline.services.mongo_store import MongoJobStore
 
     try:
-        store = FirestoreJobStore(settings=settings)  # type: ignore[arg-type]
+        store = MongoJobStore(settings=settings)  # type: ignore[arg-type]
     except Exception as exc:
-        logger.error(f"[run_image_worker] Could not connect to Firestore: {exc}")
-        logger.error(
-            "Set GCP_PROJECT_ID in .env and ensure ADC credentials are configured."
-        )
+        logger.error(f"[run_image_worker] Could not connect to MongoDB: {exc}")
+        logger.error("Set MONGO_URI in .env.")
         sys.exit(1)
 
-    worker = ImageWorker(settings=settings, firestore_store=store)  # type: ignore[arg-type]
+    worker = ImageWorker(settings=settings, mongo_store=store)  # type: ignore[arg-type]
 
     logger.info(
-        "[run_image_worker] Daemon mode started — polling Firestore for PENDING jobs..."
+        "[run_image_worker] Daemon mode started — polling MongoDB for PENDING jobs..."
     )
     logger.info(
         f"[run_image_worker] Poll interval: {_POLL_INTERVAL}s. Press Ctrl+C to stop."
@@ -275,7 +273,7 @@ def main() -> None:
         )
         sys.exit(1)
     else:
-        # Daemon mode: poll Firestore indefinitely
+        # Daemon mode: poll MongoDB indefinitely
         run_daemon_mode(settings)
 
 
