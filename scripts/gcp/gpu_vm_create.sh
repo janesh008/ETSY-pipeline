@@ -19,7 +19,7 @@ gcloud compute instances create "$VM_NAME" \
     --machine-type="$MACHINE_TYPE" \
     --accelerator="type=$GPU_TYPE,count=1" \
     --maintenance-policy="TERMINATE" \
-    --image-family="common-cu121-debian-11" \
+    --image-family="common-cu121-ubuntu-2204" \
     --image-project="deeplearning-platform-release" \
     --boot-disk-size="$DISK_SIZE" \
     --boot-disk-type="pd-ssd" \
