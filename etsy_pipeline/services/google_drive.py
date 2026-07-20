@@ -24,7 +24,10 @@ from etsy_pipeline.utils.logging import get_logger
 logger = get_logger(__name__)
 
 # Required scope for managing files in Google Drive
-DRIVE_SCOPES = ["https://www.googleapis.com/auth/drive.file", "https://www.googleapis.com/auth/drive"]
+DRIVE_SCOPES = [
+    "https://www.googleapis.com/auth/drive.file",
+    "https://www.googleapis.com/auth/drive",
+]
 
 
 class GoogleDriveService:
@@ -80,10 +83,16 @@ class GoogleDriveService:
         token_file = Path(token_path)
         if token_file.exists():
             try:
-                creds = Credentials.from_authorized_user_file(str(token_file), DRIVE_SCOPES)
-                logger.debug(f"Loaded existing GDrive OAuth token session from: {token_file}")
+                creds = Credentials.from_authorized_user_file(
+                    str(token_file), DRIVE_SCOPES
+                )
+                logger.debug(
+                    f"Loaded existing GDrive OAuth token session from: {token_file}"
+                )
             except Exception as e:
-                logger.warning(f"Failed to load existing token file: {e}. Re-authenticating...")
+                logger.warning(
+                    f"Failed to load existing token file: {e}. Re-authenticating..."
+                )
 
         # If there are no (valid) credentials available, let the user log in.
         if not creds or not creds.valid:
@@ -97,9 +106,13 @@ class GoogleDriveService:
                     logger.debug("GDrive access token refreshed and saved.")
                     return creds
                 except Exception as e:
-                    logger.warning(f"Failed to refresh GDrive access token: {e}. Restarting login flow.")
+                    logger.warning(
+                        f"Failed to refresh GDrive access token: {e}. Restarting login flow."
+                    )
 
-            logger.info("No active GDrive OAuth session. Triggering browser login flow...")
+            logger.info(
+                "No active GDrive OAuth session. Triggering browser login flow..."
+            )
             try:
                 flow = InstalledAppFlow.from_client_secrets_file(
                     str(client_secrets_file),
@@ -156,36 +169,36 @@ class GoogleDriveService:
         )
 
         try:
-            results = (
-                service.files()
-                .list(q=query, fields="files(id, name)")
-                .execute()
-            )
+            results = service.files().list(q=query, fields="files(id, name)").execute()
             files = results.get("files", [])
 
             if files:
                 folder_id = files[0]["id"]
-                logger.debug(f"Found existing date subfolder '{folder_name}' (ID: {folder_id})")
+                logger.debug(
+                    f"Found existing date subfolder '{folder_name}' (ID: {folder_id})"
+                )
                 return str(folder_id)
 
             # Create the date subfolder if not found
-            logger.info(f"Creating new date subfolder '{folder_name}' under parent '{parent_id}'")
+            logger.info(
+                f"Creating new date subfolder '{folder_name}' under parent '{parent_id}'"
+            )
             file_metadata = {
                 "name": folder_name,
                 "mimeType": "application/vnd.google-apps.folder",
                 "parents": [parent_id],
             }
-            folder = (
-                service.files()
-                .create(body=file_metadata, fields="id")
-                .execute()
-            )
+            folder = service.files().create(body=file_metadata, fields="id").execute()
             return str(folder.get("id"))
 
         except Exception as e:
-            logger.error(f"Failed to check/create date subfolder '{folder_name}' on Drive: {e}")
+            logger.error(
+                f"Failed to check/create date subfolder '{folder_name}' on Drive: {e}"
+            )
             # Fallback to the main parent folder if subfolder creation fails
-            logger.warning(f"Falling back to upload directly to parent folder '{parent_id}'")
+            logger.warning(
+                f"Falling back to upload directly to parent folder '{parent_id}'"
+            )
             return parent_id
 
     def upload_file(
@@ -271,4 +284,3 @@ class GoogleDriveService:
                 f"Google Drive upload failed. Make sure the folder '{target_folder}' "
                 f"is shared with your Service Account email as Editor. Error: {e}"
             ) from e
-

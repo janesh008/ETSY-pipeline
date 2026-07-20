@@ -283,40 +283,66 @@ SUB_CHARACTER_2: Angel (Experiment 624, pink alien)
 class TestParseResponse:
     """Test the _parse_response method."""
 
-    def test_parses_all_sections(self, worker: PromptWorker, sample_gemini_response: str) -> None:
+    def test_parses_all_sections(
+        self, worker: PromptWorker, sample_gemini_response: str
+    ) -> None:
         """Verify all locked sections are present in parsed output."""
         prompts, roster = worker._parse_response(sample_gemini_response)
 
         for section in LOCKED_SECTIONS:
             assert section in prompts, f"Missing section: {section}"
 
-    def test_active_sections_have_prompts(self, worker: PromptWorker, sample_gemini_response: str) -> None:
+    def test_active_sections_have_prompts(
+        self, worker: PromptWorker, sample_gemini_response: str
+    ) -> None:
         """Verify active sections contain at least 10 prompts."""
         prompts, _ = worker._parse_response(sample_gemini_response)
 
-        active_sections = ["MAIN_CHARACTER", "SUB_CHARACTER_1", "SUB_CHARACTER_2",
-                          "CHARACTER_COMBO_2", "CHARACTER_COMBO_3", "PATTERN", "PROP", "SCENE"]
+        active_sections = [
+            "MAIN_CHARACTER",
+            "SUB_CHARACTER_1",
+            "SUB_CHARACTER_2",
+            "CHARACTER_COMBO_2",
+            "CHARACTER_COMBO_3",
+            "PATTERN",
+            "PROP",
+            "SCENE",
+        ]
 
         for section in active_sections:
             assert len(prompts[section]) >= 10, (
                 f"Section {section} has {len(prompts[section])} prompts (expected >= 10)"
             )
 
-    def test_inactive_sections_are_empty(self, worker: PromptWorker, sample_gemini_response: str) -> None:
+    def test_inactive_sections_are_empty(
+        self, worker: PromptWorker, sample_gemini_response: str
+    ) -> None:
         """Verify inactive sections have empty prompt lists."""
         prompts, _ = worker._parse_response(sample_gemini_response)
 
         inactive_sections = [
-            "SUB_CHARACTER_3", "SUB_CHARACTER_4", "SUB_CHARACTER_5",
-            "SUB_CHARACTER_6", "SUB_CHARACTER_7", "SUB_CHARACTER_8",
-            "CHARACTER_COMBO_4", "CHARACTER_COMBO_FULL_GROUP",
-            "LOGO_EMBLEM", "BANNER", "ALPHABET_NUMBER", "FRAME_BORDER",
+            "SUB_CHARACTER_3",
+            "SUB_CHARACTER_4",
+            "SUB_CHARACTER_5",
+            "SUB_CHARACTER_6",
+            "SUB_CHARACTER_7",
+            "SUB_CHARACTER_8",
+            "CHARACTER_COMBO_4",
+            "CHARACTER_COMBO_FULL_GROUP",
+            "LOGO_EMBLEM",
+            "BANNER",
+            "ALPHABET_NUMBER",
+            "FRAME_BORDER",
         ]
 
         for section in inactive_sections:
-            assert prompts[section] == [], f"Section {section} should be empty but has {len(prompts[section])} prompts"
+            assert prompts[section] == [], (
+                f"Section {section} should be empty but has {len(prompts[section])} prompts"
+            )
 
-    def test_prompts_are_clean_strings(self, worker: PromptWorker, sample_gemini_response: str) -> None:
+    def test_prompts_are_clean_strings(
+        self, worker: PromptWorker, sample_gemini_response: str
+    ) -> None:
         """Verify prompts are clean single-line strings without numbering."""
         prompts, _ = worker._parse_response(sample_gemini_response)
 
@@ -326,9 +352,13 @@ class TestParseResponse:
                 assert not prompt.startswith(("1.", "2.", "3.")), (
                     f"Prompt in {section} still has numbering prefix: {prompt[:50]}"
                 )
-                assert prompt.strip() == prompt, f"Prompt has leading/trailing whitespace in {section}"
+                assert prompt.strip() == prompt, (
+                    f"Prompt has leading/trailing whitespace in {section}"
+                )
 
-    def test_roster_extraction(self, worker: PromptWorker, sample_gemini_response: str) -> None:
+    def test_roster_extraction(
+        self, worker: PromptWorker, sample_gemini_response: str
+    ) -> None:
         """Verify character roster is extracted from preamble."""
         _, roster = worker._parse_response(sample_gemini_response)
 
@@ -358,7 +388,9 @@ class TestParseResponse:
 class TestValidatePrompts:
     """Test the _validate_prompts method."""
 
-    def test_valid_prompts_pass(self, worker: PromptWorker, sample_gemini_response: str) -> None:
+    def test_valid_prompts_pass(
+        self, worker: PromptWorker, sample_gemini_response: str
+    ) -> None:
         """Verify valid prompts pass validation."""
         prompts, _ = worker._parse_response(sample_gemini_response)
         # Should not raise
@@ -395,7 +427,9 @@ class TestStripFrontmatter:
 
     def test_strips_frontmatter(self, worker: PromptWorker) -> None:
         """Verify frontmatter is removed from content."""
-        content = "---\nname: test\ndescription: test\n---\n\n# Actual Content\nBody text."
+        content = (
+            "---\nname: test\ndescription: test\n---\n\n# Actual Content\nBody text."
+        )
         result = worker._strip_frontmatter(content)
         assert result.strip().startswith("# Actual Content")
         assert "name: test" not in result

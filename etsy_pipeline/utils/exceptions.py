@@ -10,7 +10,9 @@ update the Job status properly.
 class PipelineError(Exception):
     """Base exception for all pipeline errors."""
 
-    def __init__(self, message: str, stage: str | None = None, job_id: str | None = None):
+    def __init__(
+        self, message: str, stage: str | None = None, job_id: str | None = None
+    ):
         self.stage = stage
         self.job_id = job_id
         super().__init__(message)

@@ -47,6 +47,25 @@ class StageResult(BaseModel):
     worker_id: str | None = None
     metadata: dict[str, Any] = Field(default_factory=dict)
 
+    # --- Cost & Progress Tracking ---
+    cost_usd: float = Field(
+        default=0.0,
+        description="Estimated USD cost incurred by this stage (GPU time, API calls, etc.)",
+    )
+    # Image generation progress (used by image_worker)
+    images_total: int = Field(
+        default=0,
+        description="Total number of images to generate in this stage",
+    )
+    images_done: int = Field(
+        default=0,
+        description="Number of images completed so far in this stage",
+    )
+    gpu_hours: float = Field(
+        default=0.0,
+        description="GPU compute hours consumed by this stage",
+    )
+
     def mark_running(self, worker_id: str | None = None) -> None:
         """Mark this stage as running."""
         self.status = StageStatus.RUNNING
@@ -71,6 +90,13 @@ class StageResult(BaseModel):
             return (self.completed_at - self.started_at).total_seconds()
         return None
 
+    @property
+    def progress_pct(self) -> float | None:
+        """Image generation progress as a 0.0–100.0 percentage, or None if not applicable."""
+        if self.images_total > 0:
+            return round(self.images_done / self.images_total * 100, 1)
+        return None
+
 
 class Job(BaseModel):
     """
@@ -92,10 +118,18 @@ class Job(BaseModel):
     )
 
     # --- Input Parameters ---
-    theme: str = Field(..., description="Cartoon/character theme name (e.g., 'Lilo & Stitch')")
-    event_type: str = Field(default="Normal", description="Event theme (e.g., 'birthday', 'baby shower')")
-    style_hint: str | None = Field(default=None, description="Optional style override (e.g., 'watercolor', '3D')")
-    prompt_count: int | None = Field(default=None, description="Optional total prompt count override")
+    theme: str = Field(
+        ..., description="Cartoon/character theme name (e.g., 'Lilo & Stitch')"
+    )
+    event_type: str = Field(
+        default="Normal", description="Event theme (e.g., 'birthday', 'baby shower')"
+    )
+    style_hint: str | None = Field(
+        default=None, description="Optional style override (e.g., 'watercolor', '3D')"
+    )
+    prompt_count: int | None = Field(
+        default=None, description="Optional total prompt count override"
+    )
     sections_requested: list[str] | None = Field(
         default=None,
         description="Optional list of specific sections to generate (default = full bundle)",
@@ -166,7 +200,9 @@ class Job(BaseModel):
             "etsy_upload": StageResult(),
         }
     )
-    errors: list[str] = Field(default_factory=list, description="Accumulated error messages")
+    errors: list[str] = Field(
+        default_factory=list, description="Accumulated error messages"
+    )
     logs: list[str] = Field(default_factory=list, description="Execution log entries")
 
     # --- Timestamps ---
@@ -200,9 +236,19 @@ class Job(BaseModel):
         """List of sections that have at least one prompt."""
         return [section for section, prompts in self.prompts.items() if prompts]
 
+    @property
+    def theme_slug(self) -> str:
+        """URL and filesystem-safe theme identifier (e.g. 'Lilo_and_Stitch')."""
+        return self.theme.replace(" ", "_").replace("&", "and")
+
     def get_output_dir(self, output_root: str | Path) -> Path:
         """Get the output directory for this job."""
-        return Path(output_root) / self.date_folder / self.theme.replace(" ", "_").replace("&", "and")
+        return Path(output_root) / self.date_folder / self.theme_slug
+
+    @property
+    def total_cost_usd(self) -> float:
+        """Total estimated USD cost across all pipeline stages."""
+        return round(sum(s.cost_usd for s in self.stages.values()), 4)
 
     def to_summary(self) -> str:
         """Generate a human-readable summary of the job state."""
@@ -215,5 +261,24 @@ class Job(BaseModel):
             f"Images: {len(self.generated_images)} generated, {len(self.bg_removed_images)} bg-removed, {len(self.upscaled_images)} upscaled",
             f"Mockups: {len(self.mockups)}",
             f"Errors: {len(self.errors)}",
+            f"Total Cost: ${self.total_cost_usd:.4f} USD",
         ]
+        # Per-stage cost breakdown
+        stage_lines = []
+        for stage_name, stage in self.stages.items():
+            if stage.cost_usd > 0 or stage.status not in (
+                StageStatus.PENDING,
+                StageStatus.SKIPPED,
+            ):
+                progress = (
+                    f" ({stage.images_done}/{stage.images_total})"
+                    if stage.images_total > 0
+                    else ""
+                )
+                stage_lines.append(
+                    f"  {stage_name}: {stage.status}{progress} | ${stage.cost_usd:.4f}"
+                )
+        if stage_lines:
+            lines.append("\nStage Costs:")
+            lines.extend(stage_lines)
         return "\n".join(lines)

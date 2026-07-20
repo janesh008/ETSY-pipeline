@@ -153,7 +153,10 @@ def main() -> None:
 
         # Upload prompts to Google Drive if configured
         drive_file_id = None
-        if settings.google_drive_folder_id and settings.google_drive_folder_id != "your-google-drive-folder-id":
+        if (
+            settings.google_drive_folder_id
+            and settings.google_drive_folder_id != "your-google-drive-folder-id"
+        ):
             try:
                 drive_service = GoogleDriveService(settings=settings)
                 # Upload the parsed prompts file to Google Drive

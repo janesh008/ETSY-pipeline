@@ -313,9 +313,8 @@ class PromptWorker:
 
                 # Calculate estimated cost based on rates in prompt_worker_config
                 estimated_cost = (
-                    (input_tokens * GEMINI_2_5_FLASH_INPUT_PRICE_PER_TOKEN) +
-                    (output_tokens * GEMINI_2_5_FLASH_OUTPUT_PRICE_PER_TOKEN)
-                )
+                    input_tokens * GEMINI_2_5_FLASH_INPUT_PRICE_PER_TOKEN
+                ) + (output_tokens * GEMINI_2_5_FLASH_OUTPUT_PRICE_PER_TOKEN)
 
             logger.info(
                 f"Gemini response received: {len(response.text)} chars. "
@@ -341,7 +340,9 @@ class PromptWorker:
                 job_id=job.job_id,
             ) from e
 
-    def _parse_response(self, raw_text: str) -> tuple[dict[str, list[str]], dict[str, str]]:
+    def _parse_response(
+        self, raw_text: str
+    ) -> tuple[dict[str, list[str]], dict[str, str]]:
         """
         Parse the raw Gemini response into section-organized prompts.
 
@@ -443,7 +444,11 @@ class PromptWorker:
             # Start after the number prefix (e.g., after "1. ")
             start = match.end()
             # End at the next numbered prompt or end of section
-            end = prompt_starts[i + 1].start() if i + 1 < len(prompt_starts) else len(section_content)
+            end = (
+                prompt_starts[i + 1].start()
+                if i + 1 < len(prompt_starts)
+                else len(section_content)
+            )
 
             prompt_text = section_content[start:end].strip()
 

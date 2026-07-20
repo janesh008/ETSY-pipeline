@@ -75,12 +75,7 @@ class Settings(BaseSettings):
         description="Root directory for pipeline output files",
     )
     skill_file_path: str = Field(
-        default=str(
-            _PROJECT_ROOT
-            / "etsy_pipeline"
-            / "resources"
-            / "SKILL.md"
-        ),
+        default=str(_PROJECT_ROOT / "etsy_pipeline" / "resources" / "SKILL.md"),
         description="Path to the SKILL.md prompt generation skill file",
     )
     metadata_skill_file_path: str = Field(

@@ -174,24 +174,28 @@ class GraphBuilder:
                 child_ids.append(f"{mod_id}.{node.name}")
 
         # Module node
-        self._nodes.append({
-            "id": mod_id,
-            "kind": "module",
-            "path": rel_path,
-            "docstring_summary": _get_docstring_summary(tree),
-            "children": child_ids,
-        })
+        self._nodes.append(
+            {
+                "id": mod_id,
+                "kind": "module",
+                "path": rel_path,
+                "docstring_summary": _get_docstring_summary(tree),
+                "children": child_ids,
+            }
+        )
 
         # Import edges from this module
         for node in ast.iter_child_nodes(tree):
             if isinstance(node, ast.Import):
                 for alias in node.names:
-                    self._edges.append({
-                        "from": mod_id,
-                        "to": alias.name,
-                        "kind": "import",
-                        "static_only": True,
-                    })
+                    self._edges.append(
+                        {
+                            "from": mod_id,
+                            "to": alias.name,
+                            "kind": "import",
+                            "static_only": True,
+                        }
+                    )
             elif isinstance(node, ast.ImportFrom):
                 base = node.module or ""
                 # Resolve relative imports
@@ -204,12 +208,14 @@ class GraphBuilder:
                         base = ".".join(base_parts)
                 for alias in node.names:
                     target = f"{base}.{alias.name}" if base else alias.name
-                    self._edges.append({
-                        "from": mod_id,
-                        "to": target,
-                        "kind": "import",
-                        "static_only": True,
-                    })
+                    self._edges.append(
+                        {
+                            "from": mod_id,
+                            "to": target,
+                            "kind": "import",
+                            "static_only": True,
+                        }
+                    )
 
         # Class and function nodes
         for node in ast.iter_child_nodes(tree):
@@ -232,14 +238,16 @@ class GraphBuilder:
             if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 method_names.append(node.name)
 
-        self._nodes.append({
-            "id": class_id,
-            "kind": "class",
-            "module": mod_id,
-            "docstring_summary": _get_docstring_summary(class_node),
-            "methods": method_names,
-            "public_methods": [m for m in method_names if _is_public(m)],
-        })
+        self._nodes.append(
+            {
+                "id": class_id,
+                "kind": "class",
+                "module": mod_id,
+                "docstring_summary": _get_docstring_summary(class_node),
+                "methods": method_names,
+                "public_methods": [m for m in method_names if _is_public(m)],
+            }
+        )
 
         # Process each method
         for node in ast.iter_child_nodes(class_node):
@@ -284,13 +292,15 @@ class GraphBuilder:
         # Call edges from this function — sort for determinism
         called_names = _collect_calls(func_node)
         for called in sorted(set(called_names)):  # sorted+dedup for stable output
-            self._edges.append({
-                "from": func_id,
-                "to": called,
-                "kind": "call",
-                "static_only": True,
-                "note": "name-only; may not resolve to correct module without runtime context",
-            })
+            self._edges.append(
+                {
+                    "from": func_id,
+                    "to": called,
+                    "kind": "call",
+                    "static_only": True,
+                    "note": "name-only; may not resolve to correct module without runtime context",
+                }
+            )
 
     def to_dict(self) -> dict[str, Any]:
         """Serialize the graph to a JSON-compatible dictionary.
@@ -299,13 +309,17 @@ class GraphBuilder:
             Dictionary with schema_version, generated_at, nodes, and edges.
         """
         sorted_nodes = sorted(self._nodes, key=lambda n: n["id"])
-        sorted_edges = sorted(self._edges, key=lambda e: (e["from"], e.get("to", ""), e["kind"]))
+        sorted_edges = sorted(
+            self._edges, key=lambda e: (e["from"], e.get("to", ""), e["kind"])
+        )
         return {
             "schema_version": SCHEMA_VERSION,
             "generated_at": datetime.now(UTC).isoformat(),
             "generator": "scripts/build_graph.py",
             "static_only": True,
-            "scan_roots": [str(r.relative_to(REPO_ROOT)).replace("\\", "/") for r in SCAN_ROOTS],
+            "scan_roots": [
+                str(r.relative_to(REPO_ROOT)).replace("\\", "/") for r in SCAN_ROOTS
+            ],
             "node_count": len(sorted_nodes),
             "edge_count": len(sorted_edges),
             "nodes": sorted_nodes,
