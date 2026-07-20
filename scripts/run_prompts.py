@@ -168,7 +168,9 @@ def main() -> None:
         try:
             mongo_store = MongoJobStore(settings=settings)
             mongo_store.upsert_job(job)
-            logger.info(f"Job {job.job_id} successfully saved to MongoDB (PENDING image_generation)")
+            logger.info(
+                f"Job {job.job_id} successfully saved to MongoDB (PENDING image_generation)"
+            )
         except Exception as e:
             logger.error(f"Failed to save job to MongoDB: {e}")
             logger.error("Is MONGO_URI set correctly in your .env?")

@@ -272,7 +272,7 @@ class GCSStore:
         Returns:
             GCS object path string.
         """
-        return f"prompts/{date_folder}/{theme_slug}.txt"
+        return f"Clipart/{date_folder}/{theme_slug}/{theme_slug}.txt"
 
     @staticmethod
     def make_image_path(
@@ -289,4 +289,4 @@ class GCSStore:
         Returns:
             GCS object path string.
         """
-        return f"{prefix}/{date_folder}/{theme_slug}/{filename}"
+        return f"Clipart/{date_folder}/{theme_slug}/{prefix}/{filename}"

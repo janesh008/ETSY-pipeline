@@ -27,7 +27,6 @@ from etsy_pipeline.workers.image_worker_config import (
     COMFYUI_PROMPT_ENDPOINT,
     COMFYUI_TIMEOUT_SECONDS,
     COMFYUI_VIEW_ENDPOINT,
-    GCS_RAW_IMAGES_PREFIX,
     GPU_VM_HOURLY_RATE_USD,
     WORKFLOW_JSON_PATH,
     WORKFLOW_PROMPT_NODE_ID,
@@ -173,10 +172,12 @@ class ImageWorker:
 
                 # Upload to GCS
                 theme_slug = job.theme.replace(" ", "_").replace("&", "and")
-                gcs_path = f"{GCS_RAW_IMAGES_PREFIX}/{job.date_folder}/{theme_slug}/{image_path.name}"
                 try:
                     gcs = self._get_gcs()
                     if gcs:
+                        gcs_path = gcs.make_image_path(
+                            "raw_images", job.date_folder, theme_slug, image_path.name
+                        )
                         gcs.upload_file(image_path, gcs_path)
                 except Exception as exc:
                     logger.warning(
