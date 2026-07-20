@@ -1,19 +1,19 @@
 #!/bin/bash
 # ==============================================================================
-# GCP GPU VM Creation Script for Etsy Pipeline
+# GCP GPU VM Creation Script for Etsy Pipeline (Optimized for 3s Generation)
 # Run this script from your Google Cloud Shell to create the GPU VM.
 # ==============================================================================
 
 # Variables
 VM_NAME="etsy-image-worker"
-ZONE="us-central1-a"  # Ensure this matches your GCP_LOCATION in .env
-MACHINE_TYPE="n1-standard-8"
-GPU_TYPE="nvidia-tesla-t4"
-DISK_SIZE="70GB"
+ZONE="us-central1-a"       # Ensure you have your approved Nvidia L4 quota in this region/zone
+MACHINE_TYPE="g2-standard-8"
+GPU_TYPE="nvidia-l4"
+DISK_SIZE="120GB"          # Increased to handle OS + deep learning drivers + 25GB models safely
 
-echo "🚀 Creating GPU VM: $VM_NAME in $ZONE..."
+echo "🚀 Creating High-Performance GPU VM: $VM_NAME in $ZONE..."
 
-# We use Google's Deep Learning image which comes with NVIDIA drivers pre-installed.
+# Using Google's modern CUDA 12.1 Deep Learning Image optimized for the L4 architecture
 gcloud compute instances create "$VM_NAME" \
     --zone="$ZONE" \
     --machine-type="$MACHINE_TYPE" \
