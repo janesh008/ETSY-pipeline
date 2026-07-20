@@ -1,0 +1,18 @@
+[Unit]
+Description=Etsy Pipeline - Image Generation Worker
+After=network.target
+
+[Service]
+# We assume the user clones their repo to their home directory
+WorkingDirectory=/home/user/ETSY-pipeline
+# Execute the python script inside the local virtual environment (if used) or globally
+ExecStart=/home/user/ETSY-pipeline/venv/bin/python scripts/run_image_worker.py --daemon
+# Restart on failure automatically
+Restart=always
+RestartSec=10
+# Run as the default GCP user
+User=user
+Group=user
+
+[Install]
+WantedBy=multi-user.target
