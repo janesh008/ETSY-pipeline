@@ -30,7 +30,7 @@ try:
 except ImportError:
     import datetime as dt
 
-    UTC = dt.timezone.utc
+    UTC = dt.UTC
 from pathlib import Path
 from typing import Any
 

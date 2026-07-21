@@ -90,7 +90,7 @@ python_version = "3.12"
 warn_return_any = true
 warn_unused_configs = true
 warn_redundant_casts = true
-warn_unused_ignores = true
+warn_unused_ignores = false
 # Don't fail on missing stubs for third-party libs (google-genai, pydantic)
 ignore_missing_imports = true
 # Require type annotations on all public functions

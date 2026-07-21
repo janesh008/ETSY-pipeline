@@ -16,7 +16,7 @@ try:
 except ImportError:
     import datetime as dt
 
-    UTC = dt.timezone.utc
+    UTC = dt.UTC
 from typing import TYPE_CHECKING, Any
 
 from etsy_pipeline.utils.logging import get_logger

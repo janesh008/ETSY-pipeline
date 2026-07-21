@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import subprocess
 import sys
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -28,13 +28,6 @@ from etsy_pipeline.workers.mockup_worker_config import (
     PDF_CTA_TEXT,
     PDF_TITLE,
 )
-
-if sys.version_info >= (3, 11):
-    from datetime import UTC
-else:
-    from datetime import timezone
-
-    UTC = timezone.utc
 
 if TYPE_CHECKING:
     from etsy_pipeline.config.settings import Settings
