@@ -17,7 +17,17 @@ except ImportError:
     import datetime as dt
 
     UTC = dt.timezone.utc
-from enum import StrEnum
+try:
+    from enum import StrEnum
+except ImportError:
+    from enum import Enum
+
+    class StrEnum(str, Enum):
+        """Fallback StrEnum for Python < 3.11."""
+
+        pass
+
+
 from pathlib import Path
 from typing import Any
 
