@@ -9,7 +9,14 @@ Responsibility: Read, write, and atomically claim pipeline job state in MongoDB.
 from __future__ import annotations
 
 import socket
-from datetime import UTC, datetime
+from datetime import datetime
+
+try:
+    from datetime import UTC
+except ImportError:
+    import datetime as dt
+
+    UTC = dt.UTC
 from typing import TYPE_CHECKING, Any
 
 from etsy_pipeline.utils.logging import get_logger

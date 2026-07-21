@@ -14,7 +14,14 @@ import json
 import random
 import time
 import urllib.request
-from datetime import UTC, datetime
+from datetime import datetime
+
+try:
+    from datetime import UTC
+except ImportError:
+    import datetime as dt
+
+    UTC = dt.UTC
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
