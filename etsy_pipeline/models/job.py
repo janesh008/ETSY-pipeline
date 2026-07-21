@@ -16,7 +16,7 @@ try:
 except ImportError:
     import datetime as dt
 
-    UTC = dt.UTC
+    UTC = dt.timezone.utc
 from enum import StrEnum
 from pathlib import Path
 from typing import Any

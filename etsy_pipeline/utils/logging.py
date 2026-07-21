@@ -19,7 +19,7 @@ try:
 except ImportError:
     import datetime as dt
 
-    UTC = dt.UTC
+    UTC = dt.timezone.utc
 from typing import Any
 
 
