@@ -72,10 +72,24 @@ class StageResult(BaseModel):
         self.started_at = datetime.now(UTC)
         self.worker_id = worker_id
 
-    def mark_completed(self) -> None:
+    def mark_completed(
+        self,
+        cost_usd: float | None = None,
+        images_done: int | None = None,
+        images_total: int | None = None,
+        gpu_hours: float | None = None,
+    ) -> None:
         """Mark this stage as completed."""
         self.status = StageStatus.COMPLETED
         self.completed_at = datetime.now(UTC)
+        if cost_usd is not None:
+            self.cost_usd = cost_usd
+        if images_done is not None:
+            self.images_done = images_done
+        if images_total is not None:
+            self.images_total = images_total
+        if gpu_hours is not None:
+            self.gpu_hours = gpu_hours
 
     def mark_failed(self, error_message: str) -> None:
         """Mark this stage as failed with an error message."""

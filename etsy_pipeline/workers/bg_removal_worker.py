@@ -113,14 +113,15 @@ class BackgroundRemovalWorker:
         # 1. Download raw images from GCS if not present locally
         self._ensure_raw_images_local(job, raw_base_dir)
 
-        # 2. Gather raw images across both subfolders
-        misc_raw_files = sorted(
-            list((raw_base_dir / MISC_CATEGORY_SUBFOLDER).glob("*.png"))
-        )
-        pattern_raw_files = sorted(
-            list((raw_base_dir / PATTERN_SCENE_BONUS_SUBFOLDER).glob("*.png"))
-        )
-        all_raw_files = misc_raw_files + pattern_raw_files
+        # 2. Gather raw images recursively across all subfolders under raw_images
+        all_raw_files = sorted(list(raw_base_dir.rglob("*.png")))
+
+        misc_raw_files = [
+            f for f in all_raw_files if PATTERN_SCENE_BONUS_SUBFOLDER not in str(f)
+        ]
+        pattern_raw_files = [
+            f for f in all_raw_files if PATTERN_SCENE_BONUS_SUBFOLDER in str(f)
+        ]
 
         if not all_raw_files:
             error_msg = f"No raw images found to process in {raw_base_dir}"
