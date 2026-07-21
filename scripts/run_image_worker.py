@@ -92,30 +92,99 @@ Examples:
     return parser.parse_args()
 
 
+_CATEGORY_MAP: dict[str, str] = {
+    "main_character": "MAIN_CHARACTER",
+    "main character": "MAIN_CHARACTER",
+    "sub_character_1": "SUB_CHARACTER_1",
+    "sub character 1": "SUB_CHARACTER_1",
+    "sub_character_2": "SUB_CHARACTER_2",
+    "sub character 2": "SUB_CHARACTER_2",
+    "sub_character_3": "SUB_CHARACTER_3",
+    "sub character 3": "SUB_CHARACTER_3",
+    "sub_character_4": "SUB_CHARACTER_4",
+    "sub character 4": "SUB_CHARACTER_4",
+    "sub_character_5": "SUB_CHARACTER_5",
+    "sub character 5": "SUB_CHARACTER_5",
+    "sub_character_6": "SUB_CHARACTER_6",
+    "sub character 6": "SUB_CHARACTER_6",
+    "sub_character_7": "SUB_CHARACTER_7",
+    "sub character 7": "SUB_CHARACTER_7",
+    "sub_character_8": "SUB_CHARACTER_8",
+    "sub character 8": "SUB_CHARACTER_8",
+    "character_combo_2": "CHARACTER_COMBO_2",
+    "character combo 2": "CHARACTER_COMBO_2",
+    "character_combo_3": "CHARACTER_COMBO_3",
+    "character combo 3": "CHARACTER_COMBO_3",
+    "character_combo_4": "CHARACTER_COMBO_4",
+    "character combo 4": "CHARACTER_COMBO_4",
+    "character_combo_full_group": "CHARACTER_COMBO_FULL_GROUP",
+    "character combo full group": "CHARACTER_COMBO_FULL_GROUP",
+    "pattern": "PATTERN",
+    "prop": "PROP",
+    "scene": "SCENE",
+    "logo_emblem": "LOGO_EMBLEM",
+    "logo emblem": "LOGO_EMBLEM",
+    "banner": "BANNER",
+    "alphabet_number": "ALPHABET_NUMBER",
+    "alphabet number": "ALPHABET_NUMBER",
+    "frame_border": "FRAME_BORDER",
+    "frame border": "FRAME_BORDER",
+}
+
+
 def load_prompts_from_file(prompt_file: Path) -> dict[str, list[str]]:
-    """Parse a prompt .txt file produced by run_prompts.py into a section dict.
+    """Parse a prompt .txt file produced by run_prompts.py into a category section dict.
+
+    Uses category mapping and regex to map section headings accurately.
 
     Args:
         prompt_file: Path to the local prompt .txt file.
 
     Returns:
-        Dict of section_name -> list of prompt strings.
+        Dict of canonical_section_name -> list of prompt strings.
     """
+    import re
+
     text = prompt_file.read_text(encoding="utf-8")
     prompts: dict[str, list[str]] = {}
-    current_section: str | None = None
+    current_category: str = "MAIN_CHARACTER"
+
+    # Sort map keys by length descending to match most specific terms first
+    sorted_map = sorted(_CATEGORY_MAP.items(), key=lambda x: len(x[0]), reverse=True)
 
     for line in text.splitlines():
         line = line.strip()
-        if line.startswith("## "):
-            current_section = line[3:].strip()
-            prompts[current_section] = []
-        elif current_section and line and line[0].isdigit() and ". " in line:
-            _, prompt_text = line.split(". ", 1)
-            prompts[current_section].append(prompt_text.strip())
+        if not line:
+            continue
+
+        lower = line.lower()
+
+        # Detect category headings starting with ## or containing 'category'
+        if line.startswith("##") or "category" in lower:
+            header_text = line.lstrip("#").strip().lower()
+            detected = None
+            for key, value in sorted_map:
+                if key in header_text:
+                    detected = value
+                    break
+
+            if detected:
+                current_category = detected
+                if current_category not in prompts:
+                    prompts[current_category] = []
+            continue
+
+        # Detect numbered prompts
+        match = re.match(r"^\d+\.\s+(.*)", line)
+        if match:
+            if current_category not in prompts:
+                prompts[current_category] = []
+            prompts[current_category].append(match.group(1).strip())
 
     total = sum(len(v) for v in prompts.values())
-    logger.info(f"[run_image_worker] Loaded {total} prompts from {prompt_file.name}")
+    logger.info(
+        f"[run_image_worker] Loaded {total} prompts across {len(prompts)} sections from {prompt_file.name}"
+    )
     return prompts
 
 

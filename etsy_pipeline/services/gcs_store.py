@@ -276,7 +276,11 @@ class GCSStore:
 
     @staticmethod
     def make_image_path(
-        prefix: str, date_folder: str, theme_slug: str, filename: str
+        prefix: str,
+        date_folder: str,
+        theme_slug: str,
+        filename: str,
+        subfolder: str | None = None,
     ) -> str:
         """Build a canonical GCS path for a pipeline image artifact.
 
@@ -284,9 +288,12 @@ class GCSStore:
             prefix: Stage prefix — one of ``raw_images``, ``no_bg``, ``upscaled``, ``mockups``.
             date_folder: Date string (e.g. ``"2026-07-20"``).
             theme_slug: URL-safe theme identifier.
-            filename: Image filename (e.g. ``"0001.png"``).
+            filename: Image filename (e.g. ``"Thomas_and_Friends_MAIN_CHARACTER_001.png"``).
+            subfolder: Optional subfolder category (e.g. ``"misc_category"`` or ``"pattern_scene_bonus_category"``).
 
         Returns:
             GCS object path string.
         """
+        if subfolder:
+            return f"Clipart/{date_folder}/{theme_slug}/{prefix}/{subfolder}/{filename}"
         return f"Clipart/{date_folder}/{theme_slug}/{prefix}/{filename}"

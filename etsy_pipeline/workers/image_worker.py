@@ -153,8 +153,17 @@ class ImageWorker:
                 section_counters[section] = sec_count
                 formatted_filename = f"{job.theme_slug}_{section}_{sec_count:03d}.png"
 
+                # Determine subfolder: pattern/scene/bonus vs misc_category
+                subfolder = (
+                    "pattern_scene_bonus_category"
+                    if any(k in section.lower() for k in ["pattern", "scene", "bonus"])
+                    else "misc_category"
+                )
+                target_output_dir = output_dir / subfolder
+                target_output_dir.mkdir(parents=True, exist_ok=True)
+
                 logger.info(
-                    f"[image_worker] [{idx}/{total}] {section} (#{sec_count:03d}) → {formatted_filename}"
+                    f"[image_worker] [{idx}/{total}] {section} (#{sec_count:03d}) → {subfolder}/{formatted_filename}"
                 )
 
                 # Build workflow for this prompt
@@ -166,7 +175,7 @@ class ImageWorker:
                     try:
                         prompt_id = self._submit_prompt(prompt_workflow)
                         image_bytes, _raw_filename = self._wait_for_output(prompt_id)
-                        image_path = output_dir / formatted_filename
+                        image_path = target_output_dir / formatted_filename
                         image_path.write_bytes(image_bytes)
                         break
                     except Exception as exc:
@@ -195,6 +204,7 @@ class ImageWorker:
                                 job.date_folder,
                                 theme_slug,
                                 image_path.name,
+                                subfolder=subfolder,
                             )
                             gcs.upload_file(image_path, gcs_path)
                     except Exception as exc:
