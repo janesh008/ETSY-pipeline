@@ -8,6 +8,8 @@ This subpackage contains:
 *   [📄 image_worker_config.py](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/workers/image_worker_config.py) — ComfyUI endpoints and node constants.
 *   [📄 bg_removal_worker.py](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/workers/bg_removal_worker.py) — Stage 3 worker (rembg Background Removal).
 *   [📄 bg_removal_worker_config.py](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/workers/bg_removal_worker_config.py) — Background removal model and category folder constants.
+*   [📄 upscale_worker.py](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/workers/upscale_worker.py) — Stage 4 worker (Real-ESRGAN AI Upscaling).
+*   [📄 upscale_worker_config.py](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/workers/upscale_worker_config.py) — Upscaling configuration and GDrive folders.
 
 ### `PromptWorker` Class Flow
 1.  **Entry (`run(job)`):** Checks if prompts are already generated. If not, sets stage status to running, resolves the Gemini client, builds the user prompt, sends it to Gemini, parses the output, validates it, and saves it back to the `Job`.
@@ -29,3 +31,10 @@ This subpackage contains:
 3.  **AI Removal:** Uses `rembg` (`isnet-general-use`) to remove backgrounds from `misc_category` images and outputs transparent PNGs to `no_bg/misc_category/`.
 4.  **Direct Copy:** Copies `pattern_scene_bonus_category` images directly to `no_bg/pattern_scene_bonus_category/` without AI processing.
 5.  **GCS Cleanup:** Uploads all `no_bg/` PNGs to GCS, then purges `raw_images/` from GCS (`delete_prefix`) to conserve cloud storage.
+
+### `UpscaleWorker` Class Flow
+1.  **Entry (`run(job)`):** Downloads `no_bg/` images from GCS if not present locally.
+2.  **Model Loading:** Standardizes 4x-UltraSharp weights setup.
+3.  **Enhancement & Tiling:** Runs `RealESRGANer` with dynamic tile sizing fallback (`512` → `256` → `128` on CUDA OOM).
+4.  **Standardization:** Resizes the upscaled image to exactly 4096px on its longest side at 300 DPI.
+5.  **GDrive Upload:** Delivers all upscaled PNGs directly to Google Drive folder `1JWUBqtP-PG-hRLEQj4Kh_vNzfb_G_PCP` under path `Clipart/main_data/<date>/<theme_slug>/`. Does NOT delete `no_bg/` from GCS.

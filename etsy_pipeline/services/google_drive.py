@@ -381,3 +381,144 @@ class GoogleDriveService:
             f"Batch uploaded {len(uploaded_ids)} files from {local_path.name} to Drive."
         )
         return uploaded_ids
+
+    def _get_or_create_folder_by_path(
+        self, parent_id: str, path_parts: list[str]
+    ) -> str:
+        """Find or recursively create a nested folder path under a parent folder ID on Drive.
+
+        Args:
+            parent_id: Google Drive folder ID of the root directory.
+            path_parts: List of folder names representing the path (e.g. ['Clipart', 'main_data', '2026-07-21', 'Iron_man']).
+
+        Returns:
+            The folder ID of the leaf subfolder.
+        """
+        service = self._get_service()
+        current_parent = parent_id
+
+        for part in path_parts:
+            # Query for an existing folder with the given name under the current parent
+            query = (
+                f"name = '{part}' and "
+                f"'{current_parent}' in parents and "
+                f"mimeType = 'application/vnd.google-apps.folder' and "
+                f"trashed = false"
+            )
+            try:
+                results = (
+                    service.files().list(q=query, fields="files(id, name)").execute()
+                )
+                files = results.get("files", [])
+                if files:
+                    current_parent = files[0]["id"]
+                    logger.debug(
+                        f"Found existing Drive folder '{part}' (ID: {current_parent})"
+                    )
+                else:
+                    # Create the folder if not found
+                    logger.info(
+                        f"Creating Drive folder '{part}' under parent '{current_parent}'"
+                    )
+                    file_metadata = {
+                        "name": part,
+                        "mimeType": "application/vnd.google-apps.folder",
+                        "parents": [current_parent],
+                    }
+                    folder = (
+                        service.files()
+                        .create(body=file_metadata, fields="id")
+                        .execute()
+                    )
+                    current_parent = folder.get("id")
+            except Exception as e:
+                logger.error(
+                    f"Failed to resolve/create Drive folder '{part}' under parent '{current_parent}': {e}"
+                )
+                raise RuntimeError(
+                    f"Google Drive folder path resolution failed: {e}"
+                ) from e
+
+        return current_parent
+
+    def upload_folder_to_path(
+        self,
+        local_dir: Path | str,
+        parent_id: str,
+        path_parts: list[str],
+    ) -> list[str]:
+        """Upload all files in a local directory to a recursively created nested path in Drive.
+
+        Args:
+            local_dir: Path to the local directory containing files to upload.
+            parent_id: Root folder ID.
+            path_parts: List of folder names representing the target path.
+
+        Returns:
+            List of Drive file IDs for the uploaded files.
+        """
+        local_path = Path(local_dir)
+        if not local_path.is_dir():
+            raise NotADirectoryError(f"Local path is not a directory: {local_path}")
+
+        target_folder_id = self._get_or_create_folder_by_path(parent_id, path_parts)
+
+        uploaded_ids = []
+        # Upload all files directly under this folder (flat structure)
+        for file_path in sorted(local_path.iterdir()):
+            if not file_path.is_file():
+                continue
+
+            try:
+                # Custom file upload helper that directly uses parent folder_id without date fallback
+                file_id = self._upload_file_direct(file_path, target_folder_id)
+                uploaded_ids.append(file_id)
+            except Exception as e:
+                logger.error(
+                    f"Failed to upload {file_path.name} in batch to nested path: {e}"
+                )
+
+        logger.info(
+            f"Batch uploaded {len(uploaded_ids)} files to nested path {path_parts} on Drive."
+        )
+        return uploaded_ids
+
+    def _upload_file_direct(self, local_path: Path, folder_id: str) -> str:
+        """Upload a file directly to a specified parent folder ID, bypassing date subfolders."""
+        filename = local_path.name
+        service = self._get_service()
+
+        file_metadata = {
+            "name": filename,
+            "parents": [folder_id],
+        }
+
+        mimetype = "application/octet-stream"
+        if local_path.suffix == ".csv":
+            mimetype = "text/csv"
+        elif local_path.suffix in [".png", ".jpg", ".jpeg"]:
+            mimetype = f"image/{local_path.suffix[1:]}"
+
+        media = MediaFileUpload(
+            str(local_path),
+            mimetype=mimetype,
+            resumable=True,
+        )
+
+        try:
+            drive_file = (
+                service.files()
+                .create(
+                    body=file_metadata,
+                    media_body=media,
+                    fields="id",
+                )
+                .execute()
+            )
+            file_id = drive_file.get("id")
+            if not file_id:
+                raise RuntimeError("Drive API returned response without file ID.")
+            return str(file_id)
+        except Exception as e:
+            logger.error(f"Google Drive direct upload failed for {filename}: {e}")
+            raise
