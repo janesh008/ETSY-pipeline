@@ -117,6 +117,12 @@ class UpscaleWorker:
 
     def _build_upsampler(self, model_path: Path, tile: int) -> Any:
         """Build the RealESRGANer instance with specified tile size."""
+        import sys
+
+        import torchvision.transforms.functional as functional  # type: ignore[import-untyped]
+
+        sys.modules["torchvision.transforms.functional_tensor"] = functional
+
         from basicsr.archs.rrdbnet_arch import RRDBNet  # type: ignore[import-untyped]
         from realesrgan import RealESRGANer  # type: ignore[import-untyped]
 
