@@ -25,6 +25,7 @@ dependencies = [
     "rembg>=2.0.50",
     "onnxruntime>=1.16.0",
     "pillow>=10.0.0",
+    "reportlab>=4.1.0",
 ]
 
 [project.optional-dependencies]

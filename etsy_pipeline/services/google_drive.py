@@ -522,3 +522,105 @@ class GoogleDriveService:
         except Exception as e:
             logger.error(f"Google Drive direct upload failed for {filename}: {e}")
             raise
+
+    def share_folder_publicly(self, folder_id: str) -> str:
+        """Make a Google Drive folder readable by anyone with the link.
+
+        Args:
+            folder_id: The folder ID to share.
+
+        Returns:
+            The public shareable URL.
+        """
+        service = self._get_service()
+        permissions = (
+            service.permissions()
+            .list(
+                fileId=folder_id,
+                fields="permissions(id,type,role,allowFileDiscovery)",
+                supportsAllDrives=True,
+            )
+            .execute()
+            .get("permissions", [])
+        )
+
+        public_permission = next(
+            (p for p in permissions if p.get("type") == "anyone"), None
+        )
+
+        if public_permission is None:
+            service.permissions().create(
+                fileId=folder_id,
+                body={"type": "anyone", "role": "reader", "allowFileDiscovery": False},
+                fields="id,type,role",
+                supportsAllDrives=True,
+            ).execute()
+            logger.info("Folder permission changed to: Anyone with the link (Viewer)")
+        else:
+            logger.info(
+                f"Folder already shared as: {public_permission.get('role', 'reader')}"
+            )
+
+        return f"https://drive.google.com/drive/folders/{folder_id}?usp=sharing"
+
+    def get_folder_id_by_path(self, parent_id: str, path_parts: list[str]) -> str:
+        """Lookup or create a folder's ID relative to a parent folder by walking the path parts.
+
+        Args:
+            parent_id: The starting parent folder ID.
+            path_parts: List of directory names to resolve.
+
+        Returns:
+            The ID of the final nested folder.
+        """
+        service = self._get_service()
+        current_parent_id = parent_id
+
+        for part in path_parts:
+            escaped_name = part.replace("\\", "\\\\").replace("'", "\\'")
+            query = (
+                f"name = '{escaped_name}' and '{current_parent_id}' in parents and "
+                "trashed = false and "
+                "(mimeType = 'application/vnd.google-apps.folder' or "
+                "mimeType = 'application/vnd.google-apps.shortcut')"
+            )
+            response = (
+                service.files()
+                .list(
+                    q=query,
+                    spaces="drive",
+                    fields="files(id,name,mimeType,shortcutDetails(targetId,targetMimeType))",
+                    pageSize=10,
+                    supportsAllDrives=True,
+                    includeItemsFromAllDrives=True,
+                )
+                .execute()
+            )
+            matches = response.get("files", [])
+            if not matches:
+                # Create the folder if it does not exist
+                folder_metadata = {
+                    "name": part,
+                    "mimeType": "application/vnd.google-apps.folder",
+                    "parents": [current_parent_id],
+                }
+                new_folder = (
+                    service.files()
+                    .create(body=folder_metadata, fields="id", supportsAllDrives=True)
+                    .execute()
+                )
+                current_parent_id = new_folder["id"]
+            else:
+                item = matches[0]
+                if item["mimeType"] == "application/vnd.google-apps.shortcut":
+                    shortcut = item.get("shortcutDetails", {})
+                    if (
+                        shortcut.get("targetMimeType")
+                        != "application/vnd.google-apps.folder"
+                    ):
+                        raise ValueError(f"Drive shortcut is not a folder: {part}")
+                    current_parent_id = shortcut["targetId"]
+                else:
+                    current_parent_id = item["id"]
+
+        return current_parent_id

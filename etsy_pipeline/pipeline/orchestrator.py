@@ -25,6 +25,7 @@ from etsy_pipeline.utils.exceptions import PipelineError
 from etsy_pipeline.utils.logging import get_logger, setup_logging
 from etsy_pipeline.workers.bg_removal_worker import BackgroundRemovalWorker
 from etsy_pipeline.workers.image_worker import ImageWorker
+from etsy_pipeline.workers.mockup_worker import MockupWorker
 from etsy_pipeline.workers.prompt_worker import PromptWorker
 from etsy_pipeline.workers.upscale_worker import UpscaleWorker
 
@@ -84,9 +85,9 @@ class Pipeline:
         self._image_worker = ImageWorker(settings=self._settings)
         self._bg_removal_worker = BackgroundRemovalWorker(settings=self._settings)
         self._upscale_worker = UpscaleWorker(settings=self._settings)
+        self._mockup_worker = MockupWorker(settings=self._settings)
 
         # Future workers (uncomment as modules are built):
-        # self._mockup_worker = MockupWorker(settings=self._settings)
         # self._metadata_worker = MetadataWorker(settings=self._settings)
         # self._csv_worker = CSVWorker(settings=self._settings)
         # self._etsy_worker = EtsyWorker(settings=self._settings)
@@ -120,7 +121,7 @@ class Pipeline:
             ("image_generation", self._image_worker),
             ("bg_removal", self._bg_removal_worker),
             ("upscaling", self._upscale_worker),
-            # ("mockups", self._mockup_worker),
+            ("mockups", self._mockup_worker),
             # ("metadata_generation", self._metadata_worker),
             # ("csv_generation", self._csv_worker),
             # ("etsy_upload", self._etsy_worker),
@@ -183,8 +184,10 @@ class Pipeline:
         """
         worker_map: dict[str, Worker] = {
             "prompt_generation": self._prompt_worker,
-            # "image_generation": self._image_worker,
-            # ... future workers
+            "image_generation": self._image_worker,
+            "bg_removal": self._bg_removal_worker,
+            "upscaling": self._upscale_worker,
+            "mockups": self._mockup_worker,
         }
 
         worker = worker_map.get(stage_name)

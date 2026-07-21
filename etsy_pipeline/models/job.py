@@ -204,6 +204,14 @@ class Job(BaseModel):
         default_factory=list,
         description="Paths to generated mockup images",
     )
+    pdf_path: str | None = Field(
+        default=None,
+        description="Local path to the generated clickable PDF wrapper",
+    )
+    pdf_drive_link: str | None = Field(
+        default=None,
+        description="Public Google Drive link for the upscaled clipart files",
+    )
 
     # Metadata Generation
     metadata: dict[str, Any] = Field(
