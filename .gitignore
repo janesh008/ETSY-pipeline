@@ -48,7 +48,6 @@ output/
 
 # Sibling repositories — ignored so this repo is only for etsy_pipeline
 /ETSY_main_colab/
-/etsy mockup creator/
 
 # Credentials / Keys — NEVER commit these
 *.json

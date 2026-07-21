@@ -7,7 +7,7 @@ name = "etsy-pipeline"
 version = "0.1.0"
 description = "Production-grade Etsy asset generation pipeline for Pixel Bar Studio"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 license = {text = "MIT"}
 
 dependencies = [
@@ -50,7 +50,7 @@ markers = [
 # Ruff — lint + format (Black-compatible, replaces flake8/isort/pyupgrade)
 # ---------------------------------------------------------------------------
 [tool.ruff]
-target-version = "py310"
+target-version = "py312"
 line-length = 88
 # Exclude generated artifacts and legacy colab code from linting
 exclude = [
@@ -85,7 +85,7 @@ skip-magic-trailing-comma = false
 # mypy — static type checking (warn-only initially; tighten per workstream)
 # ---------------------------------------------------------------------------
 [tool.mypy]
-python_version = "3.10"
+python_version = "3.12"
 # Warn-only mode: surface issues but don't block CI yet
 warn_return_any = true
 warn_unused_configs = true
