@@ -137,6 +137,8 @@ class ImageWorker:
         generated: list[str] = []
         failed_count: int = 0
 
+        section_counters: dict[str, int] = {}
+
         from tqdm import tqdm
 
         with tqdm(
@@ -146,8 +148,13 @@ class ImageWorker:
             dynamic_ncols=True,
         ) as pbar:
             for idx, (section, prompt_text) in enumerate(all_prompts, start=1):
+                # Format filename per section counter (e.g. Thomas_and_Friends_MAIN_CHARACTER_001.png)
+                sec_count = section_counters.get(section, 0) + 1
+                section_counters[section] = sec_count
+                formatted_filename = f"{job.theme_slug}_{section}_{sec_count:03d}.png"
+
                 logger.info(
-                    f"[image_worker] [{idx}/{total}] {section}: {prompt_text[:80]}..."
+                    f"[image_worker] [{idx}/{total}] {section} (#{sec_count:03d}) → {formatted_filename}"
                 )
 
                 # Build workflow for this prompt
@@ -158,14 +165,14 @@ class ImageWorker:
                 for attempt in range(1, COMFYUI_MAX_RETRIES + 1):
                     try:
                         prompt_id = self._submit_prompt(prompt_workflow)
-                        image_bytes, filename = self._wait_for_output(prompt_id)
-                        image_path = output_dir / f"{idx:04d}_{filename}"
+                        image_bytes, _raw_filename = self._wait_for_output(prompt_id)
+                        image_path = output_dir / formatted_filename
                         image_path.write_bytes(image_bytes)
                         break
                     except Exception as exc:
                         logger.warning(
                             f"[image_worker] Attempt {attempt}/{COMFYUI_MAX_RETRIES} failed "
-                            f"for prompt #{idx}: {exc}"
+                            f"for prompt #{idx} ({formatted_filename}): {exc}"
                         )
                         if attempt == COMFYUI_MAX_RETRIES:
                             logger.error(
