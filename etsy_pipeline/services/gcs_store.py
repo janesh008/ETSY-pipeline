@@ -186,7 +186,7 @@ class GCSStore:
         """
         blob = self._bucket.blob(gcs_object_path)
         try:
-            return blob.download_as_text(encoding=encoding)
+            return str(blob.download_as_text(encoding=encoding))
         except Exception as exc:
             raise RuntimeError(
                 f"[gcs] Download-as-text failed for gs://{self._bucket_name}/{gcs_object_path}: {exc}"
@@ -245,7 +245,7 @@ class GCSStore:
         Returns:
             True if the object exists, False otherwise.
         """
-        return self._bucket.blob(gcs_object_path).exists()
+        return bool(self._bucket.blob(gcs_object_path).exists())
 
     def list_objects(self, gcs_prefix: str) -> list[str]:
         """List all object paths under a GCS prefix.
