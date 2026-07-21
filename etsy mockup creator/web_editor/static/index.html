@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Automated Etsy Mockup Generator — Visual Canvas Editor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- App Header -->
+  <header class="app-header">
+    <div class="header-logo">
+      <span class="logo-icon">✨</span>
+      <h1>Etsy Mockup Editor</h1>
+    </div>
+    
+    <div class="header-center">
+      <div class="template-selector">
+        <label for="template-select">Template:</label>
+        <select id="template-select">
+          <option value="">-- Select Template --</option>
+        </select>
+      </div>
+      <span class="divider">|</span>
+      <div class="template-name-container">
+        <input type="text" id="template-name" placeholder="Template Name" title="Change template display name">
+      </div>
+    </div>
+    
+    <div class="header-actions">
+      <button id="btn-batch-run" class="btn btn-secondary" title="Process multiple themes in one click">⚡ Batch Run</button>
+      <button id="btn-select-folder" class="btn btn-secondary">📁 Load Theme Folder</button>
+      <button id="btn-save-template" class="btn btn-primary">💾 Save Template</button>
+      <button id="btn-generate" class="btn btn-accent">⚡ Generate Preview</button>
+    </div>
+  </header>
+
+  <!-- Main Grid Workspace -->
+  <main class="app-workspace">
+    
+    <!-- LEFT SIDEBAR: Navigation & Image Assets -->
+    <aside class="sidebar-left">
+      <div class="panel-header">
+        <h3>Image Gallery</h3>
+      </div>
+      
+      <div class="folder-navigation">
+        <div class="breadcrumbs" id="gallery-breadcrumbs">
+          <span class="breadcrumb-item active">Theme</span>
+        </div>
+        <button id="btn-gallery-back" class="btn btn-small btn-secondary hidden">&larr; Back</button>
+      </div>
+      
+      <div class="explorer-content">
+        <!-- Subfolders view -->
+        <div id="subfolders-list" class="subfolders-list">
+          <div class="empty-state">
+            <span class="empty-icon">📁</span>
+            <p>Click "Load Theme Folder" in the header to display your PNG categories here.</p>
+          </div>
+        </div>
+        
+        <!-- Image thumbnails view -->
+        <div id="image-thumbnails-grid" class="image-grid hidden"></div>
+      </div>
+    </aside>
+
+    <!-- CENTER AREA: Interactive Canvas Editor -->
+    <section class="canvas-viewport">
+      
+      <!-- Canvas Toolbar (Floating) -->
+      <div class="viewport-toolbar">
+        <div class="btn-group">
+          <button id="btn-add-image" class="btn btn-small" title="Add empty image slot">+ Image</button>
+          <button id="btn-add-text" class="btn btn-small" title="Add new text layer">+ Text</button>
+        </div>
+        <div class="divider-vertical"></div>
+        <div class="btn-group">
+          <button id="btn-move-up" class="btn btn-small" title="Move element layer up in z-order">&uarr;</button>
+          <button id="btn-move-down" class="btn btn-small" title="Move element layer down in z-order">&darr;</button>
+          <button id="btn-duplicate" class="btn btn-small" title="Duplicate selected element">Duplicate</button>
+          <button id="btn-delete" class="btn btn-small btn-danger-text" title="Delete selected element">Delete</button>
+        </div>
+        <div class="divider-vertical"></div>
+        <div class="zoom-controls">
+          <button id="btn-zoom-out" class="btn btn-small btn-icon">&minus;</button>
+          <span id="zoom-lbl">50%</span>
+          <button id="btn-zoom-in" class="btn btn-small btn-icon">&plus;</button>
+          <button id="btn-zoom-fit" class="btn btn-small">Fit</button>
+        </div>
+        <div class="divider-vertical"></div>
+        <div class="grid-controls">
+          <label class="toggle-switch">
+            <input type="checkbox" id="chk-grid" checked>
+            <span class="slider"></span>
+            Grid
+          </label>
+        </div>
+      </div>
+      
+      <!-- Scrollable Canvas Container -->
+      <div class="canvas-container" id="canvas-container-outer">
+        <div class="canvas-wrapper" id="canvas-wrapper">
+          <!-- Checkerboard canvas background -->
+          <div class="checkerboard-bg"></div>
+          
+          <!-- Drawing canvas -->
+          <canvas id="editor-canvas" width="2000" height="2000"></canvas>
+          
+          <!-- Interactive DOM Overlay for handles, crop boundaries, resizing -->
+          <div id="canvas-overlay" class="canvas-overlay">
+            <!-- Bounding Box Indicator -->
+            <div id="selection-box" class="selection-box hidden">
+              <!-- Handles: 8 points -->
+              <div class="resize-handle tl" data-handle="tl"></div>
+              <div class="resize-handle tm" data-handle="tm"></div>
+              <div class="resize-handle tr" data-handle="tr"></div>
+              <div class="resize-handle ml" data-handle="ml"></div>
+              <div class="resize-handle mr" data-handle="mr"></div>
+              <div class="resize-handle bl" data-handle="bl"></div>
+              <div class="resize-handle bm" data-handle="bm"></div>
+              <div class="resize-handle br" data-handle="br"></div>
+              
+              <!-- Edge crop handles (visible in crop mode) -->
+              <div class="crop-handle c-tl hidden"></div>
+              <div class="crop-handle c-tr hidden"></div>
+              <div class="crop-handle c-bl hidden"></div>
+              <div class="crop-handle c-br hidden"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT SIDEBAR: Contextual properties -->
+    <aside class="sidebar-right">
+      <div class="panel-header">
+        <h3>Properties</h3>
+      </div>
+      
+      <div class="properties-content">
+        
+        <!-- ELEMENT SELECTION PLACEHOLDER -->
+        <div id="prop-no-selection" class="properties-section">
+          <h4>Template Settings</h4>
+          <div class="prop-group">
+            <label>Template File</label>
+            <input type="text" id="prop-canvas-file" readonly value="No file loaded" class="disabled">
+          </div>
+          <div class="prop-row">
+            <div class="prop-group">
+              <label>Width</label>
+              <input type="number" id="prop-canvas-w" value="2000">
+            </div>
+            <div class="prop-group">
+              <label>Height</label>
+              <input type="number" id="prop-canvas-h" value="2000">
+            </div>
+          </div>
+          
+          <h4 class="section-title">Background</h4>
+          <div class="prop-group">
+            <label>Type</label>
+            <select id="prop-bg-type">
+              <option value="solid">Solid Color</option>
+              <option value="gradient">Linear Gradient</option>
+              <option value="image">Background Image</option>
+            </select>
+          </div>
+          
+          <!-- Bg Solid section -->
+          <div id="bg-solid-controls" class="prop-group">
+            <label>Color</label>
+            <div class="color-picker-wrapper">
+              <input type="color" id="prop-bg-color" value="#FFFFFF">
+              <input type="text" id="prop-bg-color-hex" value="#FFFFFF" maxlength="7">
+            </div>
+          </div>
+          
+          <!-- Bg Gradient section -->
+          <div id="bg-gradient-controls" class="prop-row hidden">
+            <div class="prop-group">
+              <label>Color Start</label>
+              <div class="color-picker-wrapper">
+                <input type="color" id="prop-bg-grad-start" value="#FFFFFF">
+              </div>
+            </div>
+            <div class="prop-group">
+              <label>Color End</label>
+              <div class="color-picker-wrapper">
+                <input type="color" id="prop-bg-grad-end" value="#CCCCCC">
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- IMAGE PROPERTIES PANEL -->
+        <div id="prop-image-panel" class="properties-section hidden">
+          <h4>Image Element Properties</h4>
+          
+          <h5 class="section-title">Asset Source</h5>
+          <div class="prop-group">
+            <label>Category</label>
+            <select id="prop-img-category">
+              <!-- Default Categories -->
+              <option value="character">character</option>
+              <option value="prop">prop</option>
+              <option value="combo">combo</option>
+              <option value="pattern">pattern</option>
+              <option value="scene">scene</option>
+              <option value="subcharacter">subcharacter</option>
+              <!-- Sub-characters -->
+              <option value="sub_character_1">sub_character_1</option>
+              <option value="sub_character_2">sub_character_2</option>
+              <option value="sub_character_3">sub_character_3</option>
+              <option value="sub_character_4">sub_character_4</option>
+              <option value="sub_character_5">sub_character_5</option>
+              <option value="sub_character_6">sub_character_6</option>
+              <option value="sub_character_7">sub_character_7</option>
+              <option value="sub_character_8">sub_character_8</option>
+              <!-- Combos -->
+              <option value="character_combo_2">character_combo_2</option>
+              <option value="character_combo_3">character_combo_3</option>
+              <option value="character_combo_4">character_combo_4</option>
+              <option value="character_combo_full_group">character_combo_full_group</option>
+              <!-- Patterns -->
+              <option value="pattern_character">pattern_character</option>
+              <option value="pattern_object">pattern_object</option>
+              <option value="pattern_floral">pattern_floral</option>
+              <option value="pattern_geometric">pattern_geometric</option>
+              <!-- Props -->
+              <option value="prop_food">prop_food</option>
+              <option value="prop_vehicle">prop_vehicle</option>
+              <option value="prop_weapon_tool">prop_weapon_tool</option>
+              <option value="prop_flower_nature">prop_flower_nature</option>
+              <option value="prop_party">prop_party</option>
+              <!-- Scenes -->
+              <option value="scene_interior">scene_interior</option>
+              <option value="scene_exterior">scene_exterior</option>
+              <!-- Graphics & Layout Elements -->
+              <option value="logo_emblem">logo_emblem</option>
+              <option value="banner">banner</option>
+              <option value="alphabet_number">alphabet_number</option>
+              <option value="frame_border">frame_border</option>
+              <option value="invitation_element">invitation_element</option>
+            </select>
+          </div>
+          <div class="prop-group">
+            <label>Index offset</label>
+            <input type="number" id="prop-img-index" min="0" value="0">
+          </div>
+          
+          <h5 class="section-title">Transform</h5>
+          <div class="prop-row">
+            <div class="prop-group">
+              <label>X position</label>
+              <input type="number" id="prop-img-x" value="1000">
+            </div>
+            <div class="prop-group">
+              <label>Y position</label>
+              <input type="number" id="prop-img-y" value="1000">
+            </div>
+          </div>
+          <div class="prop-row">
+            <div class="prop-group">
+              <label>Width</label>
+              <input type="number" id="prop-img-w" value="500">
+            </div>
+            <div class="prop-group">
+              <label>Height</label>
+              <input type="number" id="prop-img-h" value="500">
+            </div>
+          </div>
+          <div class="prop-row">
+            <div class="prop-group">
+              <label>Rotation</label>
+              <input type="number" id="prop-img-rot" min="-360" max="360" value="0">
+            </div>
+            <div class="prop-group">
+              <label>Anchor</label>
+              <select id="prop-img-anchor">
+                <option value="center">center</option>
+                <option value="top-left">top-left</option>
+                <option value="top-center">top-center</option>
+              </select>
+            </div>
+          </div>
+          
+          <h5 class="section-title">Visual Crop</h5>
+          <div class="crop-actions">
+            <button id="btn-trigger-crop" class="btn btn-secondary btn-full">✂ Crop Image Layer</button>
+            <div id="crop-active-indicator" class="crop-status-box hidden">
+              <p>Crop mode active. Drag handles or press:</p>
+              <div class="btn-row">
+                <button id="btn-crop-confirm" class="btn btn-small btn-primary">Confirm (Enter)</button>
+                <button id="btn-crop-cancel" class="btn btn-small btn-secondary">Cancel (Esc)</button>
+              </div>
+            </div>
+          </div>
+          
+          <h5 class="section-title">Visual Effects</h5>
+          <!-- Outline toggle -->
+          <div class="effect-header-row">
+            <label class="checkbox-container">
+              <input type="checkbox" id="chk-effect-outline">
+              <span class="checkmark"></span>
+              Outline Border
+            </label>
+          </div>
+          <div id="outline-settings-sub" class="effect-sub-controls hidden">
+            <div class="prop-row">
+              <div class="prop-group">
+                <label>Width</label>
+                <input type="number" id="prop-ol-width" min="1" max="100" value="10">
+              </div>
+              <div class="prop-group">
+                <label>Color</label>
+                <div class="color-picker-wrapper">
+                  <input type="color" id="prop-ol-color" value="#FFFFFF">
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Shadow toggle -->
+          <div class="effect-header-row">
+            <label class="checkbox-container">
+              <input type="checkbox" id="chk-effect-shadow">
+              <span class="checkmark"></span>
+              Drop Shadow
+            </label>
+          </div>
+          <div id="shadow-settings-sub" class="effect-sub-controls hidden">
+            <div class="prop-row">
+              <div class="prop-group">
+                <label>Blur</label>
+                <input type="number" id="prop-sh-blur" min="0" max="100" value="15">
+              </div>
+              <div class="prop-group">
+                <label>Color</label>
+                <div class="color-picker-wrapper">
+                  <input type="color" id="prop-sh-color" value="#000000">
+                </div>
+              </div>
+            </div>
+            <div class="prop-row">
+              <div class="prop-group">
+                <label>Offset X</label>
+                <input type="number" id="prop-sh-dx" value="10">
+              </div>
+              <div class="prop-group">
+                <label>Offset Y</label>
+                <input type="number" id="prop-sh-dy" value="10">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TEXT PROPERTIES PANEL -->
+        <div id="prop-text-panel" class="properties-section hidden">
+          <h4>Text Element Properties</h4>
+          
+          <div class="prop-group">
+            <label>Text Content</label>
+            <textarea id="prop-text-content" rows="3" placeholder="Enter text here..."></textarea>
+            <span class="info-tip">Supports `{theme_name}` interpolation.</span>
+          </div>
+          
+          <h5 class="section-title">Typography</h5>
+          <div class="prop-group">
+            <label>Font Library (Canva-like)</label>
+            <div class="searchable-select">
+              <input type="text" id="font-search" placeholder="Search fonts (e.g. Montserrat, Playfair)...">
+              <select id="prop-text-font" size="5" class="font-dropdown-list">
+                <optgroup label="Sans-Serif">
+                  <option value="Outfit-Regular">Outfit Regular</option>
+                  <option value="Outfit-Bold">Outfit Bold</option>
+                  <option value="Inter-Regular">Inter Regular</option>
+                  <option value="Inter-Bold">Inter Bold</option>
+                  <option value="Roboto-Regular">Roboto Regular</option>
+                  <option value="Roboto-Bold">Roboto Bold</option>
+                  <option value="Montserrat-Regular">Montserrat Regular</option>
+                  <option value="Montserrat-Bold">Montserrat Bold</option>
+                  <option value="OpenSans-Regular">Open Sans Regular</option>
+                  <option value="OpenSans-Bold">Open Sans Bold</option>
+                </optgroup>
+                <optgroup label="Serif">
+                  <option value="PlayfairDisplay-Regular">Playfair Display Regular</option>
+                  <option value="PlayfairDisplay-Bold">Playfair Display Bold</option>
+                  <option value="Merriweather-Regular">Merriweather Regular</option>
+                  <option value="Merriweather-Bold">Merriweather Bold</option>
+                  <option value="Lora-Regular">Lora Regular</option>
+                  <option value="Lora-Bold">Lora Bold</option>
+                  <option value="Cinzel-Regular">Cinzel Regular</option>
+                  <option value="Cinzel-Bold">Cinzel Bold</option>
+                </optgroup>
+                <optgroup label="Display / Decorative">
+                  <option value="FredokaOne-Regular">Fredoka One Regular</option>
+                  <option value="FredokaOne-Bold">Fredoka One Bold</option>
+                  <option value="Lobster-Regular">Lobster Regular</option>
+                  <option value="Lobster-Bold">Lobster Bold</option>
+                  <option value="BebasNeue-Regular">Bebas Neue Regular</option>
+                  <option value="BebasNeue-Bold">Bebas Neue Bold</option>
+                  <option value="Pacifico-Regular">Pacifico Regular</option>
+                  <option value="Pacifico-Bold">Pacifico Bold</option>
+                </optgroup>
+                <optgroup label="Handwritten / Script">
+                  <option value="Caveat-Regular">Caveat Regular</option>
+                  <option value="Caveat-Bold">Caveat Bold</option>
+                  <option value="DancingScript-Regular">Dancing Script Regular</option>
+                  <option value="DancingScript-Bold">Dancing Script Bold</option>
+                </optgroup>
+                <optgroup label="Comic / Fun">
+                  <option value="COMIC">Comic Sans MS</option>
+                  <option value="ComicSansMS3">Comic Sans MS 3</option>
+                  <option value="comici">Comic Sans Italic</option>
+                  <option value="comicz">Comic Sans Bold Italic</option>
+                  <option value="design.graffiti.comicsansms">Comic Graffiti</option>
+                  <option value="design.graffiti.comicsansmsgras">Comic Graffiti Bold</option>
+                </optgroup>
+              </select>
+            </div>
+          </div>
+          
+          <div class="prop-row">
+            <div class="prop-group">
+              <label>Font Size (px)</label>
+              <input type="number" id="prop-text-size" min="6" value="72">
+            </div>
+            <div class="prop-group">
+              <label>Text Color</label>
+              <div class="color-picker-wrapper">
+                <input type="color" id="prop-text-color" value="#000000">
+                <input type="text" id="prop-text-color-hex" value="#000000" maxlength="7">
+              </div>
+            </div>
+          </div>
+          
+          <h5 class="section-title">Text Layout</h5>
+          <div class="prop-row">
+            <div class="prop-group">
+              <label>Align</label>
+              <select id="prop-text-align">
+                <option value="left">Left</option>
+                <option value="center">Center</option>
+                <option value="right">Right</option>
+              </select>
+            </div>
+            <div class="prop-group">
+              <label>Anchor</label>
+              <select id="prop-text-anchor">
+                <option value="center">center</option>
+                <option value="top-left">top-left</option>
+                <option value="top-center">top-center</option>
+              </select>
+            </div>
+          </div>
+          <div class="prop-row">
+            <div class="prop-group">
+              <label>X coordinates</label>
+              <input type="number" id="prop-text-x" value="1000">
+            </div>
+            <div class="prop-group">
+              <label>Y coordinates</label>
+              <input type="number" id="prop-text-y" value="1000">
+            </div>
+          </div>
+          <div class="prop-group">
+            <label>Max Width (0 = unwrapped)</label>
+            <input type="number" id="prop-text-maxw" value="0" min="0">
+          </div>
+        </div>
+
+      </div>
+    </aside>
+  </main>
+
+  <!-- GENERATION PREVIEW SCREEN OVERLAY MODAL -->
+  <div id="modal-preview" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>⚡ Mockup Preview Output</h3>
+        <button id="modal-preview-close" class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="preview-output-container">
+          <img id="preview-output-img" src="" alt="Output Mockup PNG Preview">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <p id="preview-path" class="path-snippet"></p>
+        <button id="modal-preview-ok" class="btn btn-primary">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main JavaScript App Entrypoint -->
+  <script src="app.js"></script>
+</body>
+</html>
