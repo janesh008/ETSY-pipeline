@@ -56,4 +56,6 @@ output/
 !.repo-graph/graph.json
 !.pre-commit-config.yaml
 !etsy_pipeline/resources/image_z_image_turbo1.json
+!cred/client_secret.json
+!cred/token.json
 
