@@ -137,61 +137,73 @@ class ImageWorker:
         generated: list[str] = []
         failed_count: int = 0
 
-        for idx, (section, prompt_text) in enumerate(all_prompts, start=1):
-            logger.info(
-                f"[image_worker] [{idx}/{total}] {section}: {prompt_text[:80]}..."
-            )
+        from tqdm import tqdm
 
-            # Build workflow for this prompt
-            prompt_workflow = self._inject_prompt(workflow, prompt_text)
+        with tqdm(
+            total=total,
+            desc=f"🎨 Generating '{job.theme}'",
+            unit="img",
+            dynamic_ncols=True,
+        ) as pbar:
+            for idx, (section, prompt_text) in enumerate(all_prompts, start=1):
+                logger.info(
+                    f"[image_worker] [{idx}/{total}] {section}: {prompt_text[:80]}..."
+                )
 
-            # Submit to ComfyUI with retries
-            image_path: Path | None = None
-            for attempt in range(1, COMFYUI_MAX_RETRIES + 1):
-                try:
-                    prompt_id = self._submit_prompt(prompt_workflow)
-                    image_bytes, filename = self._wait_for_output(prompt_id)
-                    image_path = output_dir / f"{idx:04d}_{filename}"
-                    image_path.write_bytes(image_bytes)
-                    break
-                except Exception as exc:
-                    logger.warning(
-                        f"[image_worker] Attempt {attempt}/{COMFYUI_MAX_RETRIES} failed "
-                        f"for prompt #{idx}: {exc}"
-                    )
-                    if attempt == COMFYUI_MAX_RETRIES:
-                        logger.error(
-                            f"[image_worker] Giving up on prompt #{idx} after {COMFYUI_MAX_RETRIES} attempts"
+                # Build workflow for this prompt
+                prompt_workflow = self._inject_prompt(workflow, prompt_text)
+
+                # Submit to ComfyUI with retries
+                image_path: Path | None = None
+                for attempt in range(1, COMFYUI_MAX_RETRIES + 1):
+                    try:
+                        prompt_id = self._submit_prompt(prompt_workflow)
+                        image_bytes, filename = self._wait_for_output(prompt_id)
+                        image_path = output_dir / f"{idx:04d}_{filename}"
+                        image_path.write_bytes(image_bytes)
+                        break
+                    except Exception as exc:
+                        logger.warning(
+                            f"[image_worker] Attempt {attempt}/{COMFYUI_MAX_RETRIES} failed "
+                            f"for prompt #{idx}: {exc}"
                         )
-                        failed_count += 1
-                        continue
-                    time.sleep(2.0 * attempt)
+                        if attempt == COMFYUI_MAX_RETRIES:
+                            logger.error(
+                                f"[image_worker] Giving up on prompt #{idx} after {COMFYUI_MAX_RETRIES} attempts"
+                            )
+                            failed_count += 1
+                            continue
+                        time.sleep(2.0 * attempt)
 
-            if image_path and image_path.exists():
-                generated.append(str(image_path))
+                if image_path and image_path.exists():
+                    generated.append(str(image_path))
 
-                # Upload to GCS
-                theme_slug = job.theme.replace(" ", "_").replace("&", "and")
-                try:
-                    gcs = self._get_gcs()
-                    if gcs:
-                        gcs_path = gcs.make_image_path(
-                            "raw_images", job.date_folder, theme_slug, image_path.name
+                    # Upload to GCS
+                    theme_slug = job.theme.replace(" ", "_").replace("&", "and")
+                    try:
+                        gcs = self._get_gcs()
+                        if gcs:
+                            gcs_path = gcs.make_image_path(
+                                "raw_images",
+                                job.date_folder,
+                                theme_slug,
+                                image_path.name,
+                            )
+                            gcs.upload_file(image_path, gcs_path)
+                    except Exception as exc:
+                        logger.warning(
+                            f"[image_worker] GCS upload failed for {image_path.name}: {exc}"
                         )
-                        gcs.upload_file(image_path, gcs_path)
-                except Exception as exc:
-                    logger.warning(
-                        f"[image_worker] GCS upload failed for {image_path.name}: {exc}"
-                    )
 
-            # Flush progress to Firestore every N images
-            if idx % _PROGRESS_FLUSH_EVERY == 0 or idx == total:
+                # Update terminal progress bar
                 elapsed_hours = (datetime.now(UTC) - start_time).total_seconds() / 3600
                 cost = round(elapsed_hours * GPU_VM_HOURLY_RATE_USD, 4)
-                self._push_progress(job, idx, total, cost, gpu_hours=elapsed_hours)
-                logger.info(
-                    f"[image_worker] Progress: {idx}/{total} images | ${cost:.4f}"
-                )
+                pbar.update(1)
+                pbar.set_postfix({"done": f"{idx}/{total}", "cost": f"${cost:.4f}"})
+
+                # Flush progress to MongoDB every N images
+                if idx % _PROGRESS_FLUSH_EVERY == 0 or idx == total:
+                    self._push_progress(job, idx, total, cost, gpu_hours=elapsed_hours)
 
         # Final cost
         elapsed_hours = (datetime.now(UTC) - start_time).total_seconds() / 3600

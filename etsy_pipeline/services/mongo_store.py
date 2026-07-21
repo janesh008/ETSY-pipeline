@@ -195,10 +195,10 @@ class MongoJobStore:
         """
         from pymongo import ReturnDocument  # type: ignore[import-untyped]
 
-        # Build the atomic match query
+        # Build the atomic match query (allows claiming both PENDING and FAILED stages)
         query: dict[str, Any] = {
             "job_id": job_id,
-            f"stages.{stage_name}.status": "PENDING",
+            f"stages.{stage_name}.status": {"$in": ["PENDING", "FAILED"]},
         }
 
         # Check prerequisite in the atomic query if it exists
@@ -234,21 +234,22 @@ class MongoJobStore:
     # ------------------------------------------------------------------
 
     def list_jobs_by_stage_status(
-        self, stage_name: str, status: str, limit: int = 50
+        self, stage_name: str, status: str | list[str], limit: int = 50
     ) -> list[dict[str, Any]]:
-        """Return raw MongoDB documents for jobs where a stage has a given status.
+        """Return raw MongoDB documents for jobs where a stage has a given status (or list of statuses).
 
         Args:
             stage_name: Stage field to filter on (e.g. ``"image_generation"``).
-            status: Status string to match (e.g. ``"PENDING"``).
+            status: Status string or list of status strings to match (e.g. ``"PENDING"`` or ``["PENDING", "FAILED"]``).
             limit: Maximum number of documents to return.
 
         Returns:
             List of raw document dicts (job data).
         """
-        cursor = self._collection.find({f"stages.{stage_name}.status": status}).limit(
-            limit
-        )
+        status_filter = {"$in": status} if isinstance(status, list) else status
+        cursor = self._collection.find(
+            {f"stages.{stage_name}.status": status_filter}
+        ).limit(limit)
 
         # Convert cursor to list and remove MongoDB's internal _id to match dict shape
         results = []

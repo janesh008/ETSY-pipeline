@@ -17,9 +17,9 @@ _PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 
-from etsy_pipeline.config.settings import get_settings
-from etsy_pipeline.services.gcs_store import GCSStore
-from etsy_pipeline.utils.logging import get_logger, setup_logging
+from etsy_pipeline.config.settings import get_settings  # noqa: E402
+from etsy_pipeline.services.gcs_store import GCSStore  # noqa: E402
+from etsy_pipeline.utils.logging import get_logger, setup_logging  # noqa: E402
 
 logger = get_logger(__name__)
 
@@ -45,14 +45,14 @@ def main() -> None:
     # 2. Upload using GCSStore
     try:
         gcs = GCSStore(settings=settings)
-        
+
         # Build canonical path: Clipart/<date>/<theme>/<theme>.txt
         gcs_path = GCSStore.make_prompt_path("2026-07-20", "test_theme")
         logger.info(f"Uploading file to destination path: {gcs_path}")
-        
+
         gcs_uri = gcs.upload_file(test_file, gcs_path)
         logger.info(f"[SUCCESS] Upload completed! GCS URI: {gcs_uri}")
-        
+
     except Exception as exc:
         logger.error(f"[FAIL] Upload failed: {exc}")
         sys.exit(1)

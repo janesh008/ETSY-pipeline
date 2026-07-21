@@ -162,7 +162,7 @@ def run_daemon_mode(settings: object) -> None:
     worker = ImageWorker(settings=settings, mongo_store=store)  # type: ignore[arg-type]
 
     logger.info(
-        "[run_image_worker] Daemon mode started — polling MongoDB for PENDING jobs..."
+        "[run_image_worker] Daemon mode started — polling MongoDB for PENDING/FAILED jobs..."
     )
     logger.info(
         f"[run_image_worker] Poll interval: {_POLL_INTERVAL}s. Press Ctrl+C to stop."
@@ -171,12 +171,12 @@ def run_daemon_mode(settings: object) -> None:
     while True:
         try:
             pending_docs = store.list_jobs_by_stage_status(
-                "image_generation", "PENDING", limit=5
+                "image_generation", ["PENDING", "FAILED"], limit=5
             )
 
             if not pending_docs:
                 logger.debug(
-                    "[run_image_worker] No PENDING image_generation jobs. Waiting..."
+                    "[run_image_worker] No PENDING or FAILED image_generation jobs. Waiting..."
                 )
                 time.sleep(_POLL_INTERVAL)
                 continue
