@@ -56,10 +56,17 @@ Every stage transitions the corresponding worker's `StageResult` status in the `
 
 ## 💾 Distributed State Management (MongoDB)
 
-To support multiple VMs processing the same pipeline (e.g., a Prompt Generation VM and a GPU VM for image generation), the `Job` state is persisted to a central **MongoDB** database via the `MongoJobStore`. 
+To support multiple VMs processing the same pipeline (e.g., a Prompt Generation VM, a GPU Image Worker VM, and a Background Removal Worker VM), the `Job` state is persisted to a central **MongoDB** database via the `MongoJobStore`. 
 
-- **Atomic Claims**: GPU workers use MongoDB's `find_one_and_update` to safely lock `PENDING` stages across distributed instances.
-- **Live Progress**: Long-running workers (like `image_worker`) push live progress updates (e.g. `images_done` and `cost_usd`) back to MongoDB incrementally.
+- **Atomic Claims**: GPU workers use MongoDB's `find_one_and_update` to safely lock `PENDING` or `FAILED` stages across distributed instances.
+- **Live Progress**: Long-running workers (like `image_worker` and `bg_removal_worker`) push live progress updates (e.g. `images_done` and `cost_usd`) back to MongoDB incrementally.
+
+## 🧹 GCS Storage Optimization (Post-Stage Cleanup)
+
+To keep GCS storage costs minimal:
+- **`raw_images/`**: Uploaded during `image_generation` stage under `misc_category/` and `pattern_scene_bonus_category/`.
+- **`no_bg/`**: Generated during `bg_removal` stage (`rembg isnet-general-use` for `misc_category`, direct copy for `pattern_scene_bonus_category`).
+- **Purge Action**: Immediately upon completion of `bg_removal`, the worker calls `gcs.delete_prefix("Clipart/<date>/<theme_slug>/raw_images/")` to purge the raw image files from GCS, retaining only the transparent `no_bg/` PNGs.
 
 ---
 

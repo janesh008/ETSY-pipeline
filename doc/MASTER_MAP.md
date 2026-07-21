@@ -29,8 +29,14 @@ Use these links to jump directly to any directory or file in the codebase:
         *   [**📁 workers/**](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/workers) — Pipeline stage implementations.
             *   [📄 prompt_worker.py](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/workers/prompt_worker.py) — Clipart prompt generation.
             *   [📄 prompt_worker_config.py](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/workers/prompt_worker_config.py) — Rules for prompt parsing.
+            *   [📄 image_worker.py](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/workers/image_worker.py) — GPU image generation via ComfyUI.
+            *   [📄 image_worker_config.py](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/workers/image_worker_config.py) — ComfyUI node constants.
+            *   [📄 bg_removal_worker.py](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/workers/bg_removal_worker.py) — AI background removal via rembg.
+            *   [📄 bg_removal_worker_config.py](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/workers/bg_removal_worker_config.py) — Background removal constants.
     *   [**📁 scripts/**](file:///d:/Janesh/ETSY/ETSY-pipeline/scripts) — Runnable CLI commands.
         *   [📄 run_prompts.py](file:///d:/Janesh/ETSY/ETSY-pipeline/scripts/run_prompts.py) — CLI command to run prompt stage.
+        *   [📄 run_image_worker.py](file:///d:/Janesh/ETSY/ETSY-pipeline/scripts/run_image_worker.py) — CLI runner for image generation daemon.
+        *   [📄 run_bg_removal_worker.py](file:///d:/Janesh/ETSY/ETSY-pipeline/scripts/run_bg_removal_worker.py) — CLI runner for background removal daemon.
         *   [📄 build_graph.py](file:///d:/Janesh/ETSY/ETSY-pipeline/scripts/build_graph.py) — Code graph generator.
     *   [**📁 tests/**](file:///d:/Janesh/ETSY/ETSY-pipeline/tests) — Automated test suite.
         *   [📄 test_prompt_worker.py](file:///d:/Janesh/ETSY/ETSY-pipeline/tests/test_prompt_worker.py) — Unit/Integration tests.
