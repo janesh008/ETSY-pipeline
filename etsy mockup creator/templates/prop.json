@@ -1,0 +1,132 @@
+{
+  "background": {
+    "color": "#ffffff",
+    "color_end": "#E8E5DF",
+    "color_start": "#F8F7F4",
+    "type": "solid"
+  },
+  "canvas_size": [
+    2000,
+    2000
+  ],
+  "elements": [
+    {
+      "anchor": "center",
+      "height": 666,
+      "rotation": 0,
+      "source": {
+        "category": "prop",
+        "index": 0
+      },
+      "type": "image",
+      "width": 666,
+      "x": 331,
+      "y": 332
+    },
+    {
+      "anchor": "center",
+      "height": 666,
+      "rotation": 0,
+      "source": {
+        "category": "prop",
+        "index": 1
+      },
+      "type": "image",
+      "width": 666,
+      "x": 995,
+      "y": 999
+    },
+    {
+      "anchor": "center",
+      "height": 666,
+      "rotation": 0,
+      "source": {
+        "category": "prop",
+        "index": 2
+      },
+      "type": "image",
+      "width": 666,
+      "x": 993,
+      "y": 334
+    },
+    {
+      "anchor": "center",
+      "height": 666,
+      "rotation": 0,
+      "source": {
+        "category": "prop",
+        "index": 3
+      },
+      "type": "image",
+      "width": 666,
+      "x": 328,
+      "y": 1659
+    },
+    {
+      "anchor": "center",
+      "height": 666,
+      "rotation": 0,
+      "source": {
+        "category": "prop",
+        "index": 4
+      },
+      "type": "image",
+      "width": 666,
+      "x": 1662,
+      "y": 336
+    },
+    {
+      "anchor": "center",
+      "height": 666,
+      "rotation": 0,
+      "source": {
+        "category": "prop",
+        "index": 5
+      },
+      "type": "image",
+      "width": 666,
+      "x": 334,
+      "y": 995
+    },
+    {
+      "anchor": "center",
+      "height": 666,
+      "rotation": 0,
+      "source": {
+        "category": "prop",
+        "index": 7
+      },
+      "type": "image",
+      "width": 666,
+      "x": 1662,
+      "y": 1004
+    },
+    {
+      "anchor": "center",
+      "height": 666,
+      "rotation": 0,
+      "source": {
+        "category": "prop",
+        "index": 10
+      },
+      "type": "image",
+      "width": 666,
+      "x": 995,
+      "y": 1665
+    },
+    {
+      "anchor": "center",
+      "height": 666,
+      "rotation": 0,
+      "source": {
+        "category": "prop",
+        "index": 11
+      },
+      "type": "image",
+      "width": 666,
+      "x": 1662,
+      "y": 1662
+    }
+  ],
+  "name": "prop Showcase"
+}

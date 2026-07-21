@@ -1,0 +1,319 @@
+{
+  "background": {
+    "color": "#FFFFFF",
+    "type": "solid"
+  },
+  "canvas_size": [
+    2000,
+    2000
+  ],
+  "elements": [
+    {
+      "align": "center",
+      "anchor": "center",
+      "color": "#000000",
+      "content": "{bundle_count} ",
+      "font_family": "design.graffiti.comicsansmsgras",
+      "font_size": 88,
+      "type": "text",
+      "x": 1023,
+      "y": 851
+    },
+    {
+      "align": "center",
+      "anchor": "center",
+      "color": "#8c3131",
+      "content": "{theme_name_title}",
+      "font_family": "design.graffiti.comicsansmsgras",
+      "font_size": 100,
+      "type": "text",
+      "x": 1000,
+      "y": 1067
+    },
+    {
+      "anchor": "center",
+      "height": 400,
+      "rotation": 0,
+      "source": {
+        "category": "character",
+        "index": 0
+      },
+      "type": "image",
+      "width": 400,
+      "x": 210,
+      "y": 1709
+    },
+    {
+      "anchor": "center",
+      "height": 420,
+      "rotation": 0,
+      "source": {
+        "category": "character",
+        "index": 2
+      },
+      "type": "image",
+      "width": 420,
+      "x": 1162,
+      "y": 1742
+    },
+    {
+      "anchor": "center",
+      "height": 561,
+      "rotation": 0,
+      "source": {
+        "category": "character",
+        "index": 9
+      },
+      "type": "image",
+      "width": 561,
+      "x": 243,
+      "y": 260
+    },
+    {
+      "anchor": "center",
+      "height": 573,
+      "rotation": 0,
+      "source": {
+        "category": "character",
+        "index": 19
+      },
+      "type": "image",
+      "width": 573,
+      "x": 1710,
+      "y": 279
+    },
+    {
+      "anchor": "center",
+      "height": 338,
+      "rotation": 0,
+      "source": {
+        "category": "prop",
+        "index": 28
+      },
+      "type": "image",
+      "width": 338,
+      "x": 719,
+      "y": 1349
+    },
+    {
+      "anchor": "center",
+      "height": 464,
+      "rotation": 0,
+      "source": {
+        "category": "character",
+        "index": 29
+      },
+      "type": "image",
+      "width": 464,
+      "x": 1782,
+      "y": 1108
+    },
+    {
+      "anchor": "center",
+      "height": 254,
+      "rotation": 0,
+      "source": {
+        "category": "character_combo_2",
+        "index": 59
+      },
+      "type": "image",
+      "width": 254,
+      "x": 630,
+      "y": 587
+    },
+    {
+      "anchor": "center",
+      "height": 269,
+      "rotation": 0,
+      "source": {
+        "category": "character_combo_2",
+        "index": 76
+      },
+      "type": "image",
+      "width": 269,
+      "x": 1752,
+      "y": 703
+    },
+    {
+      "anchor": "center",
+      "height": 172,
+      "rotation": 0,
+      "source": {
+        "category": "prop",
+        "index": 80
+      },
+      "type": "image",
+      "width": 179,
+      "x": 1170,
+      "y": 639
+    },
+    {
+      "anchor": "center",
+      "height": 498,
+      "rotation": 0,
+      "source": {
+        "category": "character_combo_2",
+        "index": 49
+      },
+      "type": "image",
+      "width": 498,
+      "x": 1163,
+      "y": 238
+    },
+    {
+      "anchor": "center",
+      "height": 347,
+      "rotation": 0,
+      "source": {
+        "category": "character",
+        "index": 43
+      },
+      "type": "image",
+      "width": 347,
+      "x": 751,
+      "y": 1754
+    },
+    {
+      "anchor": "center",
+      "height": 561,
+      "rotation": 0,
+      "source": {
+        "category": "character",
+        "index": 44
+      },
+      "type": "image",
+      "width": 561,
+      "x": 1669,
+      "y": 1689
+    },
+    {
+      "anchor": "center",
+      "height": 494,
+      "rotation": 0,
+      "source": {
+        "category": "character_combo_2",
+        "index": 45
+      },
+      "type": "image",
+      "width": 494,
+      "x": 281,
+      "y": 1236
+    },
+    {
+      "anchor": "center",
+      "height": 400,
+      "rotation": 0,
+      "source": {
+        "category": "character",
+        "index": 35
+      },
+      "type": "image",
+      "width": 400,
+      "x": 206,
+      "y": 763
+    },
+    {
+      "anchor": "center",
+      "height": 194,
+      "rotation": 0,
+      "source": {
+        "category": "prop",
+        "index": 67
+      },
+      "type": "image",
+      "width": 194,
+      "x": 517,
+      "y": 807
+    },
+    {
+      "anchor": "center",
+      "height": 179,
+      "rotation": 0,
+      "source": {
+        "category": "character_combo_2",
+        "index": 71
+      },
+      "type": "image",
+      "width": 179,
+      "x": 496,
+      "y": 1697
+    },
+    {
+      "anchor": "center",
+      "height": 400,
+      "rotation": 0,
+      "source": {
+        "category": "character_combo_2",
+        "index": 74
+      },
+      "type": "image",
+      "width": 400,
+      "x": 1114,
+      "y": 1349
+    },
+    {
+      "anchor": "center",
+      "height": 400,
+      "rotation": 0,
+      "source": {
+        "category": "character_combo_2",
+        "index": 51
+      },
+      "type": "image",
+      "width": 400,
+      "x": 716,
+      "y": 200
+    },
+    {
+      "anchor": "center",
+      "height": 299,
+      "rotation": 0,
+      "source": {
+        "category": "character",
+        "index": 26
+      },
+      "type": "image",
+      "width": 299,
+      "x": 916,
+      "y": 640
+    },
+    {
+      "anchor": "center",
+      "height": 272,
+      "rotation": 0,
+      "source": {
+        "category": "prop",
+        "index": 73
+      },
+      "type": "image",
+      "width": 272,
+      "x": 1429,
+      "y": 695
+    },
+    {
+      "anchor": "center",
+      "height": 254,
+      "rotation": 0,
+      "source": {
+        "category": "prop",
+        "index": 78
+      },
+      "type": "image",
+      "width": 254,
+      "x": 1448,
+      "y": 1255
+    },
+    {
+      "align": "center",
+      "anchor": "center",
+      "color": "#000000",
+      "content": "Premium PNGs",
+      "font_family": "design.graffiti.comicsansmsgras",
+      "font_size": 72,
+      "type": "text",
+      "x": 1022,
+      "y": 945
+    }
+  ],
+  "name": "New Template"
+}
