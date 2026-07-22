@@ -214,8 +214,8 @@ class Job(BaseModel):
         description="List of 13 Etsy listing tags (max 20 chars each)",
     )
     listing_price_usd: float = Field(
-        default=3.99,
-        description="Etsy listing price in USD",
+        default=800.0,
+        description="Etsy listing price",
     )
     listing_quantity: int = Field(
         default=999,

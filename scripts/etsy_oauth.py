@@ -4,10 +4,12 @@ Generates initial ETSY_ACCESS_TOKEN and ETSY_REFRESH_TOKEN for Etsy Open API v3.
 
 Usage:
     python scripts/etsy_oauth.py
+    python scripts/etsy_oauth.py --redirect-uri "http://localhost:8080/callback"
 """
 
 from __future__ import annotations
 
+import argparse
 import base64
 import hashlib
 import os
@@ -15,7 +17,6 @@ import secrets
 import sys
 import urllib.parse
 import webbrowser
-from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 
 # Add project root to path for direct script execution
@@ -29,9 +30,24 @@ from etsy_pipeline.utils.logging import get_logger  # noqa: E402
 
 logger = get_logger(__name__)
 
-REDIRECT_URI = "https://localhost:8080/callback"
+DEFAULT_REDIRECT_URI = "https://localhost:8080/callback"
 SCOPES = "listings_r listings_w shops_r shops_w"
 ETSY_TOKEN_URL = "https://api.etsy.com/v3/public/oauth/token"
+
+
+def parse_args() -> argparse.Namespace:
+    """Parse CLI arguments."""
+    parser = argparse.ArgumentParser(
+        description="Etsy OAuth 2.0 PKCE Helper",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument(
+        "--redirect-uri",
+        type=str,
+        default=os.getenv("ETSY_REDIRECT_URI", DEFAULT_REDIRECT_URI),
+        help="Redirect URI configured in Etsy Developer App (default: https://localhost:8080/callback)",
+    )
+    return parser.parse_args()
 
 
 def generate_pkce_pair() -> tuple[str, str]:
@@ -75,8 +91,10 @@ def update_env_file(access_token: str, refresh_token: str) -> None:
 
 def main() -> None:
     """Run interactive PKCE token exchange."""
+    args = parse_args()
     settings = get_settings()
     keystring = settings.etsy_keystring
+    redirect_uri = args.redirect_uri
 
     if not keystring:
         logger.error(
@@ -90,7 +108,7 @@ def main() -> None:
     params = {
         "response_type": "code",
         "client_id": keystring,
-        "redirect_uri": REDIRECT_URI,
+        "redirect_uri": redirect_uri,
         "scope": SCOPES,
         "state": state,
         "code_challenge": code_challenge,
@@ -101,16 +119,22 @@ def main() -> None:
     print("\n=======================================================")
     print("Etsy OAuth 2.0 Authentication Helper")
     print("=======================================================")
+    print(f"Using Client ID (Keystring): {keystring}")
+    print(f"Using Redirect URI:          {redirect_uri}")
+    print("-------------------------------------------------------")
     print("Opening browser for authorization:")
     print(auth_url)
     print("=======================================================\n")
+    print("NOTE: If you get 'The requested redirect URL is not permitted',")
+    print("make sure the Redirect URI in your Etsy App settings matches EXACTLY.")
+    print("You can pass a different URI via: --redirect-uri 'YOUR_REDIRECT_URI'\n")
 
     try:
         webbrowser.open(auth_url)
     except Exception:
         pass
 
-    print("After authorizing, you will be redirected to a callback URL.")
+    print("After authorizing, you will be redirected to your callback URL.")
     print("Copy and paste the full callback URL (or just the 'code' parameter) below:")
     callback_input = input("\nPaste callback URL or code: ").strip()
 
@@ -128,7 +152,7 @@ def main() -> None:
     payload = {
         "grant_type": "authorization_code",
         "client_id": keystring,
-        "redirect_uri": REDIRECT_URI,
+        "redirect_uri": redirect_uri,
         "code": code,
         "code_verifier": code_verifier,
     }

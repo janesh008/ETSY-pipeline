@@ -280,6 +280,22 @@ class MongoJobStore:
             doc.pop("_id", None)
         return doc
 
+    def get_job(self, job_id: str) -> Job | None:
+        """Fetch a single Job model instance by ID.
+
+        Args:
+            job_id: The unique job identifier.
+
+        Returns:
+            Populated Job object, or None if not found.
+        """
+        doc = self.get_job_doc(job_id)
+        if not doc:
+            return None
+        from etsy_pipeline.models.job import Job
+
+        return Job.model_validate(doc)
+
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
@@ -287,38 +303,9 @@ class MongoJobStore:
     @staticmethod
     def _job_to_dict(job: Job) -> dict[str, Any]:
         """Serialise a Job instance to a flat MongoDB-compatible dict."""
-        stages_data: dict[str, Any] = {}
-        for stage_name, stage in job.stages.items():
-            stages_data[stage_name] = {
-                "status": stage.status.value,
-                "started_at": stage.started_at.isoformat()
-                if stage.started_at
-                else None,
-                "completed_at": stage.completed_at.isoformat()
-                if stage.completed_at
-                else None,
-                "error_message": stage.error_message,
-                "worker_id": stage.worker_id,
-                "cost_usd": stage.cost_usd,
-                "images_total": stage.images_total,
-                "images_done": stage.images_done,
-                "gpu_hours": stage.gpu_hours,
-                "metadata": stage.metadata,
-            }
-
-        return {
-            "job_id": job.job_id,
-            "theme": job.theme,
-            "event_type": job.event_type,
-            "style_hint": job.style_hint,
-            "date_folder": job.date_folder,
-            "status": job.status.value,
-            "total_prompt_count": job.total_prompt_count,
-            "stages": stages_data,
-            "errors": job.errors,
-            "created_at": job.created_at.isoformat(),
-            "updated_at": _now_iso(),
-        }
+        data = job.model_dump(mode="json")
+        data["updated_at"] = _now_iso()
+        return data
 
 
 # ------------------------------------------------------------------

@@ -91,8 +91,8 @@ class Settings(BaseSettings):
         description="Etsy OAuth 2.0 user refresh token",
     )
     default_listing_price: float = Field(
-        default=3.99,
-        description="Default listing price in USD for Etsy listings",
+        default=800.0,
+        description="Default listing price for Etsy listings",
     )
     default_listing_quantity: int = Field(
         default=999,

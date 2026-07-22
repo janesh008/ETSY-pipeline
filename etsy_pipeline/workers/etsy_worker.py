@@ -79,7 +79,7 @@ class EtsyWorker:
         # 1. Refresh OAuth access token
         access_token = self._refresh_oauth_token()
         headers = {
-            "x-api-key": self._settings.etsy_keystring,
+            "x-api-key": self._get_api_key_header(),
             "Authorization": f"Bearer {access_token}",
         }
 
@@ -223,13 +223,17 @@ class EtsyWorker:
         taxonomy_id: int,
         headers: dict[str, str],
     ) -> tuple[int, str]:
-        """POST /v3/application/shops/{shop_id}/listings — create draft listing."""
         url = f"{ETSY_API_BASE}/shops/{shop_id}/listings"
+        price = (
+            job.listing_price_usd
+            if job.listing_price_usd >= 18.0
+            else self._settings.default_listing_price
+        )
         payload = {
             "title": job.etsy_title,
             "description": job.etsy_description,
             "tags": job.etsy_tags,
-            "price": job.listing_price_usd,
+            "price": price,
             "quantity": job.listing_quantity,
             "taxonomy_id": taxonomy_id,
             "who_made": "i_did",
@@ -349,3 +353,11 @@ class EtsyWorker:
             except Exception as exc:
                 logger.warning(f"[etsy_upload] GCSStore init failed: {exc}")
         return self._gcs
+
+    def _get_api_key_header(self) -> str:
+        """Get x-api-key header value (keystring:shared_secret or keystring)."""
+        keystring = self._settings.etsy_keystring
+        shared_secret = self._settings.etsy_shared_secret
+        if keystring and shared_secret:
+            return f"{keystring}:{shared_secret}"
+        return keystring

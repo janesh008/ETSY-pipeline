@@ -72,31 +72,20 @@ def main() -> None:
     # Find job document
     doc = None
     if args.job_id:
-        doc = store._collection.find_one({"job_id": args.job_id})
+        doc = store.get_job_doc(args.job_id)
     elif args.theme:
         doc = store._collection.find_one({"theme": args.theme})
+        if doc:
+            doc.pop("_id", None)
 
     if not doc:
         logger.error(f"[run_etsy_upload] Job not found for input parameters.")
         sys.exit(1)
 
-    job_id = doc.get("job_id", "")
-    theme = doc.get("theme", "")
-    logger.info(f"[run_etsy_upload] Found job {job_id} ({theme})")
-
-    # Reconstruct Job object from MongoDB document
-    job = Job(
-        job_id=job_id,
-        theme=theme,
-        event_type=doc.get("event_type", "birthday"),
-        date_folder=doc.get("date_folder", ""),
-        pdf_drive_link=doc.get("pdf_drive_link"),
-        etsy_title=doc.get("etsy_title"),
-        etsy_description=doc.get("etsy_description"),
-        etsy_tags=doc.get("etsy_tags", []),
-        listing_price_usd=doc.get("listing_price_usd", 3.99),
-        listing_quantity=doc.get("listing_quantity", 999),
-    )
+    # Reconstruct complete Job object from MongoDB document
+    job = Job.model_validate(doc)
+    job_id = job.job_id
+    logger.info(f"[run_etsy_upload] Found job {job_id} ({job.theme})")
 
     etsy_worker = EtsyWorker(settings=settings)
     csv_worker = CSVWorker(settings=settings)

@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-07-22T13:23:46.913082+00:00",
+  "generated_at": "2026-07-22T17:50:19.670370+00:00",
   "generator": "scripts/build_graph.py",
   "static_only": true,
   "scan_roots": [
@@ -8,8 +8,8 @@
     "scripts",
     "tests"
   ],
-  "node_count": 293,
-  "edge_count": 1560,
+  "node_count": 303,
+  "edge_count": 1616,
   "nodes": [
     {
       "id": "etsy_pipeline",
@@ -686,6 +686,7 @@
         "try_claim_stage",
         "list_jobs_by_stage_status",
         "get_job_doc",
+        "get_job",
         "_job_to_dict"
       ],
       "public_methods": [
@@ -694,7 +695,8 @@
         "update_stage_progress",
         "try_claim_stage",
         "list_jobs_by_stage_status",
-        "get_job_doc"
+        "get_job_doc",
+        "get_job"
       ]
     },
     {
@@ -714,6 +716,16 @@
       "docstring_summary": "Serialise a Job instance to a flat MongoDB-compatible dict.",
       "signature": "(job)",
       "is_public": false,
+      "is_async": false,
+      "class": "MongoJobStore"
+    },
+    {
+      "id": "etsy_pipeline.services.mongo_store.MongoJobStore.get_job",
+      "kind": "function",
+      "module": "etsy_pipeline.services.mongo_store",
+      "docstring_summary": "Fetch a single Job model instance by ID.",
+      "signature": "(self, job_id)",
+      "is_public": true,
       "is_async": false,
       "class": "MongoJobStore"
     },
@@ -1374,7 +1386,8 @@
         "_upload_listing_images",
         "_publish_listing",
         "_ensure_mockups_local",
-        "_get_gcs"
+        "_get_gcs",
+        "_get_api_key_header"
       ],
       "public_methods": [
         "run"
@@ -1394,7 +1407,7 @@
       "id": "etsy_pipeline.workers.etsy_worker.EtsyWorker._create_draft_listing",
       "kind": "function",
       "module": "etsy_pipeline.workers.etsy_worker",
-      "docstring_summary": "POST /v3/application/shops/{shop_id}/listings — create draft listing.",
+      "docstring_summary": "",
       "signature": "(self, shop_id, job, taxonomy_id, headers)",
       "is_public": false,
       "is_async": false,
@@ -1406,6 +1419,16 @@
       "module": "etsy_pipeline.workers.etsy_worker",
       "docstring_summary": "Ensure local mockups exist, downloading from GCS if needed.",
       "signature": "(self, job, mockups_dir)",
+      "is_public": false,
+      "is_async": false,
+      "class": "EtsyWorker"
+    },
+    {
+      "id": "etsy_pipeline.workers.etsy_worker.EtsyWorker._get_api_key_header",
+      "kind": "function",
+      "module": "etsy_pipeline.workers.etsy_worker",
+      "docstring_summary": "Get x-api-key header value (keystring:shared_secret or keystring).",
+      "signature": "(self)",
       "is_public": false,
       "is_async": false,
       "class": "EtsyWorker"
@@ -2332,6 +2355,7 @@
       "path": "scripts/etsy_oauth.py",
       "docstring_summary": "Interactive Etsy OAuth 2.0 PKCE authentication tool.",
       "children": [
+        "scripts.etsy_oauth.parse_args",
         "scripts.etsy_oauth.generate_pkce_pair",
         "scripts.etsy_oauth.update_env_file",
         "scripts.etsy_oauth.main"
@@ -2351,6 +2375,15 @@
       "kind": "function",
       "module": "scripts.etsy_oauth",
       "docstring_summary": "Run interactive PKCE token exchange.",
+      "signature": "()",
+      "is_public": true,
+      "is_async": false
+    },
+    {
+      "id": "scripts.etsy_oauth.parse_args",
+      "kind": "function",
+      "module": "scripts.etsy_oauth",
+      "docstring_summary": "Parse CLI arguments.",
       "signature": "()",
       "is_public": true,
       "is_async": false
@@ -2495,6 +2528,7 @@
       "docstring_summary": "CLI entry point for the Metadata Generation & CSV Consolidation worker.",
       "children": [
         "scripts.run_metadata_worker.parse_args",
+        "scripts.run_metadata_worker.process_single_job",
         "scripts.run_metadata_worker.run_daemon_mode",
         "scripts.run_metadata_worker.main"
       ]
@@ -2518,11 +2552,20 @@
       "is_async": false
     },
     {
+      "id": "scripts.run_metadata_worker.process_single_job",
+      "kind": "function",
+      "module": "scripts.run_metadata_worker",
+      "docstring_summary": "Process a single specific MongoDB job ID.",
+      "signature": "(job_id, store, metadata_worker, csv_worker)",
+      "is_public": true,
+      "is_async": false
+    },
+    {
       "id": "scripts.run_metadata_worker.run_daemon_mode",
       "kind": "function",
       "module": "scripts.run_metadata_worker",
-      "docstring_summary": "Poll MongoDB indefinitely for PENDING/FAILED metadata generation jobs.",
-      "signature": "(settings)",
+      "docstring_summary": "Poll MongoDB indefinitely for PENDING (or FAILED with cooldown) metadata jobs.",
+      "signature": "(settings, retry_failed)",
       "is_public": true,
       "is_async": false
     },
@@ -2533,6 +2576,7 @@
       "docstring_summary": "CLI entry point for the Mockup & PDF worker.",
       "children": [
         "scripts.run_mockup_worker.parse_args",
+        "scripts.run_mockup_worker.process_single_job",
         "scripts.run_mockup_worker.run_daemon_mode",
         "scripts.run_mockup_worker.main"
       ]
@@ -2556,11 +2600,20 @@
       "is_async": false
     },
     {
+      "id": "scripts.run_mockup_worker.process_single_job",
+      "kind": "function",
+      "module": "scripts.run_mockup_worker",
+      "docstring_summary": "Process a single specific MongoDB job ID.",
+      "signature": "(job_id, store, worker)",
+      "is_public": true,
+      "is_async": false
+    },
+    {
       "id": "scripts.run_mockup_worker.run_daemon_mode",
       "kind": "function",
       "module": "scripts.run_mockup_worker",
-      "docstring_summary": "Poll MongoDB indefinitely for PENDING/FAILED mockup jobs.",
-      "signature": "(settings)",
+      "docstring_summary": "Poll MongoDB indefinitely for PENDING (or FAILED with cooldown) mockup jobs.",
+      "signature": "(settings, retry_failed)",
       "is_public": true,
       "is_async": false
     },
@@ -2722,6 +2775,34 @@
       "is_async": false
     },
     {
+      "id": "tests.test_etsy_worker",
+      "kind": "module",
+      "path": "tests/test_etsy_worker.py",
+      "docstring_summary": "Unit tests for EtsyWorker module.",
+      "children": [
+        "tests.test_etsy_worker.test_get_api_key_header_formatting",
+        "tests.test_etsy_worker.test_get_api_key_header_without_secret"
+      ]
+    },
+    {
+      "id": "tests.test_etsy_worker.test_get_api_key_header_formatting",
+      "kind": "function",
+      "module": "tests.test_etsy_worker",
+      "docstring_summary": "Test x-api-key header combines keystring and shared_secret.",
+      "signature": "()",
+      "is_public": true,
+      "is_async": false
+    },
+    {
+      "id": "tests.test_etsy_worker.test_get_api_key_header_without_secret",
+      "kind": "function",
+      "module": "tests.test_etsy_worker",
+      "docstring_summary": "Test x-api-key returns only keystring when shared_secret is empty.",
+      "signature": "()",
+      "is_public": true,
+      "is_async": false
+    },
+    {
       "id": "tests.test_metadata_worker",
       "kind": "module",
       "path": "tests/test_metadata_worker.py",
@@ -2785,6 +2866,24 @@
       "kind": "function",
       "module": "tests.test_metadata_worker",
       "docstring_summary": "Create a MetadataWorker instance with default settings.",
+      "signature": "()",
+      "is_public": true,
+      "is_async": false
+    },
+    {
+      "id": "tests.test_mongo_store",
+      "kind": "module",
+      "path": "tests/test_mongo_store.py",
+      "docstring_summary": "Unit tests for MongoJobStore serialization and deserialization.",
+      "children": [
+        "tests.test_mongo_store.test_job_to_dict_preserves_etsy_metadata"
+      ]
+    },
+    {
+      "id": "tests.test_mongo_store.test_job_to_dict_preserves_etsy_metadata",
+      "kind": "function",
+      "module": "tests.test_mongo_store",
+      "docstring_summary": "Test _job_to_dict includes etsy_title, etsy_description, etsy_tags, and all metadata fields.",
       "signature": "()",
       "is_public": true,
       "is_async": false
@@ -4993,14 +5092,21 @@
     },
     {
       "from": "etsy_pipeline.services.mongo_store.MongoJobStore._job_to_dict",
-      "to": "isoformat",
+      "to": "model_dump",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
     },
     {
-      "from": "etsy_pipeline.services.mongo_store.MongoJobStore._job_to_dict",
-      "to": "items",
+      "from": "etsy_pipeline.services.mongo_store.MongoJobStore.get_job",
+      "to": "get_job_doc",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.mongo_store.MongoJobStore.get_job",
+      "to": "model_validate",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
@@ -6794,6 +6900,13 @@
     {
       "from": "etsy_pipeline.workers.etsy_worker.EtsyWorker.run",
       "to": "_ensure_mockups_local",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.etsy_worker.EtsyWorker.run",
+      "to": "_get_api_key_header",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
@@ -10762,6 +10875,12 @@
     },
     {
       "from": "scripts.etsy_oauth",
+      "to": "argparse",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "scripts.etsy_oauth",
       "to": "base64",
       "kind": "import",
       "static_only": true
@@ -10781,18 +10900,6 @@
     {
       "from": "scripts.etsy_oauth",
       "to": "hashlib",
-      "kind": "import",
-      "static_only": true
-    },
-    {
-      "from": "scripts.etsy_oauth",
-      "to": "http.server.BaseHTTPRequestHandler",
-      "kind": "import",
-      "static_only": true
-    },
-    {
-      "from": "scripts.etsy_oauth",
-      "to": "http.server.HTTPServer",
       "kind": "import",
       "static_only": true
     },
@@ -10945,6 +11052,13 @@
     },
     {
       "from": "scripts.etsy_oauth.main",
+      "to": "parse_args",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.etsy_oauth.main",
       "to": "parse_qs",
       "kind": "call",
       "static_only": true,
@@ -10995,6 +11109,34 @@
     {
       "from": "scripts.etsy_oauth.main",
       "to": "urlparse",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.etsy_oauth.parse_args",
+      "to": "ArgumentParser",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.etsy_oauth.parse_args",
+      "to": "add_argument",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.etsy_oauth.parse_args",
+      "to": "getenv",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.etsy_oauth.parse_args",
+      "to": "parse_args",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
@@ -11366,13 +11508,6 @@
     },
     {
       "from": "scripts.run_etsy_upload.main",
-      "to": "Job",
-      "kind": "call",
-      "static_only": true,
-      "note": "name-only; may not resolve to correct module without runtime context"
-    },
-    {
-      "from": "scripts.run_etsy_upload.main",
       "to": "MongoJobStore",
       "kind": "call",
       "static_only": true,
@@ -11401,7 +11536,7 @@
     },
     {
       "from": "scripts.run_etsy_upload.main",
-      "to": "get",
+      "to": "get_job_doc",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
@@ -11422,7 +11557,21 @@
     },
     {
       "from": "scripts.run_etsy_upload.main",
+      "to": "model_validate",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.run_etsy_upload.main",
       "to": "parse_args",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.run_etsy_upload.main",
+      "to": "pop",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
@@ -12037,6 +12186,27 @@
     },
     {
       "from": "scripts.run_metadata_worker.main",
+      "to": "CSVWorker",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.run_metadata_worker.main",
+      "to": "MetadataWorker",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.run_metadata_worker.main",
+      "to": "MongoJobStore",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.run_metadata_worker.main",
       "to": "get_settings",
       "kind": "call",
       "static_only": true,
@@ -12052,6 +12222,13 @@
     {
       "from": "scripts.run_metadata_worker.main",
       "to": "parse_args",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.run_metadata_worker.main",
+      "to": "process_single_job",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
@@ -12092,15 +12269,78 @@
       "note": "name-only; may not resolve to correct module without runtime context"
     },
     {
-      "from": "scripts.run_metadata_worker.run_daemon_mode",
-      "to": "CSVWorker",
+      "from": "scripts.run_metadata_worker.process_single_job",
+      "to": "error",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.run_metadata_worker.process_single_job",
+      "to": "exit",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.run_metadata_worker.process_single_job",
+      "to": "get",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.run_metadata_worker.process_single_job",
+      "to": "get_job_doc",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.run_metadata_worker.process_single_job",
+      "to": "info",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.run_metadata_worker.process_single_job",
+      "to": "model_validate",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.run_metadata_worker.process_single_job",
+      "to": "run",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.run_metadata_worker.process_single_job",
+      "to": "str",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.run_metadata_worker.process_single_job",
+      "to": "update_stage_status",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.run_metadata_worker.process_single_job",
+      "to": "upsert_job",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
     },
     {
       "from": "scripts.run_metadata_worker.run_daemon_mode",
-      "to": "Job",
+      "to": "CSVWorker",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
@@ -12115,6 +12355,13 @@
     {
       "from": "scripts.run_metadata_worker.run_daemon_mode",
       "to": "MongoJobStore",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.run_metadata_worker.run_daemon_mode",
+      "to": "append",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
@@ -12156,6 +12403,13 @@
     },
     {
       "from": "scripts.run_metadata_worker.run_daemon_mode",
+      "to": "model_validate",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.run_metadata_worker.run_daemon_mode",
       "to": "run",
       "kind": "call",
       "static_only": true,
@@ -12171,6 +12425,13 @@
     {
       "from": "scripts.run_metadata_worker.run_daemon_mode",
       "to": "str",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.run_metadata_worker.run_daemon_mode",
+      "to": "time",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
@@ -12257,6 +12518,26 @@
       "static_only": true
     },
     {
+      "from": "scripts.run_mockup_worker",
+      "to": "typing.Any",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "scripts.run_mockup_worker.main",
+      "to": "MockupWorker",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.run_mockup_worker.main",
+      "to": "MongoJobStore",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
       "from": "scripts.run_mockup_worker.main",
       "to": "get_settings",
       "kind": "call",
@@ -12273,6 +12554,13 @@
     {
       "from": "scripts.run_mockup_worker.main",
       "to": "parse_args",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.run_mockup_worker.main",
+      "to": "process_single_job",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
@@ -12313,6 +12601,76 @@
       "note": "name-only; may not resolve to correct module without runtime context"
     },
     {
+      "from": "scripts.run_mockup_worker.process_single_job",
+      "to": "Job",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.run_mockup_worker.process_single_job",
+      "to": "error",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.run_mockup_worker.process_single_job",
+      "to": "exit",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.run_mockup_worker.process_single_job",
+      "to": "find_one",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.run_mockup_worker.process_single_job",
+      "to": "get",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.run_mockup_worker.process_single_job",
+      "to": "info",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.run_mockup_worker.process_single_job",
+      "to": "run",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.run_mockup_worker.process_single_job",
+      "to": "str",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.run_mockup_worker.process_single_job",
+      "to": "update_stage_status",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.run_mockup_worker.process_single_job",
+      "to": "upsert_job",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
       "from": "scripts.run_mockup_worker.run_daemon_mode",
       "to": "Job",
       "kind": "call",
@@ -12329,6 +12687,13 @@
     {
       "from": "scripts.run_mockup_worker.run_daemon_mode",
       "to": "MongoJobStore",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.run_mockup_worker.run_daemon_mode",
+      "to": "append",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
@@ -12385,6 +12750,13 @@
     {
       "from": "scripts.run_mockup_worker.run_daemon_mode",
       "to": "str",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.run_mockup_worker.run_daemon_mode",
+      "to": "time",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
@@ -13265,6 +13637,78 @@
       "note": "name-only; may not resolve to correct module without runtime context"
     },
     {
+      "from": "tests.test_etsy_worker",
+      "to": "__future__.annotations",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "tests.test_etsy_worker",
+      "to": "etsy_pipeline.config.settings.Settings",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "tests.test_etsy_worker",
+      "to": "etsy_pipeline.workers.etsy_worker.EtsyWorker",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "tests.test_etsy_worker",
+      "to": "etsy_pipeline.workers.etsy_worker.sort_mockup_images",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "tests.test_etsy_worker",
+      "to": "pathlib.Path",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "tests.test_etsy_worker.test_get_api_key_header_formatting",
+      "to": "EtsyWorker",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_etsy_worker.test_get_api_key_header_formatting",
+      "to": "Settings",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_etsy_worker.test_get_api_key_header_formatting",
+      "to": "_get_api_key_header",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_etsy_worker.test_get_api_key_header_without_secret",
+      "to": "EtsyWorker",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_etsy_worker.test_get_api_key_header_without_secret",
+      "to": "Settings",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_etsy_worker.test_get_api_key_header_without_secret",
+      "to": "_get_api_key_header",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
       "from": "tests.test_metadata_worker",
       "to": "__future__.annotations",
       "kind": "import",
@@ -13360,6 +13804,45 @@
     {
       "from": "tests.test_metadata_worker.worker",
       "to": "Settings",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_mongo_store",
+      "to": "__future__.annotations",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "tests.test_mongo_store",
+      "to": "etsy_pipeline.models.job.Job",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "tests.test_mongo_store",
+      "to": "etsy_pipeline.services.mongo_store.MongoJobStore",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "tests.test_mongo_store.test_job_to_dict_preserves_etsy_metadata",
+      "to": "Job",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_mongo_store.test_job_to_dict_preserves_etsy_metadata",
+      "to": "_job_to_dict",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_mongo_store.test_job_to_dict_preserves_etsy_metadata",
+      "to": "model_validate",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
