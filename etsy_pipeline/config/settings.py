@@ -69,6 +69,36 @@ class Settings(BaseSettings):
         description="Gemini model name for prompt/metadata generation",
     )
 
+    # --- Etsy Open API v3 & Listing Settings ---
+    etsy_keystring: str = Field(
+        default="",
+        description="Etsy OAuth 2.0 app keystring (API Key)",
+    )
+    etsy_shared_secret: str = Field(
+        default="",
+        description="Etsy OAuth 2.0 app shared secret",
+    )
+    etsy_shop_id: str = Field(
+        default="",
+        description="Etsy shop ID for listing creation",
+    )
+    etsy_access_token: str = Field(
+        default="",
+        description="Etsy OAuth 2.0 user access token",
+    )
+    etsy_refresh_token: str = Field(
+        default="",
+        description="Etsy OAuth 2.0 user refresh token",
+    )
+    default_listing_price: float = Field(
+        default=3.99,
+        description="Default listing price in USD for Etsy listings",
+    )
+    default_listing_quantity: int = Field(
+        default=999,
+        description="Default inventory stock quantity for Etsy listings",
+    )
+
     # --- MongoDB Settings ---
     mongo_uri: str = Field(
         default="mongodb://localhost:27017/",

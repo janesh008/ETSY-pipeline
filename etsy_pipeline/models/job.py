@@ -201,6 +201,34 @@ class Job(BaseModel):
         default_factory=dict,
         description="Etsy listing metadata (title, description, tags)",
     )
+    etsy_title: str | None = Field(
+        default=None,
+        description="Etsy listing title (max 140 chars)",
+    )
+    etsy_description: str | None = Field(
+        default=None,
+        description="Etsy listing full description text",
+    )
+    etsy_tags: list[str] = Field(
+        default_factory=list,
+        description="List of 13 Etsy listing tags (max 20 chars each)",
+    )
+    listing_price_usd: float = Field(
+        default=3.99,
+        description="Etsy listing price in USD",
+    )
+    listing_quantity: int = Field(
+        default=999,
+        description="Etsy listing stock quantity",
+    )
+    etsy_listing_id: str | None = Field(
+        default=None,
+        description="Etsy listing ID generated after live upload",
+    )
+    etsy_listing_url: str | None = Field(
+        default=None,
+        description="Public Etsy listing URL after live upload",
+    )
 
     # CSV Generation
     csv_path: str | None = Field(
