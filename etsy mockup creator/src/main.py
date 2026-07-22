@@ -117,6 +117,8 @@ def main():
             )
     except Exception as e:
         print(f"Execution failed: {e}")
+        import sys
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()

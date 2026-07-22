@@ -74,7 +74,7 @@ class MockupWorker:
         job.stages[self.STAGE_NAME].mark_running()
         start_time = datetime.now(UTC)
 
-        theme_slug = job.theme.replace(" ", "_")
+        theme_slug = job.theme_slug
 
         # 1. Local workspace directory setup
         local_base_dir = Path(self._settings.output_root) / job.date_folder / theme_slug
@@ -327,7 +327,7 @@ class MockupWorker:
             return
 
         gcs_no_bg_prefix = (
-            f"Clipart/{job.date_folder}/{job.theme.replace(' ', '_')}/no_bg/"
+            f"Clipart/{job.date_folder}/{job.theme_slug}/no_bg/"
         )
         gcs_objects = gcs.list_objects(gcs_no_bg_prefix)
         if not gcs_objects:
