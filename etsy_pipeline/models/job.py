@@ -9,14 +9,7 @@ No global variables — all state lives here.
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
-
-try:
-    from datetime import UTC
-except ImportError:
-    import datetime as dt
-
-    UTC = dt.UTC
+from datetime import UTC, datetime
 from enum import StrEnum
 from pathlib import Path
 from typing import Any

@@ -24,7 +24,7 @@ if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 
 from etsy_pipeline.config.settings import get_settings  # noqa: E402
-from etsy_pipeline.models.job import Job, JobStatus  # noqa: E402
+from etsy_pipeline.models.job import Job, StageStatus  # noqa: E402
 from etsy_pipeline.pipeline.orchestrator import Pipeline  # noqa: E402
 from etsy_pipeline.services import GCSStore, MongoJobStore  # noqa: E402
 from etsy_pipeline.utils.logging import get_logger, setup_logging  # noqa: E402
@@ -138,12 +138,14 @@ def main() -> None:
 
     logger.info(f"Created job {job.job_id} for theme: '{job.theme}' ({job.event_type})")
 
-    # Run the pipeline (currently only prompt generation)
+    # Run ONLY the prompt generation stage (not the full pipeline)
     pipeline = Pipeline(settings=settings)
-    job = pipeline.run(job)
+    job = pipeline.run_stage(job, "prompt_generation")
 
-    # Handle results
-    if job.status == JobStatus.COMPLETED:
+    # Handle results — check the stage status, not job.status
+    # (run_stage does not set job.status; only pipeline.run() does)
+    prompt_stage = job.stages.get("prompt_generation")
+    if prompt_stage and prompt_stage.status == StageStatus.COMPLETED:
         # Determine output directory
         output_root = args.output_dir or settings.output_root
         output_dir = job.get_output_dir(output_root)
@@ -199,7 +201,7 @@ def main() -> None:
 
     else:
         print("\n" + "=" * 60)
-        print("[FAIL] PROMPT GENERATION FAILED")
+        print("❌ PROMPT GENERATION FAILED")
         print("=" * 60)
         print(job.to_summary())
         if job.errors:
