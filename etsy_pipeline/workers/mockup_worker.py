@@ -100,7 +100,8 @@ class MockupWorker:
         preview_image = self._find_first_image(no_bg_dir)
 
         # 2. Run Mockup Subprocess
-        self._run_mockup_creator(no_bg_dir, mockups_local_dir)
+        theme_display_name = job.theme or theme_slug.replace("_", " ")
+        self._run_mockup_creator(no_bg_dir, mockups_local_dir, theme_name=theme_display_name)
 
         # 3. Share Upscaled GDrive Folder & Retrieve Link
         drive = self._get_drive()
@@ -197,7 +198,9 @@ class MockupWorker:
 
         return job
 
-    def _run_mockup_creator(self, input_dir: Path, output_dir: Path) -> None:
+    def _run_mockup_creator(
+        self, input_dir: Path, output_dir: Path, theme_name: str | None = None
+    ) -> None:
         """Run the 'etsy mockup creator' subprocess."""
         mockup_creator_dir = Path(self._settings.project_root) / "etsy mockup creator"
         if not mockup_creator_dir.exists():
@@ -209,18 +212,22 @@ class MockupWorker:
             f"[mockups] Running mockup generator subprocess. Input: {input_dir}"
         )
         try:
+            cmd = [
+                sys.executable,
+                "-m",
+                "src.main",
+                "--theme",
+                str(input_dir.resolve()),
+                "--output",
+                str(output_dir.resolve()),
+                "--templates",
+                str((mockup_creator_dir / "templates").resolve()),
+            ]
+            if theme_name and theme_name.strip():
+                cmd.extend(["--theme-name", theme_name.strip()])
+
             result = subprocess.run(
-                [
-                    sys.executable,
-                    "-m",
-                    "src.main",
-                    "--theme",
-                    str(input_dir.resolve()),
-                    "--output",
-                    str(output_dir.resolve()),
-                    "--templates",
-                    str((mockup_creator_dir / "templates").resolve()),
-                ],
+                cmd,
                 cwd=str(mockup_creator_dir),
                 capture_output=True,
                 text=True,

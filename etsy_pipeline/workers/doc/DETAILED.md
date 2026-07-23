@@ -16,6 +16,7 @@ The `etsy_pipeline/workers/doc/` directory is structured as follows:
 *   **[`bug_resolvers/`](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/workers/doc/bug_resolvers/)**: Diagnostic reports and resolution documentation for pipeline bugs.
     *   [📄 bug_resolver_missing_mockups.md](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/workers/doc/bug_resolvers/bug_resolver_missing_mockups.md)
     *   [📄 bug_resolver_mockup_path_resolution_error.md](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/workers/doc/bug_resolvers/bug_resolver_mockup_path_resolution_error.md)
+    *   [📄 bug_resolver_hero_mockup_theme_name.md](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/workers/doc/bug_resolvers/bug_resolver_hero_mockup_theme_name.md)
 
 ---
 

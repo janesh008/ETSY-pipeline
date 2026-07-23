@@ -7,9 +7,8 @@ Row schema aligns with Etsy bulk upload specifications and internal upload tools
 from __future__ import annotations
 
 import csv
-from datetime import UTC, datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from etsy_pipeline.utils.exceptions import PipelineError
 from etsy_pipeline.utils.logging import get_logger
@@ -103,7 +102,7 @@ class CSVWorker:
         existing_rows: list[dict[str, str]] = []
         if csv_file_path.exists():
             try:
-                with open(csv_file_path, "r", encoding="utf-8", newline="") as f:
+                with open(csv_file_path, encoding="utf-8", newline="") as f:
                     reader = csv.DictReader(f)
                     existing_rows = list(reader)
             except Exception as exc:

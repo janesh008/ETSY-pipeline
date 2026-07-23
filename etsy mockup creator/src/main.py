@@ -54,6 +54,12 @@ def main():
         type=str,
         help="Path to the main directory containing multiple theme folders to process in a single batch run"
     )
+    parser.add_argument(
+        "--theme-name",
+        type=str,
+        default=None,
+        help="Optional theme display name to override folder name inference for text interpolation"
+    )
     
     args = parser.parse_args()
     
@@ -102,7 +108,8 @@ def main():
                     Generator.generate_all(
                         theme_dir=theme_path,
                         templates_dir=args.templates,
-                        output_dir=output_path
+                        output_dir=output_path,
+                        theme_name=args.theme_name
                     )
                     success_count += 1
                 except Exception as e:
@@ -113,7 +120,8 @@ def main():
             Generator.generate_all(
                 theme_dir=args.theme,
                 templates_dir=args.templates,
-                output_dir=args.output
+                output_dir=args.output,
+                theme_name=args.theme_name
             )
     except Exception as e:
         print(f"Execution failed: {e}")

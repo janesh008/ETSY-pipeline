@@ -272,7 +272,7 @@ class MetadataWorker:
             clean_tag = re.sub(r"[^\w\s\-]", "", tag).strip()
             if len(clean_tag) > TAG_MAX_CHARS:
                 clean_tag = clean_tag[:TAG_MAX_CHARS].strip()
-            
+
             lower_tag = clean_tag.lower()
             if clean_tag and lower_tag not in seen:
                 seen.add(lower_tag)

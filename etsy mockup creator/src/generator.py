@@ -9,20 +9,27 @@ class Generator:
     Orchestrates the entire batch mockup generation workflow.
     """
     @staticmethod
-    def generate_all(theme_dir: str, templates_dir: str, output_dir: str):
+    def generate_all(theme_dir: str, templates_dir: str, output_dir: str, theme_name: str | None = None):
         """
         Runs the mockup generator for all templates against a theme folder.
         """
-        # Resolve theme name from folder name
+        # Resolve theme name from folder name if not provided
         from pathlib import Path
         import re
         
-        path_obj = Path(theme_dir)
-        theme_folder_name = path_obj.name
-        
-        # If the selected folder is a known subfolder, use its parent name instead
-        if theme_folder_name.lower() in ("processed_no_bg", "processed no bg", "processed-no-bg", "misc_category", "scen-pattern"):
-            theme_folder_name = path_obj.parent.name
+        if theme_name and theme_name.strip():
+            theme_folder_name = theme_name.strip()
+        else:
+            path_obj = Path(theme_dir)
+            theme_folder_name = path_obj.name
+            
+            # If the selected folder is a known subfolder, use its parent name instead
+            if theme_folder_name.lower() in (
+                "no_bg", "no bg", "no-bg", "nobg",
+                "processed_no_bg", "processed no bg", "processed-no-bg",
+                "misc_category", "scen-pattern"
+            ):
+                theme_folder_name = path_obj.parent.name
             
         clean_name = re.sub(r'[\s_\-]*\d+$', '', theme_folder_name)
         theme_name = clean_name.replace("_", " ")

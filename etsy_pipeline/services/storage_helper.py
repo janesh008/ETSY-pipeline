@@ -125,7 +125,9 @@ def ensure_local_assets(
                 logger.info(f"[storage_helper] GCS miss. Downloading {len(files)} files from Google Drive ({'/'.join(drive_path_parts)})...")
                 target_dir.mkdir(parents=True, exist_ok=True)
 
-                from googleapiclient.http import MediaIoBaseDownload  # type: ignore[import-untyped]
+                from googleapiclient.http import (
+                    MediaIoBaseDownload,  # type: ignore[import-untyped]
+                )
 
                 for f_info in files:
                     file_id = f_info["id"]
