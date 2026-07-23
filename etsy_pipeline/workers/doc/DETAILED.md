@@ -13,6 +13,7 @@ The `etsy_pipeline/workers/doc/` directory is structured as follows:
 *   **[`new_features/`](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/workers/doc/new_features/)**: Feature design specifications and implementation plans.
     *   [📄 implementation_plan_etsy-listing-metadata.md](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/workers/doc/new_features/implementation_plan_etsy-listing-metadata.md)
     *   [📄 implementation_plan_vm_first_storage_and_cleanup.md](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/workers/doc/new_features/implementation_plan_vm_first_storage_and_cleanup.md)
+    *   [📄 implementation_plan_etsy_listing_description_formatting.md](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/workers/doc/new_features/implementation_plan_etsy_listing_description_formatting.md)
 *   **[`bug_resolvers/`](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/workers/doc/bug_resolvers/)**: Diagnostic reports and resolution documentation for pipeline bugs.
     *   [📄 bug_resolver_missing_mockups.md](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/workers/doc/bug_resolvers/bug_resolver_missing_mockups.md)
     *   [📄 bug_resolver_mockup_path_resolution_error.md](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/workers/doc/bug_resolvers/bug_resolver_mockup_path_resolution_error.md)

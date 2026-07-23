@@ -51,28 +51,31 @@ After analysis, write a **General Description** — 3–4 sentences covering: wh
 
 ## STEP 3 — GENERATE THE ETSY DESCRIPTION
 
-The description must answer every pre-purchase question a buyer might have. Follow this exact **8-section structure**:
+The description must answer every pre-purchase question a buyer might have. Follow this exact **9-section structure** (including the Title Banner at top):
 
-### Section 1: Hook (2–3 sentences)
+### Section 0: Listing Title Header (MANDATORY TOP BANNER)
+Place the full generated Etsy listing title at the very top of the Etsy description before the Hook section.
+
+### Section 1: ✨ — HOOK — ✨ (2–3 sentences)
 Lead with emotional appeal or the buyer's identity. Who is this for? Why will they love it? Make them feel seen.
 
-### Section 2: Product Details (bullet list)
+### Section 2: 📦 — PRODUCT DETAILS — 📦 (bullet list)
 - **Product Type:** Digital Watercolor Clipart Set, Backgrounds, Props & Seamless Patterns (Commercial Use License included)
-- **Included Files:** [Exact Number from image] high-resolution PNG images in a Zip file. *(MANDATORY: Break down the contents to prove the value—e.g., "Includes XX Bunny Characters, XX Standalone Props (eggs, carrots), and XX Seamless Patterns".)*
-- **Resolution:** High-resolution, print-ready for sublimation, printing, and digital crafts.
+- **Included Files:** [Exact Total Number from image] high-resolution PNG images in a Zip file. *(MANDATORY RULE: State the total count of clipart PNGs directly. DO NOT segregate or break down the count into subcategories such as XX characters, XX props, or XX patterns).*
+- **Resolution:** 300 DPI high-resolution, print-ready for sublimation, printing, and digital crafts.
 - **File Format:** Instant Zip Download via Google Drive Link. **The link is provided inside the PDF file included with your purchase.**
 - **License:** Permitted for personal use and small commercial use (up to 500 physical products sold per design).
 - **Please Note:** Colors may vary slightly due to different monitor settings and printer calibrations.
 
-### Section 3: HOW TO DOWNLOAD (NEW FIXED SECTION)
+### Section 3: 💻 — HOW TO DOWNLOAD — 💻 (FIXED SECTION)
 - Add the item to your cart and complete your purchase
 - After payment, your files will be available in Etsy → Purchases & Reviews
 - Download the files and start creating immediately
 
-### Section 4: Design Description (3–4 sentences)
+### Section 4: 🎨 — DESIGN DESCRIPTION — 🎨 (3–4 sentences)
 Describe exactly what the design looks like — colors, composition, characters, props, scenes, and patterns. Convey the mood and aesthetic. Help the buyer visualize it on their products.
 
-### Section 5: Perfect For (bullet list)
+### Section 5: ✨ — PERFECT FOR — ✨ (bullet list)
 List every relevant use case, occasion, and recipient type (6–10 bullet points):
 - Designing Sublimation tumblers, mugs, and apparel (POD).
 - Creating Birthday Party Invitations, banners, and cake toppers.
@@ -82,13 +85,13 @@ List every relevant use case, occasion, and recipient type (6–10 bullet points
 - Creating educational flashcards and storytelling visuals for kids.
 - Crafting handmade greeting cards, stationery, and themed decor.
 
-### Section 6: Why Pixel Bar Studio (3–4 sentences)
+### Section 6: 🌟 — WHY PIXEL BAR STUDIO — 🌟 (3–4 sentences)
 Brand voice: Confident, niche-savvy, creator-focused. Speak to quality, uniqueness, and the value of getting a massive, cohesive bundle via instant download. 
 
-### Section 7: SEO Reinforcement Paragraph (2–3 sentences)
+### Section 7: 📜 — SEO REINFORCEMENT — 📜 (2–3 sentences)
 Naturally weave in 3–5 primary keywords from the title. This helps Etsy's search algorithm index the listing correctly. Write it as a readable sentence, not a keyword dump.
 
-### Section 8: Call to Action (1–2 sentences)
+### Section 8: 🛒 — CALL TO ACTION — 🛒 (1–2 sentences)
 Invite them to act. Remind them of the instant PDF/Drive download.
 
 ---
@@ -149,28 +152,30 @@ Deliver results in this exact structure every time:
 
 ### 📝 ETSY DESCRIPTION
 
-**— HOOK —**
+[Full Generated Etsy Listing Title]
+
+✨ — HOOK — ✨
 [Hook text]
 
-**— PRODUCT DETAILS —**
-[Bullet list - Ensure the "Included Files" bullet correctly states the total count without adding extra "extras" outside that count.]
+📦 — PRODUCT DETAILS — 📦
+[Bullet list - Ensure "Included Files" states direct total clipart count without subcategory breakdown, and "Resolution" specifies 300 DPI high-resolution]
 
-**— HOW TO DOWNLOAD —**
+💻 — HOW TO DOWNLOAD — 💻
 [Fixed bullet list]
 
-**— DESIGN DESCRIPTION —**
+🎨 — DESIGN DESCRIPTION — 🎨
 [Design text]
 
-**— PERFECT FOR —**
+✨ — PERFECT FOR — ✨
 [Bullet list]
 
-**— WHY PIXEL BAR STUDIO —**
+🌟 — WHY PIXEL BAR STUDIO — 🌟
 [Brand voice text]
 
-**— SEO REINFORCEMENT —**
+📜 — SEO REINFORCEMENT — 📜
 [SEO paragraph]
 
-**— CALL TO ACTION —**
+🛒 — CALL TO ACTION — 🛒
 [CTA text]
 
 ---
@@ -209,9 +214,10 @@ Run through every item before delivering output:
 - [ ] No ALL CAPS, no filler adjectives, no keyword repetition
 
 **Description:**
-- [ ] All 8 sections present
-- [ ] Product details mention the specific asset count from the image
-- [ ] **CRITICAL CHECK:** The "Included Files" bullet calculates the total correctly. (If the image says "103 PNGs", it says "Includes 103 High-resolution PNGs...". It does NOT say "103 + 9 patterns". It describes the breakdown inside that 103).
+- [ ] Full Generated Etsy Listing Title placed at the very top of description before Hook
+- [ ] All 9 description sections present
+- [ ] **Resolution bullet** explicitly states `300 DPI high-resolution`
+- [ ] **Included Files bullet** states the direct total clipart PNG count without segregating/breaking down into subcategories
 - [ ] PDF / Google Drive link delivery explicitly stated
 - [ ] "HOW TO DOWNLOAD" section present and formatted correctly
 - [ ] Design described visually (characters, props, scenes, patterns)
