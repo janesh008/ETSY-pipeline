@@ -107,16 +107,24 @@ class EtsyWorker:
             / job.theme_slug
             / "mockups"
         )
-        self._ensure_mockups_local(job, local_mockups_dir)
+        gcs_mockup_prefix = f"Clipart/{job.date_folder}/{job.theme_slug}/mockups/"
+        drive_mockup_parts = ["Clipart", "raw_data", job.date_folder, job.theme_slug, "mockups"]
+        from etsy_pipeline.services.storage_helper import ensure_local_assets
 
-        mockup_files = sort_mockup_images(
-            list(local_mockups_dir.glob("*.png")) + list(local_mockups_dir.glob("*.jpg"))
-        )[:10]
+        mockup_files = ensure_local_assets(
+            local_dir=local_mockups_dir,
+            gcs_prefix=gcs_mockup_prefix,
+            drive_path_parts=drive_mockup_parts,
+            settings=self._settings,
+            gcs_store=self._gcs,
+        )
+
+        sorted_mockups = sort_mockup_images(mockup_files)[:10]
 
         self._upload_listing_images(
             shop_id=shop_id,
             listing_id=listing_id,
-            mockup_files=mockup_files,
+            mockup_files=sorted_mockups,
             headers=headers,
         )
 
@@ -131,6 +139,9 @@ class EtsyWorker:
         # 6. Save results to Job
         job.etsy_listing_id = str(listing_id)
         job.etsy_listing_url = listing_url
+
+        # 7. Post-pipeline cleanup: Delete local VM theme output directory
+        self._purge_local_theme_folder(job)
 
         stage.mark_completed()
         logger.info(
@@ -361,3 +372,14 @@ class EtsyWorker:
         if keystring and shared_secret:
             return f"{keystring}:{shared_secret}"
         return keystring
+
+    def _purge_local_theme_folder(self, job: Job) -> None:
+        """Delete local VM theme directory post-upload to free space."""
+        theme_dir = Path(self._settings.output_root) / job.date_folder / job.theme_slug
+        try:
+            if theme_dir.exists():
+                import shutil
+                shutil.rmtree(theme_dir, ignore_errors=True)
+                logger.info(f"[etsy_upload] Purged local VM theme directory: {theme_dir}")
+        except Exception as exc:
+            logger.warning(f"[etsy_upload] Failed to purge local theme folder {theme_dir}: {exc}")

@@ -1,6 +1,26 @@
 # Code Details — `workers`
 
+## Directory Structure & Documentation Subfolders
+
+The `etsy_pipeline/workers/doc/` directory is structured as follows:
+
+*   **[`main_modules/`](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/workers/doc/main_modules/)**: Documentation for primary pipeline worker modules.
+    *   [📄 remove_bg.md](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/workers/doc/main_modules/remove_bg.md)
+    *   [📄 upscale.md](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/workers/doc/main_modules/upscale.md)
+    *   [📄 mockups.md](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/workers/doc/main_modules/mockups.md)
+    *   [📄 metadata.md](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/workers/doc/main_modules/metadata.md)
+    *   [📄 etsy_upload.md](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/workers/doc/main_modules/etsy_upload.md)
+*   **[`new_features/`](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/workers/doc/new_features/)**: Feature design specifications and implementation plans.
+    *   [📄 implementation_plan_etsy-listing-metadata.md](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/workers/doc/new_features/implementation_plan_etsy-listing-metadata.md)
+    *   [📄 implementation_plan_vm_first_storage_and_cleanup.md](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/workers/doc/new_features/implementation_plan_vm_first_storage_and_cleanup.md)
+*   **[`bug_resolvers/`](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/workers/doc/bug_resolvers/)**: Diagnostic reports and resolution documentation for pipeline bugs.
+    *   [📄 bug_resolver_missing_mockups.md](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/workers/doc/bug_resolvers/bug_resolver_missing_mockups.md)
+    *   [📄 bug_resolver_mockup_path_resolution_error.md](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/workers/doc/bug_resolvers/bug_resolver_mockup_path_resolution_error.md)
+
+---
+
 ## Code Behavior
+
 This subpackage contains:
 *   [📄 prompt_worker.py](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/workers/prompt_worker.py) — Stage 1 worker.
 *   [📄 prompt_worker_config.py](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/workers/prompt_worker_config.py) — Configuration and templates.
@@ -26,15 +46,15 @@ This subpackage contains:
 4.  **Naming & Storage:** Saves image locally as `{theme_slug}_{section}_{sec_count:03d}.png` under `misc_category/` or `pattern_scene_bonus_category/`, uploads to GCS, and pushes progress to MongoDB.
 
 ### `BackgroundRemovalWorker` Class Flow
-1.  **Entry (`run(job)`):** Downloads `raw_images/` from GCS if missing locally.
+1.  **Entry (`run(job)`):** Resolves `raw_images/` inputs locally or downloads from GCS fallback.
 2.  **Category Partitioning:** Scans `misc_category` and `pattern_scene_bonus_category`.
 3.  **AI Removal:** Uses `rembg` (`isnet-general-use`) to remove backgrounds from `misc_category` images and outputs transparent PNGs to `no_bg/misc_category/`.
 4.  **Direct Copy:** Copies `pattern_scene_bonus_category` images directly to `no_bg/pattern_scene_bonus_category/` without AI processing.
-5.  **GCS Cleanup:** Uploads all `no_bg/` PNGs to GCS, then purges `raw_images/` from GCS (`delete_prefix`) to conserve cloud storage.
+5.  **Cloud Sync & Cleanup:** Uploads all `no_bg/` PNGs to BOTH GCS and Google Drive, then purges `raw_images/` from both local VM disk and GCS to conserve storage.
 
 ### `UpscaleWorker` Class Flow
-1.  **Entry (`run(job)`):** Downloads `no_bg/` images from GCS if not present locally.
+1.  **Entry (`run(job)`):** Resolves `no_bg/` inputs locally or downloads from GCS/Drive fallbacks.
 2.  **Model Loading:** Standardizes 4x-UltraSharp weights setup.
 3.  **Enhancement & Tiling:** Runs `RealESRGANer` with dynamic tile sizing fallback (`512` → `256` → `128` on CUDA OOM).
 4.  **Standardization:** Resizes the upscaled image to exactly 4096px on its longest side at 300 DPI.
-5.  **GDrive Upload:** Delivers all upscaled PNGs directly to Google Drive folder `1JWUBqtP-PG-hRLEQj4Kh_vNzfb_G_PCP` under path `Clipart/main_data/<date>/<theme_slug>/`. Does NOT delete `no_bg/` from GCS.
+5.  **Direct GDrive Delivery:** Delivers all upscaled PNGs directly to Google Drive under `Clipart/main_data/<date>/<theme_slug>/`. Cleans up local upscaled directory post-upload.

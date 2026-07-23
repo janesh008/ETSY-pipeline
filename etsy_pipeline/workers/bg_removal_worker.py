@@ -117,8 +117,16 @@ class BackgroundRemovalWorker:
         )
         no_bg_base_dir.mkdir(parents=True, exist_ok=True)
 
-        # 1. Download raw images from GCS if not present locally
-        self._ensure_raw_images_local(job, raw_base_dir)
+        # 1. Ensure raw images exist locally (VM -> GCS fallback)
+        gcs_raw_prefix = f"Clipart/{job.date_folder}/{job.theme_slug}/raw_images/"
+        from etsy_pipeline.services.storage_helper import ensure_local_assets
+
+        ensure_local_assets(
+            local_dir=raw_base_dir,
+            gcs_prefix=gcs_raw_prefix,
+            settings=self._settings,
+            gcs_store=self._gcs,
+        )
 
         # 2. Gather raw images recursively across all subfolders under raw_images
         all_raw_files = sorted(list(raw_base_dir.rglob("*.png")))
@@ -218,9 +226,10 @@ class BackgroundRemovalWorker:
                             input_img.close()
                         del input_img, output_img
 
-                # Upload to GCS
+                # Upload to GCS & Drive
                 if dest_path.exists():
                     self._upload_no_bg_to_gcs(job, dest_path, subfolder)
+                    self._upload_no_bg_to_drive(job, dest_path, subfolder)
 
                 # Periodic GPU memory cleanup
                 if idx % CLEAR_GPU_EVERY_N_IMAGES == 0:
@@ -247,8 +256,8 @@ class BackgroundRemovalWorker:
             job.add_error(error_msg)
             raise BackgroundRemovalError(error_msg, job_id=job.job_id)
 
-        # 3. Post-stage GCS storage cleanup: Purge raw_images from GCS to save storage
-        self._purge_raw_images_from_gcs(job)
+        # 3. Post-stage cleanup: Purge raw_images from BOTH local VM disk & GCS
+        self._purge_raw_images_from_gcs_and_local(job, raw_base_dir)
 
         job.stages[self.STAGE_NAME].mark_completed(
             cost_usd=final_cost,
@@ -308,8 +317,36 @@ class BackgroundRemovalWorker:
                 f"[bg_removal] GCS upload failed for {dest_path.name}: {exc}"
             )
 
-    def _purge_raw_images_from_gcs(self, job: Job) -> None:
-        """Delete raw_images/ prefix from GCS post-stage to save storage."""
+    def _upload_no_bg_to_drive(self, job: Job, dest_path: Path, subfolder: str) -> None:
+        """Upload transparent PNG to Google Drive under Clipart/raw_data/<date>/<slug>/no_bg/<subfolder>/."""
+        if not self._settings.google_drive_folder_id:
+            return
+        try:
+            from etsy_pipeline.services.google_drive import GoogleDriveService
+
+            drive = GoogleDriveService(settings=self._settings)
+            path_parts = ["Clipart", "raw_data", job.date_folder, job.theme_slug, "no_bg", subfolder]
+            target_folder_id = drive._get_or_create_folder_by_path(
+                parent_id=self._settings.google_drive_folder_id,
+                path_parts=path_parts,
+            )
+            drive._upload_file_direct(dest_path, target_folder_id)
+        except Exception as exc:
+            logger.warning(
+                f"[bg_removal] Google Drive no_bg upload failed for {dest_path.name}: {exc}"
+            )
+
+    def _purge_raw_images_from_gcs_and_local(self, job: Job, raw_base_dir: Path) -> None:
+        """Delete raw_images/ from both GCS and local VM disk post-stage to save storage."""
+        # 1. Local VM disk cleanup
+        try:
+            if raw_base_dir.exists():
+                shutil.rmtree(raw_base_dir, ignore_errors=True)
+                logger.info(f"[bg_removal] Purged raw_images from local VM disk: {raw_base_dir}")
+        except Exception as exc:
+            logger.warning(f"[bg_removal] Failed to purge raw_images from local VM: {exc}")
+
+        # 2. GCS storage cleanup
         try:
             gcs = self._get_gcs()
             if gcs:

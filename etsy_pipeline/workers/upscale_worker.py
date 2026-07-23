@@ -174,8 +174,19 @@ class UpscaleWorker:
         )
         upscaled_dir.mkdir(parents=True, exist_ok=True)
 
-        # 1. Download no_bg images from GCS if not present locally
-        self._ensure_no_bg_images_local(job, no_bg_base_dir)
+        # 1. Ensure no_bg images exist locally (VM -> GCS -> Drive fallback)
+        gcs_no_bg_prefix = f"Clipart/{job.date_folder}/{job.theme_slug}/no_bg/"
+        drive_no_bg_parts = ["Clipart", "raw_data", job.date_folder, job.theme_slug, "no_bg"]
+        from etsy_pipeline.services.storage_helper import ensure_local_assets
+
+        ensure_local_assets(
+            local_dir=no_bg_base_dir,
+            gcs_prefix=gcs_no_bg_prefix,
+            drive_path_parts=drive_no_bg_parts,
+            settings=self._settings,
+            gcs_store=self._gcs,
+            drive_service=self._drive,
+        )
 
         # Gather all no_bg images recursively (misc_category and pattern_scene_bonus_category)
         no_bg_files = sorted(list(no_bg_base_dir.rglob("*.png")))
@@ -332,6 +343,15 @@ class UpscaleWorker:
 
         # 2. Upload all upscaled files directly to Google Drive path: Clipart/main_data/<date>/<theme_slug>
         self._upload_to_google_drive(job, upscaled_dir)
+
+        # 3. Clean up local upscaled directory so upscaled images are not retained on local VM
+        import shutil
+        try:
+            if upscaled_dir.exists():
+                shutil.rmtree(upscaled_dir, ignore_errors=True)
+                logger.info(f"[upscaling] Purged upscaled images from local VM disk: {upscaled_dir}")
+        except Exception as exc:
+            logger.warning(f"[upscaling] Failed to purge local upscaled directory: {exc}")
 
         job.stages[self.STAGE_NAME].mark_completed(
             cost_usd=final_cost,

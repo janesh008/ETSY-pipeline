@@ -86,14 +86,18 @@ class CSVWorker:
 
         gcs_key = f"csv/{job.date_folder}/all_listings.csv"
 
-        # 1. Download existing CSV from GCS or Google Drive if local file does not exist
-        gcs = self._get_gcs()
-        if gcs and not csv_file_path.exists():
-            try:
-                if gcs.exists(gcs_key):
-                    gcs.download_file(gcs_key, csv_file_path)
-            except Exception as exc:
-                logger.warning(f"[csv] Failed to download existing CSV from GCS: {exc}")
+        # 1. Download/ensure existing CSV locally if missing (VM -> GCS -> Drive fallback)
+        from etsy_pipeline.services.storage_helper import ensure_local_assets
+
+        ensure_local_assets(
+            local_dir=date_dir,
+            gcs_prefix=gcs_key,
+            drive_path_parts=["Clipart", "csv", job.date_folder],
+            settings=self._settings,
+            file_patterns=["all_listings.csv"],
+            gcs_store=self._gcs,
+            drive_service=self._drive,
+        )
 
         # 2. Read existing rows
         existing_rows: list[dict[str, str]] = []

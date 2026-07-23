@@ -81,12 +81,19 @@ class MetadataWorker:
         )
         mockups_dir = local_base_dir / "mockups"
 
-        # 1. Download mockups from GCS if not present locally
-        self._ensure_mockup_images_local(job, mockups_dir)
+        # 1. Ensure mockups exist locally (VM output/<date>/<theme_slug>/mockups/ -> GCS -> Drive fallback)
+        gcs_mockup_prefix = f"Clipart/{job.date_folder}/{job.theme_slug}/mockups/"
+        drive_mockup_parts = ["Clipart", "raw_data", job.date_folder, job.theme_slug, "mockups"]
+        from etsy_pipeline.services.storage_helper import ensure_local_assets
 
-        mockup_files = sorted(
-            list(mockups_dir.glob("*.png")) + list(mockups_dir.glob("*.jpg"))
+        mockup_files = ensure_local_assets(
+            local_dir=mockups_dir,
+            gcs_prefix=gcs_mockup_prefix,
+            drive_path_parts=drive_mockup_parts,
+            settings=self._settings,
+            gcs_store=self._gcs,
         )
+
         if not mockup_files:
             error_msg = f"No mockup images found in {mockups_dir} to generate metadata."
             logger.error(f"[metadata] {error_msg}")

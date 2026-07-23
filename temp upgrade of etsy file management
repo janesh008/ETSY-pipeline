@@ -1,0 +1,120 @@
+# Implementation Plan — VM-First Local File Management with GCS/Drive Fallback
+
+Optimize pipeline file management by utilizing local VM disk space as the primary working directory during generation, background removal, upscaling, and mockup creation, while establishing robust fallback retrieval mechanisms (GCS & Google Drive) when running workers across separate distributed VMs.
+
+---
+
+## 1. Architectural Strategy
+
+```
++-----------------------------------------------------------------------------------+
+|                            VM-First Local File Strategy                           |
++-----------------------------------------------------------------------------------+
+  Stage 1: Image Generation  ---> Save raw PNGs to VM disk (output/<date>/<slug>/raw_data/)
+                                   (Defer/Background optional GCS upload)
+                                          │
+                                          ▼
+  Stage 2: BG Removal       ---> 1. Check local VM disk (raw_data/) [Fastest]
+                                 2. Fallback: Download from GCS / Drive if missing
+                                 3. Output: Save no_bg/ to VM disk
+                                 4. Sync: Upload no_bg/ to GCS (Clipart/<date>/<slug>/no_bg/)
+                                          │
+                                          ▼
+  Stage 3: Upscaling        ---> 1. Check local VM disk (no_bg/) [Fastest]
+                                 2. Fallback: Download from GCS / Drive if missing
+                                 3. Output: Save upscaled/ to VM disk
+                                 4. Sync: Upload upscaled/ directly to Google Drive
+                                    (Clipart/main_data/<date>/<slug>/) & GCS backup
+                                          │
+                                          ▼
+  Stage 4: Mockups & PDF    ---> 1. Check local VM disk (no_bg/ or upscaled/)
+                                 2. Fallback: Download from GCS / Drive if missing
+                                 3. Output: Generate Mockups & PDF locally
+                                 4. Sync: Upload PDF & Mockups to Drive & GCS
+```
+
+---
+
+## 2. Dual Execution Compatibility
+
+1. **Single-VM Sequential Pipeline (`Pipeline.run()` / Orchestrator):**
+   - Runs all stages sequentially on one machine.
+   - Stage 2 (BG Removal), Stage 3 (Upscaling), and Stage 4 (Mockups) read files **directly from the local VM disk**.
+   - Zero network overhead for raw image transfers between stages.
+
+2. **Distributed Multi-VM Daemon Execution (`run_<stage>_worker.py --daemon`):**
+   - Each worker runs on an independent VM instance (e.g. ComfyUI GPU VM -> Rembg CPU VM -> Upscale GPU VM -> Mockup VM).
+   - When a worker picks up a job on a new VM, local disk check detects missing files and automatically **falls back to downloading** from GCS (or Google Drive).
+
+---
+
+## 3. Stage-by-Stage File & Storage Specifications
+
+| Stage | Input Location (Check Order) | Primary Output Location | Cloud Delivery / Backup Destination |
+| :--- | :--- | :--- | :--- |
+| **1. Image Generation** | Prompts from Job state | Local VM: `output/<date>/<theme_slug>/raw_data/` | GCS backup: `Clipart/<date>/<theme_slug>/raw_data/` (Optional / Async) |
+| **2. BG Removal** | 1. VM: `raw_data/`<br>2. GCS: `Clipart/<date>/<theme_slug>/raw_data/`<br>3. Drive: `Clipart/raw_data/<date>/<theme_slug>/` | Local VM: `output/<date>/<theme_slug>/no_bg/` | **GCS Primary:** `Clipart/<date>/<theme_slug>/no_bg/` |
+| **3. Upscaling** | 1. VM: `no_bg/`<br>2. GCS: `Clipart/<date>/<theme_slug>/no_bg/`<br>3. Drive: `Clipart/no_bg/<date>/<theme_slug>/` | Local VM: `output/<date>/<theme_slug>/upscaled/` | **Google Drive Primary:** `Clipart/main_data/<date>/<theme_slug>/`<br>**GCS Backup:** `Clipart/<date>/<theme_slug>/upscaled/` |
+| **4. Mockups & PDF** | 1. VM: `no_bg/` or `upscaled/`<br>2. GCS: `Clipart/<date>/<theme_slug>/no_bg/`<br>3. Drive: `Clipart/main_data/<date>/<theme_slug>/` | Local VM: `output/<date>/<theme_slug>/mockups/` | **GCS Primary:** `Clipart/<date>/<theme_slug>/mockups/` & `pdf/`<br>**Google Drive:** `Clipart/raw_data/<date>/<theme_slug>/pdf/` |
+| **5. Metadata & CSV** | 1. VM: `mockups/`<br>2. GCS: `mockups/` | Local VM: `output/<date>/all_listings.csv` | **GCS & Google Drive Dual Sync:** `csv/<date>/all_listings.csv` & `Clipart/csv/<date>/` |
+
+---
+
+## 4. Proposed Code Modifications
+
+### Common Utility Layer
+
+#### [NEW] [storage_helper.py](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/services/storage_helper.py)
+Create a unified `ensure_local_assets()` helper function to encapsulate the 3-tier fallback logic:
+```python
+def ensure_local_assets(
+    local_dir: Path,
+    gcs_prefix: str | None = None,
+    drive_path_parts: list[str] | None = None,
+    settings: Settings | None = None,
+    file_patterns: list[str] | None = None,
+) -> list[Path]:
+    """1. Check local VM directory for matching files.
+       2. If empty, attempt download from GCS prefix.
+       3. If still empty, attempt download from Google Drive folder path.
+       4. Return list of resolved local file paths.
+    """
+```
+
+### Worker Modules
+
+#### [MODIFY] [image_worker.py](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/workers/image_worker.py)
+- Ensure raw generated PNGs are saved to local VM `output/<date>/<theme_slug>/raw_data/`.
+- Keep GCS raw upload non-blocking or optional for VM performance.
+
+#### [MODIFY] [bg_removal_worker.py](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/workers/bg_removal_worker.py)
+- Use `ensure_local_assets()` to resolve `raw_data/` inputs (VM -> GCS -> Drive).
+- Process rembg and save to local VM `no_bg/`.
+- Sync `no_bg/` images to GCS `Clipart/<date>/<theme_slug>/no_bg/`.
+
+#### [MODIFY] [upscale_worker.py](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/workers/upscale_worker.py)
+- Use `ensure_local_assets()` to resolve `no_bg/` inputs (VM -> GCS -> Drive).
+- Save upscaled images to local VM `upscaled/`.
+- Upload upscaled images directly to Google Drive `Clipart/main_data/<date>/<theme_slug>/` and GCS backup `Clipart/<date>/<theme_slug>/upscaled/`.
+
+#### [MODIFY] [mockup_worker.py](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/workers/mockup_worker.py)
+- Use `ensure_local_assets()` to resolve input images for mockup creation.
+- Save generated mockups and PDF to local VM `mockups/`.
+- Upload mockups to GCS (`Clipart/<date>/<theme_slug>/mockups/`) & PDF to Google Drive.
+
+#### [MODIFY] [metadata_worker.py](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/workers/metadata_worker.py)
+- Use `ensure_local_assets()` to resolve `mockups/` inputs (VM -> GCS -> Drive).
+
+---
+
+## 5. Verification Plan
+
+### Automated Tests
+- Create `tests/test_storage_helper.py` to verify:
+  1. Local VM file hit returns immediately without network calls.
+  2. Missing local files trigger GCS fallback download.
+  3. Missing GCS files trigger Google Drive fallback download.
+
+### Integration / Manual Verification
+- Test single-VM execution (`python -m etsy_pipeline.pipeline.orchestrator`): Verify raw images stay local and no unnecessary download calls are triggered.
+- Test multi-VM daemon execution (`run_bg_removal_worker.py --daemon` on a clean directory): Verify missing local files are retrieved from GCS/Drive seamlessly.

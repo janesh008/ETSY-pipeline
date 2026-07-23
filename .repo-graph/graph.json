@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-07-22T17:50:19.670370+00:00",
+  "generated_at": "2026-07-23T06:21:32.812046+00:00",
   "generator": "scripts/build_graph.py",
   "static_only": true,
   "scan_roots": [
@@ -8,8 +8,8 @@
     "scripts",
     "tests"
   ],
-  "node_count": 303,
-  "edge_count": 1616,
+  "node_count": 311,
+  "edge_count": 1675,
   "nodes": [
     {
       "id": "etsy_pipeline",
@@ -799,6 +799,34 @@
       "is_async": false
     },
     {
+      "id": "etsy_pipeline.services.storage_helper",
+      "kind": "module",
+      "path": "etsy_pipeline/services/storage_helper.py",
+      "docstring_summary": "Storage Helper — unified 3-tier local VM verification and remote download fallback.",
+      "children": [
+        "etsy_pipeline.services.storage_helper._get_local_matching_files",
+        "etsy_pipeline.services.storage_helper.ensure_local_assets"
+      ]
+    },
+    {
+      "id": "etsy_pipeline.services.storage_helper._get_local_matching_files",
+      "kind": "function",
+      "module": "etsy_pipeline.services.storage_helper",
+      "docstring_summary": "Find all files in local_dir matching any pattern.",
+      "signature": "(local_dir, file_patterns)",
+      "is_public": false,
+      "is_async": false
+    },
+    {
+      "id": "etsy_pipeline.services.storage_helper.ensure_local_assets",
+      "kind": "function",
+      "module": "etsy_pipeline.services.storage_helper",
+      "docstring_summary": "Ensure required pipeline assets exist locally on the VM.",
+      "signature": "(local_dir, gcs_prefix, drive_path_parts, settings, file_patterns, gcs_store, drive_service)",
+      "is_public": true,
+      "is_async": false
+    },
+    {
       "id": "etsy_pipeline.utils",
       "kind": "module",
       "path": "etsy_pipeline/utils/__init__.py",
@@ -1174,7 +1202,8 @@
         "run",
         "_ensure_raw_images_local",
         "_upload_no_bg_to_gcs",
-        "_purge_raw_images_from_gcs",
+        "_upload_no_bg_to_drive",
+        "_purge_raw_images_from_gcs_and_local",
         "_get_gcs",
         "_push_progress"
       ],
@@ -1213,11 +1242,11 @@
       "class": "BackgroundRemovalWorker"
     },
     {
-      "id": "etsy_pipeline.workers.bg_removal_worker.BackgroundRemovalWorker._purge_raw_images_from_gcs",
+      "id": "etsy_pipeline.workers.bg_removal_worker.BackgroundRemovalWorker._purge_raw_images_from_gcs_and_local",
       "kind": "function",
       "module": "etsy_pipeline.workers.bg_removal_worker",
-      "docstring_summary": "Delete raw_images/ prefix from GCS post-stage to save storage.",
-      "signature": "(self, job)",
+      "docstring_summary": "Delete raw_images/ from both GCS and local VM disk post-stage to save storage.",
+      "signature": "(self, job, raw_base_dir)",
       "is_public": false,
       "is_async": false,
       "class": "BackgroundRemovalWorker"
@@ -1228,6 +1257,16 @@
       "module": "etsy_pipeline.workers.bg_removal_worker",
       "docstring_summary": "Push progress updates to MongoDB.",
       "signature": "(self, job, images_done, images_total, cost_usd, gpu_hours)",
+      "is_public": false,
+      "is_async": false,
+      "class": "BackgroundRemovalWorker"
+    },
+    {
+      "id": "etsy_pipeline.workers.bg_removal_worker.BackgroundRemovalWorker._upload_no_bg_to_drive",
+      "kind": "function",
+      "module": "etsy_pipeline.workers.bg_removal_worker",
+      "docstring_summary": "Upload transparent PNG to Google Drive under Clipart/raw_data/<date>/<slug>/no_bg/<subfolder>/.",
+      "signature": "(self, job, dest_path, subfolder)",
       "is_public": false,
       "is_async": false,
       "class": "BackgroundRemovalWorker"
@@ -1387,7 +1426,8 @@
         "_publish_listing",
         "_ensure_mockups_local",
         "_get_gcs",
-        "_get_api_key_header"
+        "_get_api_key_header",
+        "_purge_local_theme_folder"
       ],
       "public_methods": [
         "run"
@@ -1459,6 +1499,16 @@
       "module": "etsy_pipeline.workers.etsy_worker",
       "docstring_summary": "PATCH listing to state=active to publish.",
       "signature": "(self, shop_id, listing_id, headers, fallback_url)",
+      "is_public": false,
+      "is_async": false,
+      "class": "EtsyWorker"
+    },
+    {
+      "id": "etsy_pipeline.workers.etsy_worker.EtsyWorker._purge_local_theme_folder",
+      "kind": "function",
+      "module": "etsy_pipeline.workers.etsy_worker",
+      "docstring_summary": "Delete local VM theme directory post-upload to free space.",
+      "signature": "(self, job)",
       "is_public": false,
       "is_async": false,
       "class": "EtsyWorker"
@@ -3170,6 +3220,34 @@
       "module": "tests.test_prompt_worker",
       "docstring_summary": "Create a PromptWorker instance for testing.",
       "signature": "()",
+      "is_public": true,
+      "is_async": false
+    },
+    {
+      "id": "tests.test_storage_helper",
+      "kind": "module",
+      "path": "tests/test_storage_helper.py",
+      "docstring_summary": "Unit tests for storage_helper module.",
+      "children": [
+        "tests.test_storage_helper.test_ensure_local_assets_vm_hit",
+        "tests.test_storage_helper.test_ensure_local_assets_empty_dir_no_remote"
+      ]
+    },
+    {
+      "id": "tests.test_storage_helper.test_ensure_local_assets_empty_dir_no_remote",
+      "kind": "function",
+      "module": "tests.test_storage_helper",
+      "docstring_summary": "Test ensure_local_assets returns empty list when directory is empty and no remote specified.",
+      "signature": "(tmp_path)",
+      "is_public": true,
+      "is_async": false
+    },
+    {
+      "id": "tests.test_storage_helper.test_ensure_local_assets_vm_hit",
+      "kind": "function",
+      "module": "tests.test_storage_helper",
+      "docstring_summary": "Test ensure_local_assets returns immediately on local VM hit without downloading.",
+      "signature": "(tmp_path)",
       "is_public": true,
       "is_async": false
     }
@@ -5273,6 +5351,300 @@
       "note": "name-only; may not resolve to correct module without runtime context"
     },
     {
+      "from": "etsy_pipeline.services.storage_helper",
+      "to": "__future__.annotations",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.services.storage_helper",
+      "to": "etsy_pipeline.config.settings.Settings",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.services.storage_helper",
+      "to": "etsy_pipeline.config.settings.get_settings",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.services.storage_helper",
+      "to": "etsy_pipeline.utils.logging.get_logger",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.services.storage_helper",
+      "to": "io",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.services.storage_helper",
+      "to": "pathlib.Path",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.services.storage_helper",
+      "to": "typing.TYPE_CHECKING",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.services.storage_helper._get_local_matching_files",
+      "to": "exists",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.storage_helper._get_local_matching_files",
+      "to": "glob",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.storage_helper._get_local_matching_files",
+      "to": "list",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.storage_helper._get_local_matching_files",
+      "to": "set",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.storage_helper._get_local_matching_files",
+      "to": "sorted",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.storage_helper._get_local_matching_files",
+      "to": "update",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.storage_helper._get_local_matching_files",
+      "to": "upper",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.storage_helper.ensure_local_assets",
+      "to": "FileIO",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.storage_helper.ensure_local_assets",
+      "to": "GCSStore",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.storage_helper.ensure_local_assets",
+      "to": "GoogleDriveService",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.storage_helper.ensure_local_assets",
+      "to": "MediaIoBaseDownload",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.storage_helper.ensure_local_assets",
+      "to": "Path",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.storage_helper.ensure_local_assets",
+      "to": "_get_local_matching_files",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.storage_helper.ensure_local_assets",
+      "to": "_get_service",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.storage_helper.ensure_local_assets",
+      "to": "close",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.storage_helper.ensure_local_assets",
+      "to": "debug",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.storage_helper.ensure_local_assets",
+      "to": "download_file",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.storage_helper.ensure_local_assets",
+      "to": "endswith",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.storage_helper.ensure_local_assets",
+      "to": "execute",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.storage_helper.ensure_local_assets",
+      "to": "exists",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.storage_helper.ensure_local_assets",
+      "to": "files",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.storage_helper.ensure_local_assets",
+      "to": "get",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.storage_helper.ensure_local_assets",
+      "to": "get_folder_id_by_path",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.storage_helper.ensure_local_assets",
+      "to": "get_media",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.storage_helper.ensure_local_assets",
+      "to": "get_settings",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.storage_helper.ensure_local_assets",
+      "to": "info",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.storage_helper.ensure_local_assets",
+      "to": "join",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.storage_helper.ensure_local_assets",
+      "to": "len",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.storage_helper.ensure_local_assets",
+      "to": "list",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.storage_helper.ensure_local_assets",
+      "to": "list_objects",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.storage_helper.ensure_local_assets",
+      "to": "mkdir",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.storage_helper.ensure_local_assets",
+      "to": "next_chunk",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.storage_helper.ensure_local_assets",
+      "to": "rstrip",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.storage_helper.ensure_local_assets",
+      "to": "startswith",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.storage_helper.ensure_local_assets",
+      "to": "str",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.storage_helper.ensure_local_assets",
+      "to": "warning",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
       "from": "etsy_pipeline.utils.exceptions.BackgroundRemovalError.__init__",
       "to": "__init__",
       "kind": "call",
@@ -5819,28 +6191,42 @@
       "note": "name-only; may not resolve to correct module without runtime context"
     },
     {
-      "from": "etsy_pipeline.workers.bg_removal_worker.BackgroundRemovalWorker._purge_raw_images_from_gcs",
+      "from": "etsy_pipeline.workers.bg_removal_worker.BackgroundRemovalWorker._purge_raw_images_from_gcs_and_local",
       "to": "_get_gcs",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
     },
     {
-      "from": "etsy_pipeline.workers.bg_removal_worker.BackgroundRemovalWorker._purge_raw_images_from_gcs",
+      "from": "etsy_pipeline.workers.bg_removal_worker.BackgroundRemovalWorker._purge_raw_images_from_gcs_and_local",
       "to": "delete_prefix",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
     },
     {
-      "from": "etsy_pipeline.workers.bg_removal_worker.BackgroundRemovalWorker._purge_raw_images_from_gcs",
+      "from": "etsy_pipeline.workers.bg_removal_worker.BackgroundRemovalWorker._purge_raw_images_from_gcs_and_local",
+      "to": "exists",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.bg_removal_worker.BackgroundRemovalWorker._purge_raw_images_from_gcs_and_local",
       "to": "info",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
     },
     {
-      "from": "etsy_pipeline.workers.bg_removal_worker.BackgroundRemovalWorker._purge_raw_images_from_gcs",
+      "from": "etsy_pipeline.workers.bg_removal_worker.BackgroundRemovalWorker._purge_raw_images_from_gcs_and_local",
+      "to": "rmtree",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.bg_removal_worker.BackgroundRemovalWorker._purge_raw_images_from_gcs_and_local",
       "to": "warning",
       "kind": "call",
       "static_only": true,
@@ -5862,6 +6248,34 @@
     },
     {
       "from": "etsy_pipeline.workers.bg_removal_worker.BackgroundRemovalWorker._push_progress",
+      "to": "warning",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.bg_removal_worker.BackgroundRemovalWorker._upload_no_bg_to_drive",
+      "to": "GoogleDriveService",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.bg_removal_worker.BackgroundRemovalWorker._upload_no_bg_to_drive",
+      "to": "_get_or_create_folder_by_path",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.bg_removal_worker.BackgroundRemovalWorker._upload_no_bg_to_drive",
+      "to": "_upload_file_direct",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.bg_removal_worker.BackgroundRemovalWorker._upload_no_bg_to_drive",
       "to": "warning",
       "kind": "call",
       "static_only": true,
@@ -5911,14 +6325,7 @@
     },
     {
       "from": "etsy_pipeline.workers.bg_removal_worker.BackgroundRemovalWorker.run",
-      "to": "_ensure_raw_images_local",
-      "kind": "call",
-      "static_only": true,
-      "note": "name-only; may not resolve to correct module without runtime context"
-    },
-    {
-      "from": "etsy_pipeline.workers.bg_removal_worker.BackgroundRemovalWorker.run",
-      "to": "_purge_raw_images_from_gcs",
+      "to": "_purge_raw_images_from_gcs_and_local",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
@@ -5926,6 +6333,13 @@
     {
       "from": "etsy_pipeline.workers.bg_removal_worker.BackgroundRemovalWorker.run",
       "to": "_push_progress",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.bg_removal_worker.BackgroundRemovalWorker.run",
+      "to": "_upload_no_bg_to_drive",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
@@ -5982,6 +6396,13 @@
     {
       "from": "etsy_pipeline.workers.bg_removal_worker.BackgroundRemovalWorker.run",
       "to": "debug",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.bg_removal_worker.BackgroundRemovalWorker.run",
+      "to": "ensure_local_assets",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
@@ -6335,13 +6756,6 @@
     },
     {
       "from": "etsy_pipeline.workers.csv_worker.CSVWorker.run",
-      "to": "_get_gcs",
-      "kind": "call",
-      "static_only": true,
-      "note": "name-only; may not resolve to correct module without runtime context"
-    },
-    {
-      "from": "etsy_pipeline.workers.csv_worker.CSVWorker.run",
       "to": "_get_or_create_folder_by_path",
       "kind": "call",
       "static_only": true,
@@ -6370,7 +6784,7 @@
     },
     {
       "from": "etsy_pipeline.workers.csv_worker.CSVWorker.run",
-      "to": "download_file",
+      "to": "ensure_local_assets",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
@@ -6737,6 +7151,41 @@
       "note": "name-only; may not resolve to correct module without runtime context"
     },
     {
+      "from": "etsy_pipeline.workers.etsy_worker.EtsyWorker._purge_local_theme_folder",
+      "to": "Path",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.etsy_worker.EtsyWorker._purge_local_theme_folder",
+      "to": "exists",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.etsy_worker.EtsyWorker._purge_local_theme_folder",
+      "to": "info",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.etsy_worker.EtsyWorker._purge_local_theme_folder",
+      "to": "rmtree",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.etsy_worker.EtsyWorker._purge_local_theme_folder",
+      "to": "warning",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
       "from": "etsy_pipeline.workers.etsy_worker.EtsyWorker._refresh_oauth_token",
       "to": "EtsyUploadError",
       "kind": "call",
@@ -6899,13 +7348,6 @@
     },
     {
       "from": "etsy_pipeline.workers.etsy_worker.EtsyWorker.run",
-      "to": "_ensure_mockups_local",
-      "kind": "call",
-      "static_only": true,
-      "note": "name-only; may not resolve to correct module without runtime context"
-    },
-    {
-      "from": "etsy_pipeline.workers.etsy_worker.EtsyWorker.run",
       "to": "_get_api_key_header",
       "kind": "call",
       "static_only": true,
@@ -6921,6 +7363,13 @@
     {
       "from": "etsy_pipeline.workers.etsy_worker.EtsyWorker.run",
       "to": "_publish_listing",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.etsy_worker.EtsyWorker.run",
+      "to": "_purge_local_theme_folder",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
@@ -6948,6 +7397,13 @@
     },
     {
       "from": "etsy_pipeline.workers.etsy_worker.EtsyWorker.run",
+      "to": "ensure_local_assets",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.etsy_worker.EtsyWorker.run",
       "to": "error",
       "kind": "call",
       "static_only": true,
@@ -6955,21 +7411,7 @@
     },
     {
       "from": "etsy_pipeline.workers.etsy_worker.EtsyWorker.run",
-      "to": "glob",
-      "kind": "call",
-      "static_only": true,
-      "note": "name-only; may not resolve to correct module without runtime context"
-    },
-    {
-      "from": "etsy_pipeline.workers.etsy_worker.EtsyWorker.run",
       "to": "info",
-      "kind": "call",
-      "static_only": true,
-      "note": "name-only; may not resolve to correct module without runtime context"
-    },
-    {
-      "from": "etsy_pipeline.workers.etsy_worker.EtsyWorker.run",
-      "to": "list",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
@@ -8097,13 +8539,6 @@
     },
     {
       "from": "etsy_pipeline.workers.metadata_worker.MetadataWorker.run",
-      "to": "_ensure_mockup_images_local",
-      "kind": "call",
-      "static_only": true,
-      "note": "name-only; may not resolve to correct module without runtime context"
-    },
-    {
-      "from": "etsy_pipeline.workers.metadata_worker.MetadataWorker.run",
       "to": "_get_gcs",
       "kind": "call",
       "static_only": true,
@@ -8132,6 +8567,13 @@
     },
     {
       "from": "etsy_pipeline.workers.metadata_worker.MetadataWorker.run",
+      "to": "ensure_local_assets",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.metadata_worker.MetadataWorker.run",
       "to": "error",
       "kind": "call",
       "static_only": true,
@@ -8146,13 +8588,6 @@
     },
     {
       "from": "etsy_pipeline.workers.metadata_worker.MetadataWorker.run",
-      "to": "glob",
-      "kind": "call",
-      "static_only": true,
-      "note": "name-only; may not resolve to correct module without runtime context"
-    },
-    {
-      "from": "etsy_pipeline.workers.metadata_worker.MetadataWorker.run",
       "to": "info",
       "kind": "call",
       "static_only": true,
@@ -8161,13 +8596,6 @@
     {
       "from": "etsy_pipeline.workers.metadata_worker.MetadataWorker.run",
       "to": "len",
-      "kind": "call",
-      "static_only": true,
-      "note": "name-only; may not resolve to correct module without runtime context"
-    },
-    {
-      "from": "etsy_pipeline.workers.metadata_worker.MetadataWorker.run",
-      "to": "list",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
@@ -8203,13 +8631,6 @@
     {
       "from": "etsy_pipeline.workers.metadata_worker.MetadataWorker.run",
       "to": "round",
-      "kind": "call",
-      "static_only": true,
-      "note": "name-only; may not resolve to correct module without runtime context"
-    },
-    {
-      "from": "etsy_pipeline.workers.metadata_worker.MetadataWorker.run",
-      "to": "sorted",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
@@ -8706,13 +9127,6 @@
     },
     {
       "from": "etsy_pipeline.workers.mockup_worker.MockupWorker.run",
-      "to": "_ensure_no_bg_images_local",
-      "kind": "call",
-      "static_only": true,
-      "note": "name-only; may not resolve to correct module without runtime context"
-    },
-    {
-      "from": "etsy_pipeline.workers.mockup_worker.MockupWorker.run",
       "to": "_find_first_image",
       "kind": "call",
       "static_only": true,
@@ -8749,6 +9163,13 @@
     {
       "from": "etsy_pipeline.workers.mockup_worker.MockupWorker.run",
       "to": "add_error",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.mockup_worker.MockupWorker.run",
+      "to": "ensure_local_assets",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
@@ -10025,13 +10446,6 @@
     },
     {
       "from": "etsy_pipeline.workers.upscale_worker.UpscaleWorker.run",
-      "to": "_ensure_no_bg_images_local",
-      "kind": "call",
-      "static_only": true,
-      "note": "name-only; may not resolve to correct module without runtime context"
-    },
-    {
-      "from": "etsy_pipeline.workers.upscale_worker.UpscaleWorker.run",
       "to": "_push_progress",
       "kind": "call",
       "static_only": true,
@@ -10075,6 +10489,13 @@
     {
       "from": "etsy_pipeline.workers.upscale_worker.UpscaleWorker.run",
       "to": "enhance",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.upscale_worker.UpscaleWorker.run",
+      "to": "ensure_local_assets",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
@@ -10201,6 +10622,13 @@
     {
       "from": "etsy_pipeline.workers.upscale_worker.UpscaleWorker.run",
       "to": "rglob",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.upscale_worker.UpscaleWorker.run",
+      "to": "rmtree",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
@@ -14136,6 +14564,58 @@
     {
       "from": "tests.test_prompt_worker.worker",
       "to": "PromptWorker",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_storage_helper",
+      "to": "__future__.annotations",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "tests.test_storage_helper",
+      "to": "etsy_pipeline.config.settings.Settings",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "tests.test_storage_helper",
+      "to": "etsy_pipeline.services.storage_helper.ensure_local_assets",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "tests.test_storage_helper",
+      "to": "pathlib.Path",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "tests.test_storage_helper.test_ensure_local_assets_empty_dir_no_remote",
+      "to": "ensure_local_assets",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_storage_helper.test_ensure_local_assets_vm_hit",
+      "to": "ensure_local_assets",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_storage_helper.test_ensure_local_assets_vm_hit",
+      "to": "len",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_storage_helper.test_ensure_local_assets_vm_hit",
+      "to": "write_text",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"

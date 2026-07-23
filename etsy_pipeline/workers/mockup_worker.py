@@ -82,8 +82,19 @@ class MockupWorker:
         mockups_local_dir = local_base_dir / "mockups"
         mockups_local_dir.mkdir(parents=True, exist_ok=True)
 
-        # Download no_bg transparent images locally if they are missing
-        self._ensure_no_bg_images_local(job, no_bg_dir)
+        # Download/ensure no_bg transparent images locally if missing (VM -> GCS -> Drive fallback)
+        gcs_no_bg_prefix = f"Clipart/{job.date_folder}/{theme_slug}/no_bg/"
+        drive_no_bg_parts = ["Clipart", "raw_data", job.date_folder, theme_slug, "no_bg"]
+        from etsy_pipeline.services.storage_helper import ensure_local_assets
+
+        ensure_local_assets(
+            local_dir=no_bg_dir,
+            gcs_prefix=gcs_no_bg_prefix,
+            drive_path_parts=drive_no_bg_parts,
+            settings=self._settings,
+            gcs_store=self._gcs,
+            drive_service=self._drive,
+        )
 
         # Find first image for PDF preview before processing
         preview_image = self._find_first_image(no_bg_dir)
