@@ -1,0 +1,77 @@
+@import "tailwindcss";
+
+:root {
+  /* Option 2: Editorial Atelier Theme Tokens */
+  --bg-ivory: #F7F6F0;
+  --surface-sand: #EFECE6;
+  --paper-elevated: #F9F8F3;
+  --warm-border: #DCD8CF;
+  
+  --text-charcoal: #1C2421;
+  --text-muted: #5A6561;
+  
+  --accent-terracotta: #C85A32;
+  --accent-terracotta-hover: #B24D28;
+  --accent-emerald: #0D5C46;
+  --accent-emerald-light: #E6F2EE;
+  
+  --amber-gold: #D97706;
+  --crimson: #DC2626;
+  
+  --background: var(--bg-ivory);
+  --foreground: var(--text-charcoal);
+}
+
+@theme inline {
+  --color-ivory: #F7F6F0;
+  --color-sand: #EFECE6;
+  --color-paper: #F9F8F3;
+  --color-border-warm: #DCD8CF;
+  --color-charcoal: #1C2421;
+  --color-slate-muted: #5A6561;
+  --color-terracotta: #C85A32;
+  --color-terracotta-hover: #B24D28;
+  --color-emerald-deep: #0D5C46;
+  --color-emerald-light: #E6F2EE;
+  --color-amber-gold: #D97706;
+  --color-crimson: #DC2626;
+
+  --font-outfit: var(--font-outfit);
+  --font-inter: var(--font-inter);
+  --font-mono: var(--font-mono);
+}
+
+body {
+  background-color: var(--bg-ivory);
+  color: var(--text-charcoal);
+  font-family: var(--font-inter), sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6, .font-display {
+  font-family: var(--font-outfit), sans-serif;
+  letter-spacing: -0.02em;
+}
+
+code, pre, .font-mono {
+  font-family: var(--font-mono), monospace;
+}
+
+/* Custom scrollbars for clean atelier aesthetic */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-ivory);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--warm-border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
