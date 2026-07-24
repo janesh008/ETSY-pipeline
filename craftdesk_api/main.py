@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from craftdesk_api.core.config import settings
-from craftdesk_api.routers import auth, etsy, gcp, pipeline, prompts, review
+from craftdesk_api.routers import auth, etsy, gcp, pipeline, prompts, review, settings as settings_router
 
 app = FastAPI(
     title=settings.app_name,
@@ -31,6 +31,7 @@ app.include_router(prompts.router, prefix="/api/v1")
 app.include_router(etsy.router, prefix="/api/v1")
 app.include_router(pipeline.router, prefix="/api/v1")
 app.include_router(review.router, prefix="/api/v1")
+app.include_router(settings_router.router, prefix="/api/v1")
 
 
 # ── Health ────────────────────────────────────────────────────────────────────
