@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-07-23T06:21:32.812046+00:00",
+  "generated_at": "2026-07-24T19:55:11.079294+00:00",
   "generator": "scripts/build_graph.py",
   "static_only": true,
   "scan_roots": [
@@ -8,8 +8,8 @@
     "scripts",
     "tests"
   ],
-  "node_count": 311,
-  "edge_count": 1675,
+  "node_count": 316,
+  "edge_count": 1684,
   "nodes": [
     {
       "id": "etsy_pipeline",
@@ -1936,7 +1936,7 @@
       "kind": "function",
       "module": "etsy_pipeline.workers.mockup_worker",
       "docstring_summary": "Run the 'etsy mockup creator' subprocess.",
-      "signature": "(self, input_dir, output_dir)",
+      "signature": "(self, input_dir, output_dir, theme_name)",
       "is_public": false,
       "is_async": false,
       "class": "MockupWorker"
@@ -2853,6 +2853,24 @@
       "is_async": false
     },
     {
+      "id": "tests.test_metadata_prompt_format",
+      "kind": "module",
+      "path": "tests/test_metadata_prompt_format.py",
+      "docstring_summary": "Unit tests for Etsy listing generator prompt format and rules.",
+      "children": [
+        "tests.test_metadata_prompt_format.test_master_prompt_contains_required_formatting_rules"
+      ]
+    },
+    {
+      "id": "tests.test_metadata_prompt_format.test_master_prompt_contains_required_formatting_rules",
+      "kind": "function",
+      "module": "tests.test_metadata_prompt_format",
+      "docstring_summary": "Verify Deepseek_etsy_listing_generator_prompt.txt contains required rules.",
+      "signature": "()",
+      "is_public": true,
+      "is_async": false
+    },
+    {
       "id": "tests.test_metadata_worker",
       "kind": "module",
       "path": "tests/test_metadata_worker.py",
@@ -2917,6 +2935,34 @@
       "module": "tests.test_metadata_worker",
       "docstring_summary": "Create a MetadataWorker instance with default settings.",
       "signature": "()",
+      "is_public": true,
+      "is_async": false
+    },
+    {
+      "id": "tests.test_mockup_theme_name",
+      "kind": "module",
+      "path": "tests/test_mockup_theme_name.py",
+      "docstring_summary": "Unit tests for Mockup Creator theme name resolution.",
+      "children": [
+        "tests.test_mockup_theme_name.test_theme_name_resolution_from_no_bg_parent",
+        "tests.test_mockup_theme_name.test_theme_name_resolution_explicit_override"
+      ]
+    },
+    {
+      "id": "tests.test_mockup_theme_name.test_theme_name_resolution_explicit_override",
+      "kind": "function",
+      "module": "tests.test_mockup_theme_name",
+      "docstring_summary": "Test explicit theme_name parameter overrides directory name.",
+      "signature": "()",
+      "is_public": true,
+      "is_async": false
+    },
+    {
+      "id": "tests.test_mockup_theme_name.test_theme_name_resolution_from_no_bg_parent",
+      "kind": "function",
+      "module": "tests.test_mockup_theme_name",
+      "docstring_summary": "Test theme name resolution falls back to parent folder when theme_dir is no_bg.",
+      "signature": "(tmp_path)",
       "is_public": true,
       "is_async": false
     },
@@ -6623,18 +6669,6 @@
     },
     {
       "from": "etsy_pipeline.workers.csv_worker",
-      "to": "datetime.UTC",
-      "kind": "import",
-      "static_only": true
-    },
-    {
-      "from": "etsy_pipeline.workers.csv_worker",
-      "to": "datetime.datetime",
-      "kind": "import",
-      "static_only": true
-    },
-    {
-      "from": "etsy_pipeline.workers.csv_worker",
       "to": "etsy_pipeline.utils.exceptions.PipelineError",
       "kind": "import",
       "static_only": true
@@ -6648,12 +6682,6 @@
     {
       "from": "etsy_pipeline.workers.csv_worker",
       "to": "pathlib.Path",
-      "kind": "import",
-      "static_only": true
-    },
-    {
-      "from": "etsy_pipeline.workers.csv_worker",
-      "to": "typing.Any",
       "kind": "import",
       "static_only": true
     },
@@ -6916,18 +6944,6 @@
     },
     {
       "from": "etsy_pipeline.workers.etsy_worker",
-      "to": "datetime.UTC",
-      "kind": "import",
-      "static_only": true
-    },
-    {
-      "from": "etsy_pipeline.workers.etsy_worker",
-      "to": "datetime.datetime",
-      "kind": "import",
-      "static_only": true
-    },
-    {
-      "from": "etsy_pipeline.workers.etsy_worker",
       "to": "etsy_pipeline.utils.exceptions.PipelineError",
       "kind": "import",
       "static_only": true
@@ -6940,12 +6956,6 @@
     },
     {
       "from": "etsy_pipeline.workers.etsy_worker",
-      "to": "os",
-      "kind": "import",
-      "static_only": true
-    },
-    {
-      "from": "etsy_pipeline.workers.etsy_worker",
       "to": "pathlib.Path",
       "kind": "import",
       "static_only": true
@@ -6953,12 +6963,6 @@
     {
       "from": "etsy_pipeline.workers.etsy_worker",
       "to": "requests",
-      "kind": "import",
-      "static_only": true
-    },
-    {
-      "from": "etsy_pipeline.workers.etsy_worker",
-      "to": "typing.Any",
       "kind": "import",
       "static_only": true
     },
@@ -9078,6 +9082,13 @@
     },
     {
       "from": "etsy_pipeline.workers.mockup_worker.MockupWorker._run_mockup_creator",
+      "to": "extend",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.mockup_worker.MockupWorker._run_mockup_creator",
       "to": "info",
       "kind": "call",
       "static_only": true,
@@ -9100,6 +9111,13 @@
     {
       "from": "etsy_pipeline.workers.mockup_worker.MockupWorker._run_mockup_creator",
       "to": "str",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.mockup_worker.MockupWorker._run_mockup_creator",
+      "to": "strip",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
@@ -9254,6 +9272,13 @@
     {
       "from": "etsy_pipeline.workers.mockup_worker.MockupWorker.run",
       "to": "relative_to",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.mockup_worker.MockupWorker.run",
+      "to": "replace",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
@@ -14137,6 +14162,46 @@
       "note": "name-only; may not resolve to correct module without runtime context"
     },
     {
+      "from": "tests.test_metadata_prompt_format",
+      "to": "__future__.annotations",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "tests.test_metadata_prompt_format",
+      "to": "pathlib.Path",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "tests.test_metadata_prompt_format.test_master_prompt_contains_required_formatting_rules",
+      "to": "Path",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_metadata_prompt_format.test_master_prompt_contains_required_formatting_rules",
+      "to": "exists",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_metadata_prompt_format.test_master_prompt_contains_required_formatting_rules",
+      "to": "read_text",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_metadata_prompt_format.test_master_prompt_contains_required_formatting_rules",
+      "to": "resolve",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
       "from": "tests.test_metadata_worker",
       "to": "__future__.annotations",
       "kind": "import",
@@ -14232,6 +14297,52 @@
     {
       "from": "tests.test_metadata_worker.worker",
       "to": "Settings",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_mockup_theme_name",
+      "to": "__future__.annotations",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "tests.test_mockup_theme_name",
+      "to": "pathlib.Path",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "tests.test_mockup_theme_name",
+      "to": "sys",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "tests.test_mockup_theme_name.test_theme_name_resolution_explicit_override",
+      "to": "strip",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_mockup_theme_name.test_theme_name_resolution_from_no_bg_parent",
+      "to": "lower",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_mockup_theme_name.test_theme_name_resolution_from_no_bg_parent",
+      "to": "mkdir",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_mockup_theme_name.test_theme_name_resolution_from_no_bg_parent",
+      "to": "touch",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"

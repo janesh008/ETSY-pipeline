@@ -1,4 +1,4 @@
-# Etsy Pipeline — Master Project Map
+# Etsy Pipeline & CraftDesk SaaS — Master Project Map
 
 Welcome! This document is a non-technical, friendly guide designed to help anyone (whether you are an AI agent, a developer, or a non-technical team member) understand exactly how this project works, what each part does, and how to make changes or solve bugs.
 
@@ -12,73 +12,81 @@ Use these links to jump directly to any directory or file in the codebase:
     *   [📄 pyproject.toml](file:///d:/Janesh/ETSY/ETSY-pipeline/pyproject.toml) — Project dependencies and tool settings.
     *   [📄 AGENTS.md](file:///d:/Janesh/ETSY/ETSY-pipeline/AGENTS.md) — Workflow instructions for AI coding assistants.
     *   [📄 README.md](file:///d:/Janesh/ETSY/ETSY-pipeline/README.md) — Main GitHub setup guide.
-    *   [**📁 Core Package (`etsy_pipeline`)**](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline)
-        *   [📄 __init__.py](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/__init__.py) — Package entry point.
-        *   [**📁 config/**](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/config) — System settings and env-var validation.
-            *   [📄 settings.py](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/config/settings.py) — Configuration schema.
-        *   [**📁 models/**](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/models) — Shared data structures.
-            *   [📄 job.py](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/models/job.py) — Pydantic Job state model.
-        *   [**📁 pipeline/**](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/pipeline) — Execution workflow sequencer.
-            *   [📄 orchestrator.py](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/pipeline/orchestrator.py) — Orchestrator class.
-        *   [**📁 resources/**](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/resources) — Copied prompt templates.
-            *   [📄 SKILL.md](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/resources/SKILL.md) — Image prompt generator system prompt.
-            *   [📄 ETSY-Listing-Master-Prompt.txt](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/resources/ETSY-Listing-Master-Prompt.txt) — SEO listing system prompt.
-        *   [**📁 utils/**](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/utils) — Logging and exception handlers.
-            *   [📄 exceptions.py](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/utils/exceptions.py) — Custom pipeline errors.
-            *   [📄 logging.py](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/utils/logging.py) — Colored console & cloud JSON logger.
-        *   [**📁 workers/**](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/workers) — Pipeline stage implementations.
-            *   [📄 prompt_worker.py](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/workers/prompt_worker.py) — Clipart prompt generation.
-            *   [📄 prompt_worker_config.py](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/workers/prompt_worker_config.py) — Rules for prompt parsing.
-            *   [📄 image_worker.py](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/workers/image_worker.py) — GPU image generation via ComfyUI.
-            *   [📄 image_worker_config.py](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/workers/image_worker_config.py) — ComfyUI node constants.
-            *   [📄 bg_removal_worker.py](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/workers/bg_removal_worker.py) — AI background removal via rembg.
-            *   [📄 bg_removal_worker_config.py](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/workers/bg_removal_worker_config.py) — Background removal constants.
-            *   [📄 upscale_worker.py](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/workers/upscale_worker.py) — AI upscaling via Real-ESRGAN.
-            *   [📄 upscale_worker_config.py](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/workers/upscale_worker_config.py) — Upscaling model settings and folders.
-    *   [**📁 scripts/**](file:///d:/Janesh/ETSY/ETSY-pipeline/scripts) — Runnable CLI commands.
-        *   [📄 run_prompts.py](file:///d:/Janesh/ETSY/ETSY-pipeline/scripts/run_prompts.py) — CLI command to run prompt stage.
-        *   [📄 run_image_worker.py](file:///d:/Janesh/ETSY/ETSY-pipeline/scripts/run_image_worker.py) — CLI runner for image generation daemon.
-        *   [📄 run_bg_removal_worker.py](file:///d:/Janesh/ETSY/ETSY-pipeline/scripts/run_bg_removal_worker.py) — CLI runner for background removal daemon.
-        *   [📄 run_upscale_worker.py](file:///d:/Janesh/ETSY/ETSY-pipeline/scripts/run_upscale_worker.py) — CLI runner for image upscaling daemon.
-        *   [📄 build_graph.py](file:///d:/Janesh/ETSY/ETSY-pipeline/scripts/build_graph.py) — Code graph generator.
-    *   [**📁 tests/**](file:///d:/Janesh/ETSY/ETSY-pipeline/tests) — Automated test suite.
-        *   [📄 test_prompt_worker.py](file:///d:/Janesh/ETSY/ETSY-pipeline/tests/test_prompt_worker.py) — Unit/Integration tests.
 
----
+*   [**📁 CraftDesk API Backend (`craftdesk_api`)**](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api)
+    *   [**📁 doc/**](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/doc) — Backend Documentation Layer
+        *   [📄 HIGH_LEVEL.md](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/doc/HIGH_LEVEL.md) — Non-technical scope, security, and DB design.
+        *   [📄 SKILL.md](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/doc/SKILL.md) — Coding guidelines, Gotchas, and testing rules.
+        *   [📄 DETAILED.md](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/doc/DETAILED.md) — Module specification & code structure.
+    *   [**📁 core/**](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/core) — Application settings & security helpers.
+        *   [📄 config.py](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/core/config.py) — Pydantic Settings schema.
+        *   [📄 security.py](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/core/security.py) — AES-256 Fernet encryption, bcrypt, JWT.
+    *   [**📁 db/**](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/db) — SQLAlchemy async database base & session dependency.
+        *   [📄 base.py](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/db/base.py) — Neon.tech engine & get_db.
+    *   [**📁 models/**](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/models) — Database ORM models.
+        *   [📄 user.py](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/models/user.py) — User model (users table).
+        *   [📄 etsy_shop.py](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/models/etsy_shop.py) — EtsyShop model (etsy_shops table).
+        *   [📄 gcp_config.py](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/models/gcp_config.py) — GcpConfig model (gcp_configs table).
+        *   [📄 api_key.py](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/models/api_key.py) — ApiKey model (api_keys table).
+    *   [**📁 schemas/**](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/schemas) — Pydantic request/response schemas.
+        *   [📄 auth.py](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/schemas/auth.py) — Auth payloads.
+        *   [📄 gcp.py](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/schemas/gcp.py) — GCP VM payloads.
+        *   [📄 prompts.py](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/schemas/prompts.py) — Prompt Studio payloads.
+        *   [📄 etsy.py](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/schemas/etsy.py) — Etsy OAuth PKCE payloads.
+        *   [📄 pipeline.py](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/schemas/pipeline.py) — 6-Stage Pipeline payloads.
+        *   [📄 review.py](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/schemas/review.py) — Review & Publishing payloads.
+        *   [📄 settings.py](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/schemas/settings.py) — Settings payloads.
+    *   [**📁 services/**](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/services) — Business logic services.
+        *   [📄 gcp_vm.py](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/services/gcp_vm.py) — GCP Compute API & ComfyUI health poller.
+        *   [📄 etsy_scraper.py](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/services/etsy_scraper.py) — Etsy listing URL scraper.
+        *   [📄 prompt_engine.py](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/services/prompt_engine.py) — Gemini 2.5 Flash prompt synthesis.
+        *   [📄 etsy_oauth.py](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/services/etsy_oauth.py) — Etsy OAuth 2.0 PKCE helper.
+        *   [📄 pipeline_runner.py](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/services/pipeline_runner.py) — 6-stage pipeline orchestrator.
+        *   [📄 etsy_publisher.py](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/services/etsy_publisher.py) — Etsy API v3 draft listing publisher.
+    *   [**📁 routers/**](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/routers) — FastAPI route endpoints.
+        *   [📄 auth.py](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/routers/auth.py) — /register, /login, /refresh, /logout.
+        *   [📄 gcp.py](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/routers/gcp.py) — /gcp/config, /gcp/vm/start, /gcp/vm/stop, /gcp/vm/status.
+        *   [📄 prompts.py](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/routers/prompts.py) — /prompts/scrape-etsy, /prompts/generate, .txt export.
+        *   [📄 etsy.py](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/routers/etsy.py) — /etsy/auth/url, /etsy/auth/callback, /etsy/shops.
+        *   [📄 pipeline.py](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/routers/pipeline.py) — /pipeline/jobs, single-stage retry, WS stream.
+        *   [📄 review.py](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/routers/review.py) — /review/{id}, metadata patch, push-to-etsy.
+        *   [📄 settings.py](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/routers/settings.py) — /settings/profile, /settings/api-keys.
+    *   [**📁 tests/**](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/tests) — Pytest suite (39 passing tests).
+        *   [📄 conftest.py](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/tests/conftest.py) — Shared aiosqlite test database fixture.
+        *   [📄 test_auth.py](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/tests/test_auth.py) — Auth unit tests.
+        *   [📄 test_gcp.py](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/tests/test_gcp.py) — GCP router tests.
+        *   [📄 test_prompts.py](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/tests/test_prompts.py) — Prompt Studio tests.
+        *   [📄 test_etsy.py](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/tests/test_etsy.py) — Etsy OAuth tests.
+        *   [📄 test_pipeline.py](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/tests/test_pipeline.py) — Pipeline runner tests.
+        *   [📄 test_review.py](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/tests/test_review.py) — Review & publishing tests.
+        *   [📄 test_settings.py](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/tests/test_settings.py) — Settings tests.
+    *   [📄 main.py](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/main.py) — FastAPI entry point.
 
-## 💡 What does this project do? (The High-Level Flow)
+*   [**📁 CraftDesk Web Frontend (`craftdesk_web`)**](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_web)
+    *   [**📁 doc/**](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_web/doc) — Frontend Documentation Layer
+        *   [📄 HIGH_LEVEL.md](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_web/doc/HIGH_LEVEL.md) — Atelier design system & session lifecycle.
+        *   [📄 SKILL.md](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_web/doc/SKILL.md) — Client component rules, token mappings, and Gotchas.
+        *   [📄 DETAILED.md](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_web/doc/DETAILED.md) — 11 Page component specifications.
+    *   [**📁 src/app/**](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_web/src/app) — App Router pages & CSS.
+        *   [📄 globals.css](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_web/src/app/globals.css) — Editorial Atelier theme CSS tokens (#F7F6F0).
+        *   [📄 layout.tsx](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_web/src/app/layout.tsx) — Outfit/Inter/Mono fonts & AuthProvider.
+        *   [📄 page.tsx](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_web/src/app/page.tsx) — Auth redirect landing page.
+        *   [📄 login/page.tsx](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_web/src/app/login/page.tsx) — Login page.
+        *   [📄 register/page.tsx](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_web/src/app/register/page.tsx) — Account registration page.
+        *   [📄 dashboard/page.tsx](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_web/src/app/dashboard/page.tsx) — Studio dashboard & GPU VM widget.
+        *   [📄 prompt-studio/page.tsx](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_web/src/app/prompt-studio/page.tsx) — AI Prompt Studio & .txt Exporter.
+        *   [📄 shops/page.tsx](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_web/src/app/shops/page.tsx) — Etsy OAuth PKCE Shop Connector.
+        *   [📄 pipeline/page.tsx](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_web/src/app/pipeline/page.tsx) — 6-Stage Pipeline & Failure Retry Card.
+        *   [📄 review/[job_id]/page.tsx](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_web/src/app/review/%5Bjob_id%5D/page.tsx) — Mockup review, Lightbox modal & Etsy Publisher.
+        *   [📄 settings/page.tsx](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_web/src/app/settings/page.tsx) — Studio settings & key store.
+    *   [**📁 src/context/**](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_web/src/context) — State providers.
+        *   [📄 AuthContext.tsx](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_web/src/context/AuthContext.tsx) — Session state & token storage.
+    *   [**📁 src/lib/**](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_web/src/lib) — API utilities.
+        *   [📄 api.ts](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_web/src/lib/api.ts) — TypeScript fetch client.
 
-This project is a pipeline designed to create digital clipart bundles and automatically list them on Etsy. Think of it like an assembly line:
-
-1.  **Input:** You give the pipeline a **Theme** (like "Lilo & Stitch") and an **Event** (like "birthday").
-2.  **Prompt Gen (Gemini):** The pipeline asks the Gemini AI to write image generation prompts. It splits these prompts into sections (Main Character, Secondary Characters, Patterns, Props, and Scenes).
-3.  **Image Gen (ComfyUI - Future):** A graphics engine renders these prompts into actual clipart pictures.
-4.  **BG Removal (Future):** A background remover strips the white backgrounds so they become transparent PNGs.
-5.  **Upscale (Future):** The images are made larger and crisp for professional printing.
-6.  **Mockups (Future):** The pipeline places the clipart onto digital boxes and paper frames so customers can see what they look like.
-7.  **SEO Metadata (Gemini - Future):** Gemini writes an optimized Etsy listing description, title, and 13 tags.
-8.  **CSV (Future):** The files and text are organized into a bulk CSV spreadsheet.
-9.  **Etsy Upload (Future):** The pipeline pushes the listings directly onto Etsy.
-
----
-
-## 🤖 What do the "Agents" and "Workers" do?
-
-*   **Workers:** Each step on the assembly line is run by a **Worker**. For example, the `PromptWorker` handles step 2. Workers are stateless; they only do the work they are asked to do on a specific job, then they pass the job along.
-*   **Agents (Future):** In the future, we will wrap these workers in intelligent **AI Agents**. An agent will monitor the worker, decide if the outputs look high quality, or automatically run corrections if a step fails.
-*   **Job Object:** All workers read from and write to a single Pydantic **Job** state model. The job carries the configuration (e.g. theme) and collects the outputs (e.g. prompt lists, files) as they are created.
-
----
-
-## 🛠️ How to develop a feature or resolve a bug
-
-If you are tasked with fixing a bug or adding a feature, follow this simple non-technical loop:
-
-1.  **Look up the target folder:** Find the folder you want to change in the [Visual Project Map](#-visual-project-map-clickable-links) and click on its link.
-2.  **Open its `doc/` folder:** Every folder has a `doc/` subdirectory.
-    *   Read **`HIGH_LEVEL.md`** to understand what that folder is responsible for.
-    *   Read **`SKILL.md`** to know the coding rules, Gotchas, and instructions for that folder.
-    *   Read **`DETAILED.md`** to see how the code is structured and what it does.
-3.  **Create a Plan:** Write down your proposed changes in `plans/` using the plan template.
-4.  **Implement & Test:** Make the code edits, run `ruff format . && ruff check . --fix` to format the code, and run tests via `pytest tests/ -v -k "not integration"` to verify everything works.
-5.  **Regenerate Code Graph:** Run `python scripts/build_graph.py` to ensure the project code graph is updated.
+*   [**📁 Core Pipeline Package (`etsy_pipeline`)**](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline)
+    *   [📄 __init__.py](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/__init__.py) — Package entry point.
+    *   [**📁 config/**](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/config) — System settings and env-var validation.
+    *   [**📁 models/**](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/models) — Shared data structures (`job.py`).
+    *   [**📁 pipeline/**](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/pipeline) — Sequencer (`orchestrator.py`).
+    *   [**📁 workers/**](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/workers) — Stage implementations (`prompt_worker`, `image_worker`, `bg_removal_worker`, `upscale_worker`).
