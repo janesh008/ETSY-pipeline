@@ -1,49 +1,42 @@
-# CraftDesk Web Frontend — High-Level Architecture & User Experience
+# CraftDesk Web Frontend — User Experience & Business Workflow Architecture
 
-## 🎯 Scope & Responsibility
+## 🎯 Business Ergonomics & Seller Focus
 
-`craftdesk_web` is the single-page application (SPA) frontend for CraftDesk built with **Next.js 14 App Router**, **TypeScript**, **Tailwind CSS**, and **lucide-react**. It provides Etsy sellers with a visual workspace to generate AI clipart prompts, monitor GCP GPU VM compute status, execute 6-stage asset pipelines, review mockup galleries, edit listing metadata, and publish draft listings to Etsy shops.
+`craftdesk_web` is designed around the daily operational workflow of an Etsy digital clipart seller. The application eliminates cognitive overhead, reduces administrative clicks, and prevents costly user mistakes:
 
----
-
-## 🎨 Design System — Editorial Atelier
-
-The interface strictly adheres to the **Editorial Atelier** theme:
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    Warm Ivory (#F7F6F0)                      │
-│                                                             │
-│   ┌─────────────────────────────────────────────────────┐   │
-│   │           Sand Surface Card (#EFECE6)               │   │
-│   │   ┌─────────────────────────────────────────────┐   │   │
-│   │   │     Elevated Paper Input (#F9F8F3)          │   │   │
-│   │   └─────────────────────────────────────────────┘   │   │
-│   │   Primary Action CTA: Terracotta Rust (#C85A32)     │   │
-│   │   Secondary Badge: Deep Emerald (#0D5C46)           │   │
-│   └─────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### Color Palette Tokens
-- **`--color-ivory` (`#F7F6F0`):** Page background — warm paper.
-- **`--color-sand` (`#EFECE6`):** Elevated cards, modals, and container panels.
-- **`--color-paper` (`#F9F8F3`):** Input fields, textareas, and active hover states.
-- **`--color-border-warm` (`#DCD8CF`):** Card borders and dividers.
-- **`--color-charcoal` (`#1C2421`):** Primary text and headings.
-- **`--color-slate-muted` (`#5A6561`):** Subtext, labels, and placeholders.
-- **`--color-terracotta` (`#C85A32`):** Primary buttons, brand mark, key CTAs.
-- **`--color-emerald-deep` (`#0D5C46`):** Success indicators, connected badges.
-
-### Typography
-- **Headings:** `Outfit` (sans-serif, display weight)
-- **Body:** `Inter` (sans-serif, clean interface text)
-- **Prompts & Logs:** `JetBrains Mono` (monospace, prompt matrix, stderr logs)
+1. **Editorial Atelier Aesthetics:** Built on a warm ivory paper background (`#F7F6F0`) with sand surface cards (`#EFECE6`), terracotta primary CTAs (`#C85A32`), and deep emerald badges (`#0D5C46`). The visual language feels like a premium artisan workshop rather than a generic dark-mode developer dashboard.
+2. **Clear Infrastructure Visibility:** The GPU VM status widget is accessible directly from the dashboard and pipeline views, giving sellers real-time visibility into cloud compute state (`Stopped 🔴` / `Booting ComfyUI... ⚙️` / `Ready ✅ (:8188)`) so they never launch pipelines against an offline server.
+3. **One-Click Handoffs:** Sellers move seamlessly through the 4-phase business workflow:
+   `Prompt Studio` → `6-Stage Pipeline` → `Mockup Gallery Review` → `Push Draft to Etsy`.
 
 ---
 
-## 🔑 Session & Authentication Architecture
+## 🔄 Seller Workflow Architecture
 
-- Managed via `AuthProvider` React Context (`src/context/AuthContext.tsx`).
-- Stores `craftdesk_access_token` and `craftdesk_refresh_token` in `localStorage`.
-- Automatically redirects unauthenticated users attempting to access protected routes (`/dashboard`, `/prompt-studio`, `/shops`, `/pipeline`, `/review`, `/settings`) back to `/login`.
+```
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                                 1. PROMPT STUDIO                                       │
+│  Input Theme / Etsy Link / Reference Images ──> Synthesize Matrix ──> Download .txt    │
+└───────────────────────────────────────────┬────────────────────────────────────────────┘
+                                            │ One-Click Handoff
+                                            ▼
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                               2. 6-STAGE PIPELINE                                      │
+│  Auto-check GPU VM ──> Image Gen ──> BG Remove ──> Upscale ──> Mockups ──> PDF ──> Meta│
+│  (If stage fails: Inspect root exception ──> Click "Retry Stage" without losing data)  │
+└───────────────────────────────────────────┬────────────────────────────────────────────┘
+                                            │ Auto Handoff on Complete
+                                            ▼
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                          3. MOCKUP REVIEW & ETSY PUBLISHER                             │
+│  Inspect Hero.png & 4 Mockups (Lightbox) ──> Edit Title/Description/Tags ──> Push Draft│
+└────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 🔒 Client Security & Session Lifecycle
+
+- **JWT Persistence:** Access tokens (60 min) and Refresh tokens (30 days) are persisted in `localStorage`.
+- **Protected Route Middleware:** Unauthenticated attempts to access protected routes automatically trigger redirect to `/login`.
+- **PKCE OAuth Safety:** The frontend generates cryptographic PKCE verifiers in `sessionStorage` during Etsy shop connection, ensuring authorization codes cannot be intercepted.

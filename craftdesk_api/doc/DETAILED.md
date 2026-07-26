@@ -1,85 +1,138 @@
-# CraftDesk API Backend — Detailed Technical Specification & Module Reference
+# CraftDesk API Backend — Module-by-Module Business Logic Specification
 
-## 📁 File Structure Map
-
-```
-craftdesk_api/
-├── core/
-│   ├── config.py           # Pydantic Settings (DATABASE_URL, JWT_SECRET, FERNET_KEY)
-│   └── security.py         # Fernet AES-256 encrypt/decrypt, bcrypt, JWT encode/decode
-├── db/
-│   └── base.py             # Async SQLAlchemy engine (Neon.tech), SessionLocal, get_db
-├── models/
-│   ├── user.py             # User ORM model (users table)
-│   ├── etsy_shop.py        # EtsyShop ORM model (etsy_shops table)
-│   ├── gcp_config.py       # GcpConfig ORM model (gcp_configs table)
-│   └── api_key.py          # ApiKey ORM model (api_keys table)
-├── schemas/
-│   ├── auth.py             # Auth Pydantic schemas
-│   ├── gcp.py              # GCP Pydantic schemas
-│   ├── prompts.py          # Prompt Studio Pydantic schemas
-│   ├── etsy.py             # Etsy OAuth & Shop Pydantic schemas
-│   ├── pipeline.py         # Pipeline Runner Pydantic schemas
-│   ├── review.py           # Review & Publishing Pydantic schemas
-│   └── settings.py         # Settings & API Keys Pydantic schemas
-├── services/
-│   ├── gcp_vm.py           # GCP Compute Engine API v1 & ComfyUI health check poller
-│   ├── etsy_scraper.py     # Etsy listing URL web scraper (httpx + BeautifulSoup)
-│   ├── prompt_engine.py    # Gemini 2.5 Flash prompt synthesis engine
-│   ├── etsy_oauth.py       # Etsy OAuth 2.0 PKCE helper (verifier, challenge, tokens)
-│   ├── pipeline_runner.py  # 6-stage pipeline execution state machine & retry logic
-│   └── etsy_publisher.py   # Etsy Open API v3 draft listing publisher
-├── routers/
-│   ├── auth.py             # /register, /login, /refresh, /logout endpoints
-│   ├── gcp.py              # /gcp/config, /gcp/vm/start, /gcp/vm/stop, /gcp/vm/status
-│   ├── prompts.py          # /prompts/scrape-etsy, /prompts/generate, /jobs/{id}/export
-│   ├── etsy.py             # /etsy/auth/url, /etsy/auth/callback, /etsy/shops
-│   ├── pipeline.py         # /pipeline/jobs, /jobs/{id}/stages/{stage}/retry, WS stream
-│   ├── review.py           # /review/{id}, /review/{id}/metadata, /review/{id}/push-to-etsy
-│   └── settings.py         # /settings/profile, /settings/api-keys
-├── tests/
-│   ├── conftest.py         # Shared aiosqlite test database fixture & env var overrides
-│   ├── test_auth.py        # 16 security & auth unit tests
-│   ├── test_gcp.py         # 7 GCP router unit tests
-│   ├── test_prompts.py     # 4 Prompt Studio unit tests
-│   ├── test_etsy.py        # 3 Etsy OAuth unit tests
-│   ├── test_pipeline.py    # 3 Pipeline runner unit tests
-│   ├── test_review.py      # 3 Review & Etsy publishing unit tests
-│   └── test_settings.py    # 3 Settings unit tests
-└── main.py                 # FastAPI entry point, CORS configuration, router mounts
-```
+This document provides an exhaustive breakdown of every module in `craftdesk_api`, detailing its **Business Goal**, **Domain Input & Output Contracts**, **Step-by-Step Business Logic Algorithm**, and **Failure Recovery Strategies**.
 
 ---
 
-## 🔍 Module Deep-Dive
+## 📁 1. Core & Database Layer
 
-### 1. `core/security.py`
-- `encrypt(plaintext: str) -> str`: Encrypts string using `cryptography.fernet.Fernet` with `FERNET_KEY`.
-- `decrypt(ciphertext: str) -> str`: Decrypts Fernet token back to plaintext string.
-- `hash_password(password: str) -> str`: Hashes password using bcrypt.
-- `verify_password(plain: str, hashed: str) -> bool`: Verifies password match.
-- `create_access_token(user_id: str) -> str`: Issues 60-minute JWT with `{"sub": user_id, "type": "access"}`.
-- `create_refresh_token(user_id: str) -> str`: Issues 30-day JWT with `{"sub": user_id, "type": "refresh"}`.
+### `craftdesk_api/core/config.py`
+- **Business Goal:** Centralizes all environment configuration to prevent hardcoded credentials across the codebase.
+- **Business Input:** Environment variables or local `.env` file (`DATABASE_URL`, `JWT_SECRET_KEY`, `FERNET_KEY`).
+- **Domain Algorithm:** Uses `pydantic-settings` to load and validate variables. Provides fallback development defaults (`sqlite+aiosqlite:///craftdesk.db`) so local execution never crashes if a non-critical variable is omitted.
 
-### 2. `services/gcp_vm.py`
-- `start_vm()`: Builds `googleapiclient.discovery` compute v1 client and executes `instances().start()`.
-- `stop_vm()`: Executes `instances().stop()`.
-- `get_vm_details()`: Executes `instances().get()`, returning status (`RUNNING`/`STOPPED`) and external IP (`natIP`).
-- `check_comfy_ui_health(host: str, port: int)`: Sends `GET http://<host>:<port>/` via `httpx.AsyncClient(timeout=3.0)` to verify ComfyUI readiness.
+### `craftdesk_api/core/security.py`
+- **Business Goal:** Protects seller credentials and session integrity using enterprise-grade cryptography.
+- **Domain Contracts:**
+  - `encrypt(plaintext: str) -> str`: Converts sensitive API keys or OAuth tokens into AES-256 Fernet ciphertext.
+  - `decrypt(ciphertext: str) -> str`: Restores original credentials for active API calls.
+  - `hash_password(password: str) -> str`: Hashes passwords via `bcrypt` (cost factor 12).
+  - `create_access_token(user_id: str) -> str`: Issues 60-minute JWT with claims `{"sub": user_id, "type": "access"}`.
+  - `create_refresh_token(user_id: str) -> str`: Issues 30-day JWT with claims `{"sub": user_id, "type": "refresh"}`.
+- **Risk Mitigation:** If ciphertext is tampered with, `decrypt()` raises an exception rather than returning corrupted keys.
 
-### 3. `services/prompt_engine.py`
-- `generate_prompts()`: Combines Theme Text, Etsy Scraped Context, and Reference Images. Invokes `google.genai` model `gemini-2.5-flash` with system prompt. Formats output into sectioned numbered prompts and a clean exportable `.txt` file string.
+### `craftdesk_api/db/base.py` & `models/`
+- **Business Goal:** Manages relational SaaS entity persistence in Neon.tech PostgreSQL.
+- **Entity Schemas:**
+  - `User` (`users` table): `id`, `email`, `password_hash`, `full_name`, `created_at`.
+  - `EtsyShop` (`etsy_shops` table): `id`, `user_id`, `shop_id`, `shop_name`, `encrypted_access_token`, `encrypted_refresh_token`, `token_expires_at`, `is_active`.
+  - `GcpConfig` (`gcp_configs` table): `id`, `user_id`, `project_id`, `zone`, `instance_name`, `encrypted_service_account_json`, `comfy_ui_port`.
+  - `ApiKey` (`api_keys` table): `id`, `user_id`, `service`, `encrypted_api_key`.
 
-### 4. `services/etsy_oauth.py`
-- `generate_pkce_pair()`: Generates 64-char `code_verifier` and SHA256 base64url `code_challenge`.
-- `get_auth_url()`: Builds Etsy OAuth consent URL with `listings_r listings_w shops_r` scopes.
-- `exchange_code_for_tokens()`: POSTs `code` + `code_verifier` to `https://api.etsy.com/v3/public/oauth/token`.
+---
 
-### 5. `services/pipeline_runner.py`
-- Manages stage status transitions: `pending` → `running` → `completed` or `failed`.
-- On stage failure, records `error_message` (root exception) and `stderr_log` (traceback).
-- Provides `retry_stage(job_id, stage_name)` to reset and re-run only the target failed stage.
+## 📁 2. Business Services Layer (`craftdesk_api/services/`)
 
-### 6. `services/etsy_publisher.py`
-- Decrypts shop access token from `etsy_shops` table via Fernet.
-- Sends POST to `https://openapi.etsy.com/v3/application/shops/{shop_id}/listings` with `taxonomy_id=10985` (digital craft clipart), truncated title (max 140), and tags (max 13 items, 20 chars each).
+### `services/gcp_vm.py` — GPU Cloud Cost Minimizer
+- **Business Goal:** Controls GCP Compute Engine GPU instance lifecycles to ensure sellers only pay for active rendering minutes.
+- **Business Logic Algorithm:**
+  1. `start_vm()`: Parses decrypted GCP service account JSON, constructs `googleapiclient.discovery` Compute Engine v1 client, and triggers `instances().start()`.
+  2. `stop_vm()`: Triggers `instances().stop()`, shutting down the GPU VM to stop billing.
+  3. `get_vm_details()`: Polls `instances().get()` to extract status (`RUNNING`/`STOPPED`) and external NAT IP.
+  4. `check_comfy_ui_health(host, port)`: Asynchronously issues `GET http://<host>:<port>/` via `httpx.AsyncClient(timeout=3.0)`. Returns `True` only when ComfyUI web server responds HTTP 200.
+
+### `services/etsy_scraper.py` — Competitor Market Intelligence Scraper
+- **Business Goal:** Extracts design trends, keywords, and gallery image layouts from top-selling Etsy product listings.
+- **Business Logic Algorithm:**
+  1. Validates input URL against Etsy listing regex (`etsy.com/listing/\d+`).
+  2. Sends HTTP GET request with Chrome User-Agent header to avoid bot detection blocks.
+  3. Parses HTML using BeautifulSoup:
+     - Title: Extracts `og:title` meta tag or `<h1>` header text.
+     - Description: Extracts `og:description` or meta description.
+     - Images: Extracts `og:image` and up to 5 gallery thumbnails matching `il_\d+xN` URL pattern.
+- **Failure Mitigation:** If scraping encounters HTTP errors, returns a clean structured fallback object so prompt generation can still proceed.
+
+### `services/prompt_engine.py` — Multi-Input AI Prompt Synthesis
+- **Business Goal:** Generates 22–100 commercial watercolor clipart prompts tailored for Midjourney or ComfyUI.
+- **Business Logic Algorithm:**
+  1. Synthesizes context from Text Theme, Etsy Scraped Title/Description, and Reference Images.
+  2. Constructs prompt instructions requiring output of numbered prompts detailing subject, pose, color palette, pastel watercolor splatters, and transparent background isolation.
+  3. Invokes Gemini 2.5 Flash API (`gemini-2.5-flash`).
+  4. Parses raw response, stripping numbers (`1. `, `01. `) and cleaning whitespace.
+  5. Formats output into a downloadable `.txt` file string with header comments and numbered entries.
+
+### `services/etsy_oauth.py` — PKCE OAuth 2.0 Store Security Helper
+- **Business Goal:** Enables sellers to connect Etsy shops without sharing passwords or client secrets.
+- **Business Logic Algorithm:**
+  1. `generate_pkce_pair()`: Generates 64-char random `code_verifier` and SHA256 base64url digest `code_challenge`.
+  2. `get_auth_url()`: Builds Etsy OAuth consent URL with `listings_r listings_w shops_r` scopes and PKCE parameters (`code_challenge_method=S256`).
+  3. `exchange_code_for_tokens()`: POSTs `code` + `code_verifier` to `https://api.etsy.com/v3/public/oauth/token`.
+  4. `get_shop_details()`: Calls `https://openapi.etsy.com/v3/application/users/me` and `/shops` to retrieve shop ID and shop name.
+
+### `services/pipeline_runner.py` — 6-Stage Assembly Line & Retry Engine
+- **Business Goal:** Manages pipeline job state transitions and single-stage failure retries.
+- **Business Logic Algorithm:**
+  1. Initializes job state with 6 stages (`image_gen`, `bg_removal`, `upscaling`, `mockup_creation`, `pdf_generation`, `metadata_generation`) in `pending` state.
+  2. Sequentially executes stages, updating `progress_percent` (0% → 50% → 100%) and status (`running` → `completed`).
+  3. If a stage throws an exception:
+     - Sets stage status to `failed`.
+     - Captures root exception message (`error_message`) and full traceback (`stderr_log`).
+     - Sets job status to `failed` and halts execution.
+  4. `retry_stage(job_id, stage_name)`: Resets target stage status to `pending`, clears error log, and re-runs only that stage.
+
+### `services/etsy_publisher.py` — Etsy API v3 Draft Listing Publisher
+- **Business Goal:** Automatically creates draft digital clipart listings on Etsy.
+- **Business Logic Algorithm:**
+  1. Truncates listing title to max 140 chars (Etsy API limit).
+  2. Cleans and truncates tags to max 13 items, max 20 chars per tag.
+  3. POSTs payload to `https://openapi.etsy.com/v3/application/shops/{shop_id}/listings` with:
+     - `taxonomy_id`: `10985` (Digital Craft / Clipart)
+     - `is_digital`: `true`
+     - `type`: `download`
+     - `state`: `draft`
+  4. Returns `listing_id` and Etsy seller dashboard URL (`https://www.etsy.com/your/shops/me/listings/{id}`).
+
+---
+
+## 📁 3. FastAPI Routers Layer (`craftdesk_api/routers/`)
+
+### `routers/auth.py`
+- `POST /api/v1/auth/register`: Validates user registration payload, hashes password, creates user record in DB.
+- `POST /api/v1/auth/login`: Authenticates email & password, returns Access & Refresh JWTs.
+- `POST /api/v1/auth/refresh`: Issues new Access Token from valid Refresh Token.
+- `POST /api/v1/auth/logout`: Clears session (HTTP 204 No Content with `response_model=None`).
+
+### `routers/gcp.py`
+- `POST /api/v1/gcp/config`: Encrypts service account JSON key via Fernet AES-256 and saves GCP VM details.
+- `GET /api/v1/gcp/config`: Returns GCP config metadata (hides key).
+- `POST /api/v1/gcp/vm/start`: Triggers GPU VM start signal.
+- `POST /api/v1/gcp/vm/stop`: Triggers GPU VM stop signal to save costs.
+- `GET /api/v1/gcp/vm/status`: Returns VM status (`RUNNING`/`STOPPED`) and polls ComfyUI `:8188` health.
+
+### `routers/prompts.py`
+- `POST /api/v1/prompts/scrape-etsy`: Scrapes competitor Etsy URL for title, description, and images.
+- `POST /api/v1/prompts/generate`: Synthesizes prompt matrix using Gemini 2.5.
+- `GET /api/v1/prompts/jobs/{job_id}/export`: Streams plain text (`.txt`) file attachment for download.
+
+### `routers/etsy.py`
+- `GET /api/v1/etsy/auth/url`: Generates PKCE authorization URL & verifier.
+- `POST /api/v1/etsy/auth/callback`: Exchanges authorization code for tokens, encrypts tokens via AES-256 Fernet, and saves connected shop.
+- `GET /api/v1/etsy/shops`: Lists user's connected Etsy stores.
+- `DELETE /api/v1/etsy/shops/{shop_db_id}`: Deactivates shop connection.
+
+### `routers/pipeline.py`
+- `POST /api/v1/pipeline/jobs`: Starts 6-stage pipeline job in background.
+- `GET /api/v1/pipeline/jobs/{job_id}`: Returns job status and stage progress array.
+- `POST /api/v1/pipeline/jobs/{job_id}/stages/{stage_name}/retry`: Re-runs single failed stage.
+- `WS /api/v1/pipeline/jobs/{job_id}/stream`: WebSocket streaming real-time stage updates.
+
+### `routers/review.py`
+- `GET /api/v1/review/{job_id}`: Returns Hero image, all 4 mockups, PDF download link, and metadata.
+- `PUT /api/v1/review/{job_id}/metadata`: Saves inline edits to title, description, or 13 tags.
+- `POST /api/v1/review/{job_id}/push-to-etsy`: Publishes draft listing to selected connected Etsy shop.
+
+### `routers/settings.py`
+- `PUT /api/v1/settings/profile`: Updates user profile name.
+- `POST /api/v1/settings/api-keys`: Encrypts and saves Gemini/Replicate API keys.
+- `GET /api/v1/settings/api-keys`: Lists saved API key services.
+- `DELETE /api/v1/settings/api-keys/{service}`: Removes saved API key.

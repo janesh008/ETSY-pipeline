@@ -18,24 +18,28 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    # ── PostgreSQL (Neon.tech) ─────────────────────────────────────────────
-    database_url: str  # e.g. postgresql+asyncpg://user:pass@host/dbname
+    # ── PostgreSQL (Neon.tech) / SQLite fallback ─────────────────────────
+    database_url: str = "sqlite+aiosqlite:///craftdesk.db"
 
     # ── JWT ───────────────────────────────────────────────────────────────
-    jwt_secret_key: str          # long random string, e.g. openssl rand -hex 32
+    jwt_secret_key: str = "craftdesk-dev-jwt-secret-key-32bytes-long!!"
     jwt_algorithm: str = "HS256"
     jwt_access_token_expire_minutes: int = 60
     jwt_refresh_token_expire_days: int = 30
 
     # ── Fernet AES-256 encryption ─────────────────────────────────────────
-    fernet_key: str              # base64-url-encoded 32-byte key: Fernet.generate_key()
+    fernet_key: str = "5T2W6zQ91Xk3k7p8J9mL0n2p4r6v8x1z3A5C7E9G1I3="
 
     # ── CORS ─────────────────────────────────────────────────────────────
-    allowed_origins: list[str] = ["http://localhost:3000"]
+    allowed_origins: list[str] = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://192.168.56.1:3000",
+    ]
 
     # ── App ───────────────────────────────────────────────────────────────
     app_name: str = "CraftDesk API"
-    debug: bool = False
+    debug: bool = True
 
 
 # Single shared instance — import this everywhere
