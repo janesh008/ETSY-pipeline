@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { api, TokenResponse, RegisterPayload, LoginPayload } from "@/lib/api";
+import { api, TokenResponse, RegisterPayload, LoginPayload } from "../lib/api";
 
 interface UserProfile {
   email: string;
