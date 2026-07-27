@@ -1,6 +1,15 @@
 /** API client for CraftDesk FastAPI backend. */
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+function getApiBaseUrl(): string {
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL;
+  }
+  if (typeof window !== "undefined") {
+    const host = window.location.hostname;
+    return `http://${host}:8000/api/v1`;
+  }
+  return "http://localhost:8000/api/v1";
+}
 
 export interface RegisterPayload {
   full_name: string;
@@ -51,7 +60,9 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
     headers["Authorization"] = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_BASE}${endpoint}`, {
+  const apiBase = getApiBaseUrl();
+
+  const response = await fetch(`${apiBase}${endpoint}`, {
     ...options,
     headers,
   });
