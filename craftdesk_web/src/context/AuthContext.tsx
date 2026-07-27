@@ -42,7 +42,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = async (data: LoginPayload) => {
+    console.log("[AuthContext] Sending login request to API for:", data.email);
     const res: TokenResponse = await api.login(data);
+    console.log("[AuthContext] Login response received successfully");
     localStorage.setItem("craftdesk_access_token", res.access_token);
     localStorage.setItem("craftdesk_refresh_token", res.refresh_token);
 
@@ -55,7 +57,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const register = async (data: RegisterPayload) => {
+    console.log("[AuthContext] Sending registration request to API for:", data.email);
     await api.register(data);
+    console.log("[AuthContext] Registration successful, initiating auto-login...");
     // After registration, auto login
     await login({ email: data.email, password: data.password });
   };

@@ -61,8 +61,11 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
   }
 
   const apiBase = getApiBaseUrl();
+  const targetUrl = `${apiBase}${endpoint}`;
 
-  const response = await fetch(`${apiBase}${endpoint}`, {
+  console.log(`[api.request] Sending ${options.method || "GET"} -> ${targetUrl}`);
+
+  const response = await fetch(targetUrl, {
     ...options,
     headers,
   });
@@ -77,6 +80,7 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
     } catch {
       // Use fallback
     }
+    console.error(`[api.request] Error HTTP ${response.status}:`, errorMessage);
     throw new ApiError(response.status, errorMessage);
   }
 
