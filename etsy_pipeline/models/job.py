@@ -288,12 +288,21 @@ class Job(BaseModel):
 
     @property
     def theme_slug(self) -> str:
-        """URL and filesystem-safe theme identifier (e.g. 'Wonder_Woman')."""
+        """URL and filesystem-safe concise theme identifier (e.g. 'Cristiano_Ronaldo_Soccer')."""
         import re
+        if not self.theme:
+            return "Clipart_Set"
         cleaned = self.theme.replace("&", "and")
         cleaned = re.sub(r'[\\/:*?"<>|,\.\-\(\)]', " ", cleaned)
-        cleaned = re.sub(r'[\s_]+', "_", cleaned).strip("_")
-        return cleaned[:50] or "Clipart_Set"
+        noise_words = {
+            "clipart", "png", "caricature", "bundle", "graphics", "backgrounds", 
+            "art", "illustration", "digital", "instant", "download", "svg", "eps", "design"
+        }
+        tokens = [t for t in cleaned.split() if t.lower() not in noise_words]
+        if not tokens:
+            tokens = cleaned.split()
+        short_slug = "_".join(tokens[:3])
+        return short_slug[:25].strip("_") or "Clipart_Set"
 
     def get_output_dir(self, output_root: str | Path) -> Path:
         """Get the output directory for this job."""

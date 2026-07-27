@@ -30,13 +30,30 @@ _PROMPT_JOBS_STORE: dict[str, dict[str, Any]] = {}
 
 
 def sanitize_slug(text: str) -> str:
-    """Sanitize text into a clean, filesystem-safe and GCP-safe slug (removing invalid Windows chars like |, :, ?, *, etc.)."""
+    """Sanitize text into a concise, filesystem-safe and GCP-safe slug.
+    
+    Strips noise/filler words (e.g. Clipart, PNG, Backgrounds, Graphics, Art) and limits length to ~25 chars.
+    """
     if not text:
         return "Clipart_Set"
+    
     cleaned = text.replace("&", "and")
     cleaned = re.sub(r'[\\/:*?"<>|,\.\-\(\)]', " ", cleaned)
-    cleaned = re.sub(r'[\s_]+', "_", cleaned).strip("_")
-    return cleaned[:50] or "Clipart_Set"
+    
+    # Strip common Etsy SEO listing noise words
+    noise_words = {
+        "clipart", "png", "caricature", "bundle", "graphics", "backgrounds", 
+        "art", "illustration", "digital", "instant", "download", "svg", "eps", "design"
+    }
+    tokens = [t for t in cleaned.split() if t.lower() not in noise_words]
+    
+    if not tokens:
+        tokens = cleaned.split()
+        
+    slug = "_".join(tokens).strip("_")
+    # Take first 3 primary words or cap at 25 characters
+    short_slug = "_".join(tokens[:3])
+    return short_slug[:25].strip("_") or "Clipart_Set"
 
 
 @router.post(
@@ -136,7 +153,7 @@ async def save_prompt_to_gcp(
     body: SavePromptToGcpRequest | None = None,
     user_id: str = Depends(get_current_user_id),
 ) -> SavePromptToGcpResponse:
-    """Save prompt set in exact Clipart/<date>/<theme_slug>/<theme_slug>.txt format locally and to GCS."""
+    """Save prompt set in concise Clipart/<date>/<theme_slug>/<theme_slug>.txt format locally and to GCS."""
     job_data = _PROMPT_JOBS_STORE.get(job_id)
     if not job_data or job_data["user_id"] != user_id:
         raise HTTPException(
