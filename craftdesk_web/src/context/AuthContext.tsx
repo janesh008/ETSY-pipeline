@@ -36,13 +36,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(JSON.parse(savedUser));
       } catch {
         localStorage.removeItem("craftdesk_user");
+        localStorage.removeItem("craftdesk_access_token");
+        localStorage.removeItem("craftdesk_refresh_token");
       }
     }
     setIsLoading(false);
   }, []);
 
+  // Enforce route protection & automatic redirects
+  useEffect(() => {
+    if (isLoading) return;
+
+    const isAuthRoute = pathname === "/login" || pathname === "/register";
+    const isProtectedRoute = [
+      "/dashboard",
+      "/prompt-studio",
+      "/pipeline",
+      "/review",
+      "/shops",
+      "/settings",
+    ].some((route) => pathname.startsWith(route));
+
+    if (!user && isProtectedRoute) {
+      console.log(`[AuthContext] Unauthenticated user accessing ${pathname}. Redirecting to /login...`);
+      router.push("/login");
+    } else if (user && isAuthRoute) {
+      console.log(`[AuthContext] Authenticated user accessing ${pathname}. Redirecting to /dashboard...`);
+      router.push("/dashboard");
+    }
+  }, [user, isLoading, pathname, router]);
+
   const login = async (data: LoginPayload) => {
-    console.log("[AuthContext] Sending login request to API for:", data.email);
+    console.log("[AuthContext] Sending login request for:", data.email);
     const res: TokenResponse = await api.login(data);
     console.log("[AuthContext] Login response received successfully");
     localStorage.setItem("craftdesk_access_token", res.access_token);
@@ -57,7 +82,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const register = async (data: RegisterPayload) => {
-    console.log("[AuthContext] Sending registration request to API for:", data.email);
+    console.log("[AuthContext] Sending registration request for:", data.email);
     await api.register(data);
     console.log("[AuthContext] Registration successful, initiating auto-login...");
     // After registration, auto login

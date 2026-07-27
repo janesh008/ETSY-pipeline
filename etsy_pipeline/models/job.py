@@ -288,8 +288,12 @@ class Job(BaseModel):
 
     @property
     def theme_slug(self) -> str:
-        """URL and filesystem-safe theme identifier (e.g. 'Lilo_and_Stitch')."""
-        return self.theme.replace(" ", "_").replace("&", "and")
+        """URL and filesystem-safe theme identifier (e.g. 'Wonder_Woman')."""
+        import re
+        cleaned = self.theme.replace("&", "and")
+        cleaned = re.sub(r'[\\/:*?"<>|,\.\-\(\)]', " ", cleaned)
+        cleaned = re.sub(r'[\s_]+', "_", cleaned).strip("_")
+        return cleaned[:50] or "Clipart_Set"
 
     def get_output_dir(self, output_root: str | Path) -> Path:
         """Get the output directory for this job."""

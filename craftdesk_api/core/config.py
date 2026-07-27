@@ -30,6 +30,10 @@ class Settings(BaseSettings):
     # ── Fernet AES-256 encryption ─────────────────────────────────────────
     fernet_key: str = "5T2W6zQ91Xk3k7p8J9mL0n2p4r6v8x1z3A5C7E9G1I3="
 
+    # ── Etsy OpenAPI v3 Credentials ───────────────────────────────────────
+    etsy_keystring: str = "s9ido8gpuc6tbtvzcchl1s4z"
+    etsy_shared_secret: str = "h9hjnw214t"
+
     # ── CORS ─────────────────────────────────────────────────────────────
     allowed_origins: list[str] = [
         "http://localhost:3000",

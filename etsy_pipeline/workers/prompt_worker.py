@@ -16,6 +16,7 @@ Future agent compatibility:
 
 from __future__ import annotations
 
+import os
 import re
 from pathlib import Path
 
@@ -118,12 +119,31 @@ class PromptWorker:
             # 6. Validate parsed prompts
             self._validate_prompts(prompts, job.job_id)
 
-            # 7. Store results in Job
+            # 7. Store results in Job & write output file to Clipart/<date>/<theme_slug>/<theme_slug>.txt
             job.prompts = prompts
             job.character_roster = roster
+
+            output_dir = Path(self._settings.output_root) / "Clipart" / job.date_folder / job.theme_slug
+            output_dir.mkdir(parents=True, exist_ok=True)
+            prompt_file = output_dir / f"{job.theme_slug}.txt"
+            prompt_file.write_text(raw_response, encoding="utf-8")
+
+            # Automatic GCP Cloud Storage Bucket Upload for VM Cloud Execution
+            gcs_bucket = self._settings.gcs_bucket or os.getenv("GCP_BUCKET_NAME")
+            if gcs_bucket:
+                gcs_blob_path = f"Clipart/{job.date_folder}/{job.theme_slug}/{job.theme_slug}.txt"
+                try:
+                    from google.cloud import storage
+                    gcs_client = storage.Client()
+                    bucket = gcs_client.bucket(gcs_bucket)
+                    blob = bucket.blob(gcs_blob_path)
+                    blob.upload_from_string(raw_response, content_type="text/plain; charset=utf-8")
+                    logger.info(f"Uploaded prompt file to GCS: gs://{gcs_bucket}/{gcs_blob_path}")
+                except Exception as gcs_err:
+                    logger.warning(f"GCS upload skipped/failed: {gcs_err}")
+
             job.add_log(
-                f"Prompt generation completed: {sum(len(p) for p in prompts.values())} prompts "
-                f"across {len([s for s, p in prompts.items() if p])} active sections"
+                f"Prompt generation completed: {sum(len(p) for p in prompts.values())} prompts saved to {prompt_file}"
             )
 
             stage.mark_completed()
@@ -230,35 +250,40 @@ class PromptWorker:
         """
         Get or create the Gemini client.
 
-        Connects exclusively to Vertex AI (using GCP Application Default Credentials
-        or a locally configured Service Account JSON file).
+        Supports API Key auth (GEMINI_API_KEY / GOOGLE_API_KEY) and Vertex AI auth (GCP Project ID).
 
         Returns:
             Configured genai.Client instance.
 
         Raises:
-            ConfigurationError: If required GCP configuration is missing.
+            ConfigurationError: If neither GEMINI_API_KEY nor GCP_PROJECT_ID is configured.
         """
         if self._client is not None:
+            return self._client
+
+        api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY") or getattr(self._settings, "gemini_api_key", None)
+        if api_key and not api_key.startswith("your-"):
+            logger.info("Initializing Gemini client with API Key auth")
+            self._client = genai.Client(api_key=api_key)
             return self._client
 
         project = self._settings.gcp_project_id
         location = self._settings.gcp_location
 
-        if not project:
-            raise ConfigurationError(
-                "GCP_PROJECT_ID is not configured. Add it to your .env file."
+        if project and not project.startswith("your-"):
+            logger.info(
+                f"Initializing Vertex AI client (project={project}, location={location})"
             )
+            self._client = genai.Client(
+                vertexai=True,
+                project=project,
+                location=location,
+            )
+            return self._client
 
-        logger.info(
-            f"Initializing Vertex AI client (project={project}, location={location})"
+        raise ConfigurationError(
+            "Neither GEMINI_API_KEY nor GCP_PROJECT_ID is configured. Add one to your .env file."
         )
-        self._client = genai.Client(
-            vertexai=True,
-            project=project,
-            location=location,
-        )
-        return self._client
 
     def _call_gemini(self, system_instruction: str, user_message: str, job: Job) -> str:
         """

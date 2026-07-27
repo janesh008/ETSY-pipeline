@@ -1,21 +1,16 @@
-"""CraftDesk API — Multi-input AI prompt generation engine using Gemini 2.5 Flash."""
+"""CraftDesk API — Prompt Engine powered directly by etsy_pipeline.workers.prompt_worker.PromptWorker."""
 from __future__ import annotations
 
 import os
 from typing import Any
-from google import genai
-from google.genai import types
+
+from etsy_pipeline.models.job import Job
+from etsy_pipeline.workers.prompt_worker import PromptWorker
+from etsy_pipeline.workers.prompt_worker_config import LOCKED_SECTIONS
 
 
 class PromptEngineService:
-    """Combines Text, Etsy listing context, and Reference Images to generate clipart prompts."""
-
-    SYSTEM_INSTRUCTION = (
-        "You are an expert AI prompt engineer specializing in high-converting commercial watercolor clipart "
-        "bundles for Etsy. Create detailed, vivid, print-ready Midjourney/ComfyUI prompts for digital watercolor "
-        "clipart sets. Each prompt must describe a unique character pose, action, or thematic element with "
-        "vibrant color palettes, transparent background details, and isolated subject composition."
-    )
+    """Invokes etsy_pipeline PromptWorker to generate section-structured clipart prompts matching SKILL.md."""
 
     @classmethod
     async def generate_prompts(
@@ -24,140 +19,178 @@ class PromptEngineService:
         etsy_context: dict[str, Any] | None = None,
         reference_images: list[str] | None = None,
         prompt_count: int = 22,
-        api_key: str | None = None,
+        style_hint: str | None = None,
     ) -> dict[str, Any]:
-        """Generate `prompt_count` clipart image prompts from multi-input sources.
+        """Run PromptWorker.run(job) to generate prompts in exact SKILL.md locked section format.
 
         Returns dict containing:
+        - job_id: str
+        - theme: str
+        - raw_prompt_text: str (exact SKILL.md output format with ## LOCKED_HEADINGS)
         - prompts: list[str]
+        - sections: dict[str, list[str]]
+        - character_roster: dict[str, str]
+        - count: int
         - txt_content: str
-        - prompt_count: int
         """
-        # Determine API key
-        gemini_key = api_key or os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
-        
-        # Build prompt synthesis context
-        user_prompt_parts = []
-        user_prompt_parts.append(f"Generate exactly {prompt_count} unique, high-resolution watercolor clipart prompts.\n")
+        # Determine theme title
+        theme_title = theme_text.strip()
+        if not theme_title and etsy_context:
+            theme_title = etsy_context.get("title", "")
+        if not theme_title:
+            theme_title = "Watercolor Digital Clipart Set"
 
-        if theme_text:
-            user_prompt_parts.append(f"PRIMARY THEME: {theme_text}\n")
-
-        if etsy_context:
-            user_prompt_parts.append("ETSY INSPIRATION CONTEXT:")
-            user_prompt_parts.append(f"- Title: {etsy_context.get('title', '')}")
-            user_prompt_parts.append(f"- Description Excerpt: {etsy_context.get('description', '')[:500]}\n")
-
+        # Determine style hint
+        effective_style = style_hint or "watercolor clipart"
         if reference_images:
-            user_prompt_parts.append(f"REFERENCE IMAGE COUNT: {len(reference_images)} visual style reference(s) attached.\n")
+            effective_style += f", matching visual style of {len(reference_images)} reference image(s)"
 
-        user_prompt_parts.append(
-            f"FORMAT REQUIREMENT:\n"
-            f"Output exactly {prompt_count} numbered prompts, one per line:\n"
-            f"1. [Detailed watercolor clipart prompt description]\n"
-            f"2. [Detailed watercolor clipart prompt description]\n"
-            f"...\n"
-            f"Do not include any conversational preamble or markdown code fences."
+        # Build Job instance for etsy_pipeline PromptWorker
+        job = Job(
+            theme=theme_title,
+            event_type="birthday" if "birthday" in theme_title.lower() else "Normal",
+            style_hint=effective_style,
+            prompt_count=prompt_count,
         )
 
-        full_user_prompt = "\n".join(user_prompt_parts)
-
-        # Fallback generator if API key is not configured in environment
-        if not gemini_key or gemini_key.startswith("your-"):
-            return cls._fallback_generate(theme_text, etsy_context, prompt_count)
-
         try:
-            client = genai.Client(api_key=gemini_key)
-            response = client.models.generate_content(
-                model="gemini-2.5-flash",
-                contents=full_user_prompt,
-                config=types.GenerateContentConfig(
-                    system_instruction=cls.SYSTEM_INSTRUCTION,
-                    temperature=0.7,
-                ),
-            )
-            raw_text = response.text or ""
-            return cls._parse_response(raw_text, theme_text, prompt_count)
+            worker = PromptWorker()
+            job = worker.run(job)
+
+            # Flatten section prompts for convenient array viewing
+            flat_prompts: list[str] = []
+            for sec_name, p_list in job.prompts.items():
+                flat_prompts.extend(p_list)
+
+            raw_text = job.raw_prompt_text or ""
+
+            return {
+                "job_id": job.job_id,
+                "theme": job.theme,
+                "raw_prompt_text": raw_text,
+                "prompts": flat_prompts,
+                "sections": job.prompts,
+                "character_roster": job.character_roster,
+                "count": len(flat_prompts),
+                "txt_content": raw_text,
+            }
 
         except Exception as err:
-            # Fallback on Gemini API error
-            return cls._fallback_generate(theme_text, etsy_context, prompt_count, error_msg=str(err))
+            # Fallback to structured SKILL.md format generator if API/config error occurs
+            return cls._generate_skill_md_fallback(theme_title, prompt_count, str(err))
 
     @classmethod
-    def _parse_response(cls, raw_text: str, theme: str, count: int) -> dict[str, Any]:
-        """Parse Gemini output lines into a clean prompt array and .txt string."""
-        lines = [line.strip() for line in raw_text.splitlines() if line.strip()]
-        prompts: list[str] = []
-
-        for line in lines:
-            # Strip line numbers like "1. ", "01. ", "Prompt 1:"
-            cleaned = line
-            if cleaned[0].isdigit():
-                cleaned = cleaned.lstrip("0123456789. :-")
-            if cleaned:
-                prompts.append(cleaned)
-
-        # Truncate or extend to match target count
-        if len(prompts) < count:
-            base_theme = theme or "Watercolor Clipart"
-            while len(prompts) < count:
-                idx = len(prompts) + 1
-                prompts.append(f"High-resolution digital watercolor clipart of {base_theme} pose #{idx}, vibrant colors, isolated on transparent background, 300 DPI, commercial use.")
-
-        prompts = prompts[:count]
-
-        # Build clean exportable .txt content
-        txt_lines = [f"# CraftDesk AI Prompt Set — {theme or 'Custom Theme'}", f"# Total Prompts: {len(prompts)}", ""]
-        for i, p in enumerate(prompts, start=1):
-            txt_lines.append(f"[{i:02d}] {p}")
-
-        return {
-            "prompts": prompts,
-            "txt_content": "\n".join(txt_lines),
-            "count": len(prompts),
-        }
-
-    @classmethod
-    def _fallback_generate(
+    def _generate_skill_md_fallback(
         cls,
         theme: str,
-        etsy_context: dict[str, Any] | None,
         count: int,
         error_msg: str | None = None,
     ) -> dict[str, Any]:
-        """Generate structured template prompts when offline or API key is not present."""
-        base_subject = theme or (etsy_context.get("title") if etsy_context else "Wonder Woman Clipart")
+        """Generate fallback output formatted strictly in SKILL.md locked section structure for exact `count` prompts."""
         actions = [
-            "heroic action stance with flowing cape",
-            "holding a vibrant birthday cake with glowing candles",
-            "floating with colorful birthday balloons",
-            "joyful celebratory pose with confetti and gift box",
-            "subtle watercolor splash background in gold and red",
-            "holding a lasso of truth with gold glitter accent",
-            "playful dynamic jump pose with festive party hat",
-            "sitting elegantly with present and ribbons",
+            "heroic action stance with flowing cape and golden belt",
+            "holding a vibrant birthday cake with glowing candles and sparkles",
+            "floating joyfully with colorful watercolor birthday balloons",
+            "celebratory pose with falling gold confetti and gift box",
+            "subtle watercolor splash background in gold and crimson",
+            "holding golden lasso of truth with shimmering accents",
+            "playful dynamic jump pose wearing a festive party hat",
+            "sitting elegantly beside stacked birthday presents and ribbons",
             "waving warmly in watercolor portrait composition",
-            "chibi style superhero pose holding party horn",
+            "chibi style superhero pose blowing a party horn",
+            "standing triumphant on a pedestal with glowing star emblem",
+            "flying gracefully mid-air against soft cloud splatters",
+            "holding a birthday banner with hand-drawn typography",
+            "sitting cross-legged with a whimsical birthday card",
+            "playful wink pose holding an oversized lollipop with birthday ribbons",
+            "dynamic superhero landing pose with energetic pastel color splashes",
+            "holding a sparkling birthday magic wand with golden trail",
+            "wrapped in a decorative birthday ribbon with confetti pattern",
+            "standing with arms crossed in confident cute chibi pose",
+            "surrounded by a wreath of pastel watercolor flowers and stars",
+            "holding a golden trophy cup with birthday celebration text",
+            "floating on a fluffy watercolor cloud with golden stars",
+            "cheering with pom-poms in vibrant watercolor splash style",
+            "wearing a golden birthday crown with gemstone details",
+            "holding a party blowout noise maker with festive ribbons",
+            "sitting on a big birthday cake with burning candles",
+            "blowing out birthday candles with smoke wisps and magic dust",
+            "holding a festive balloon arch frame composition",
+            "playful peek-a-boo pose from behind a big birthday gift box",
+            "standing with cape fluttering in a soft pastel sunset gradient",
         ]
 
-        prompts: list[str] = []
-        for i in range(count):
-            act = actions[i % len(actions)]
-            prompts.append(
-                f"Digital watercolor illustration of {base_subject}, {act}, "
-                f"soft pastel watercolor splatters, vibrant colors, isolated on white background, 300 DPI print-ready commercial quality."
-            )
-
-        txt_lines = [f"# CraftDesk AI Prompt Set — {base_subject}", f"# Total Prompts: {len(prompts)}", ""]
+        lines: list[str] = [
+            f"# CraftDesk AI Prompt Set — Pixel Bar Studio Cartoon Clipart — {theme}",
+            f"# Total Target Prompts: {count}",
+        ]
         if error_msg:
-            txt_lines.append(f"# Note: Generated via offline template engine ({error_msg})")
-            txt_lines.append("")
+            lines.append(f"# Note: Generated via offline template engine ({error_msg})")
+        lines.append("")
 
-        for i, p in enumerate(prompts, start=1):
-            txt_lines.append(f"[{i:02d}] {p}")
+        sections: dict[str, list[str]] = {}
+        flat_prompts: list[str] = []
+
+        # Define active sections and target distribution
+        active_sections = ["MAIN_CHARACTER", "SUB_CHARACTER_1", "SUB_CHARACTER_2", "SCENE", "PROP", "PATTERN", "LOGO_EMBLEM", "FRAME_BORDER"]
+        
+        # Calculate prompts per active section
+        base_per_sec = max(1, count // len(active_sections))
+        remainder = count - (base_per_sec * len(active_sections))
+
+        sec_targets: dict[str, int] = {}
+        for idx, sec in enumerate(active_sections):
+            extra = 1 if idx < remainder else 0
+            sec_targets[sec] = base_per_sec + extra
+
+        for sec in LOCKED_SECTIONS:
+            target_num = sec_targets.get(sec, 0)
+            lines.append(f"## {sec}")
+            sec_prompts: list[str] = []
+
+            if target_num > 0 and len(flat_prompts) < count:
+                for i in range(target_num):
+                    if len(flat_prompts) >= count:
+                        break
+                    idx = len(flat_prompts)
+                    act = actions[idx % len(actions)]
+                    variant = (idx // len(actions)) + 1
+                    var_str = f" variation #{variant}" if variant > 1 else ""
+                    
+                    p = (
+                        f"Digital watercolor illustration of {theme}{var_str}, {act}, "
+                        f"soft pastel watercolor splatters, isolated on transparent background, 300 DPI commercial quality."
+                    )
+                    sec_prompts.append(p)
+                    flat_prompts.append(p)
+                    lines.append(p)
+                    lines.append("")
+                sections[sec] = sec_prompts
+            else:
+                lines.append("(not applicable for this roster)")
+                lines.append("")
+                sections[sec] = []
+
+        # If any remaining prompts to reach exact `count`, append to MAIN_CHARACTER
+        while len(flat_prompts) < count:
+            idx = len(flat_prompts)
+            act = actions[idx % len(actions)]
+            p = (
+                f"Digital watercolor illustration of {theme} bonus pose #{idx + 1}, {act}, "
+                f"soft pastel watercolor splatters, isolated on transparent background, 300 DPI commercial quality."
+            )
+            flat_prompts.append(p)
+            sections["MAIN_CHARACTER"].append(p)
+
+        raw_text = "\n".join(lines)
 
         return {
-            "prompts": prompts,
-            "txt_content": "\n".join(txt_lines),
-            "count": len(prompts),
+            "job_id": f"job-{count}-{os.urandom(4).hex()}",
+            "theme": theme,
+            "raw_prompt_text": raw_text,
+            "prompts": flat_prompts,
+            "sections": sections,
+            "character_roster": {"MAIN_CHARACTER": theme},
+            "count": len(flat_prompts),
+            "txt_content": raw_text,
         }

@@ -20,23 +20,48 @@ from craftdesk_api.services.gcp_vm import GcpVmService
 router = APIRouter(prefix="/gcp", tags=["gcp"])
 
 
-# ── Auth Helper ───────────────────────────────────────────────────────────────
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-async def get_current_user_id(authorization: str | None = Header(None)) -> str:
-    """Extract and verify user UUID from 'Authorization: Bearer <token>' header."""
-    if not authorization or not authorization.startswith("Bearer "):
+security = HTTPBearer(auto_error=False)
+
+
+async def get_current_user_id(
+    auth_credentials: HTTPAuthorizationCredentials | None = Depends(security),
+    authorization: str | None = Header(None),
+) -> str:
+    """Extract and verify user UUID from 'Authorization: Bearer <token>' header or OpenAPI HTTPBearer."""
+    token: str | None = None
+
+    if auth_credentials and auth_credentials.credentials:
+        token = auth_credentials.credentials.strip()
+
+    if not token and authorization:
+        header_val = authorization.strip()
+        if header_val.startswith("Bearer "):
+            token = header_val.split(" ", 1)[1].strip()
+        elif header_val.startswith("eyJ"):
+            token = header_val
+        elif "access_token" in header_val:
+            import json
+            try:
+                data = json.loads(header_val)
+                token = data.get("access_token")
+            except Exception:
+                pass
+
+    if not token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Missing or invalid Bearer authentication token.",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    token = authorization.split(" ")[1]
+
     try:
         payload = decode_token(token)
         if payload.get("type") != "access":
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid token type.",
+                detail="Invalid token type. Access token required.",
             )
         return str(payload["sub"])
     except JWTError:
