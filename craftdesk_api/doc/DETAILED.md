@@ -70,17 +70,19 @@ This document provides an exhaustive breakdown of every module in `craftdesk_api
   4. `get_shop_details()`: Calls `https://openapi.etsy.com/v3/application/users/me` and `/shops` to retrieve shop ID and shop name.
 
 ### `services/pipeline_runner.py` — 6-Stage Real Assembly Line & Retry Engine
-- **Business Goal:** Manages real 6-stage pipeline execution using `etsy_pipeline` worker modules, GCS prompt file injection, live item progress, ETA calculations, and single-stage failure retries. (See detailed guide in [`doc/PIPELINE_ARCHITECTURE.md`](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/doc/PIPELINE_ARCHITECTURE.md)).
+- **Business Goal:** Manages real 6-stage pipeline execution using `etsy_pipeline` worker modules, GCS prompt file injection, live item progress, ETA calculations, date folder retention, module-level checkpoint recovery, and stop/cancellation controls. (See detailed guide in [`doc/PIPELINE_ARCHITECTURE.md`](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/doc/PIPELINE_ARCHITECTURE.md)).
 - **Business Logic Algorithm:**
-  1. `create_job()`: Loads and parses the selected GCS prompt file (`gs://.../Clipart/<date>/<slug>/<slug>.txt`) or local file into `Job.prompts` using `PromptWorker._parse_response`. Excludes prompt generation from stage execution.
+  1. `create_job()`: Loads and parses the selected GCS prompt file (`gs://.../Clipart/<date>/<slug>/<slug>.txt`) or local file into `Job.prompts` using `PromptWorker._parse_response`. Preserves `date_folder` from prompt file path (e.g. `Clipart/2026-07-22/`).
   2. Initializes 6 stages (`image_gen`, `bg_removal`, `upscaling`, `mockup_creation`, `pdf_generation`, `metadata_generation`) in `pending` state.
-  3. `run_full_pipeline_async()`: Sequentially executes `etsy_pipeline` worker modules (`ImageWorker`, `BackgroundRemovalWorker`, `UpscaleWorker`, `MockupWorker`, `MetadataWorker`) in background threads (`asyncio.to_thread`).
-  4. Tracks live item counters (`images_done`/`images_total`), elapsed seconds, and estimated time remaining (ETA) per stage.
-  5. If a stage throws an exception:
+  3. `_is_stage_100pct_complete()`: Checks GCS bucket prefix `Clipart/<date>/<theme>/<stage>/` and local `output/Clipart/<date>/<theme>/<stage>/`. If 100% of expected PNG files exist, marks stage `Completed ✅` immediately and skips worker execution.
+  4. `stop_job(job_id)`: Cancels active `asyncio.Task`, sets job and running stage status to `failed` (`"Pipeline execution stopped by user."`).
+  5. `run_full_pipeline_async()`: Sequentially executes `etsy_pipeline` worker modules (`ImageWorker`, `BackgroundRemovalWorker`, `UpscaleWorker`, `MockupWorker`, `MetadataWorker`) in background threads (`asyncio.create_task(asyncio.to_thread(...))`).
+  6. Tracks live item counters (`images_done`/`images_total`), elapsed seconds, and estimated time remaining (ETA) per stage.
+  7. If a stage throws an exception:
      - Sets stage status to `failed`.
      - Captures root exception message (`error_message`) and full traceback (`stderr_log`).
      - Halts execution while preserving completed assets from earlier stages.
-  6. `run_stage_execution(job_id, stage_name)`: Resets target stage status to `pending`, clears error log, and re-executes only that specific stage.
+  8. `run_stage_execution(job_id, stage_name)`: Resets target stage status to `pending`, clears error log, and re-executes only that specific stage.
 
 ### `services/etsy_publisher.py` — Etsy API v3 Draft Listing Publisher
 - **Business Goal:** Automatically creates draft digital clipart listings on Etsy.

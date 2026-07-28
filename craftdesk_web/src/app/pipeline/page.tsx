@@ -444,57 +444,100 @@ export default function PipelinePage() {
                   </Link>
                 </div>
               ) : (
-                promptFiles.map((file, idx) => {
-                  const isSelected = selectedFile?.gcs_path === file.gcs_path;
+                Object.entries(
+                  promptFiles.reduce<Record<string, PromptFile[]>>((acc, file) => {
+                    const dateKey = file.date || "Unknown Date";
+                    if (!acc[dateKey]) acc[dateKey] = [];
+                    acc[dateKey].push(file);
+                    return acc;
+                  }, {})
+                ).map(([dateStr, filesInDate]) => {
+                  const isOpen = openDates[dateStr] !== false;
                   return (
-                    <button
-                      key={`${file.gcs_path}-${idx}`}
-                      onClick={() => {
-                        setSelectedFile(file);
-                        resetPipeline();
-                      }}
-                      className={`w-full text-left p-3.5 rounded-xl border transition-all cursor-pointer ${
-                        isSelected
-                          ? "bg-[#0D5C46] border-[#0D5C46] text-white shadow-md"
-                          : "bg-[#F9F8F3] border-[#DCD8CF] hover:border-[#0D5C46]/50 hover:bg-[#EFECE6]"
-                      }`}
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <FileText className={`w-3.5 h-3.5 shrink-0 ${isSelected ? "text-white/80" : "text-[#C85A32]"}`} />
-                          <span className={`text-xs font-bold truncate ${isSelected ? "text-white" : "text-[#1C2421]"}`}>
-                            {file.name}
-                          </span>
-                        </div>
-                        {isSelected && (
-                          <span className="shrink-0 text-[10px] bg-white/20 text-white font-semibold px-1.5 py-0.5 rounded-md">
-                            Selected
-                          </span>
-                        )}
-                      </div>
-
-                      <div className={`flex items-center gap-3 mt-1.5 text-[10px] ${isSelected ? "text-white/70" : "text-[#5A6561]"}`}>
-                        <span className="flex items-center gap-1">
-                          <Calendar className="w-2.5 h-2.5" />
-                          {file.date}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Hash className="w-2.5 h-2.5" />
-                          {file.prompt_count} prompts
-                        </span>
-                        <span className="flex items-center gap-1">
-                          {file.local_path ? (
-                            <><FileText className="w-2.5 h-2.5" />Local</>
+                    <div key={dateStr} className="space-y-1.5 mb-3">
+                      {/* Date Folder Header */}
+                      <button
+                        onClick={() =>
+                          setOpenDates((prev) => ({
+                            ...prev,
+                            [dateStr]: prev[dateStr] === false ? true : false,
+                          }))
+                        }
+                        className="w-full flex items-center justify-between px-3 py-2 bg-[#E5E0D8] border border-[#DCD8CF] rounded-xl hover:bg-[#DCD8CF]/60 transition cursor-pointer"
+                      >
+                        <div className="flex items-center gap-2">
+                          {isOpen ? (
+                            <ChevronDown className="w-3.5 h-3.5 text-[#C85A32]" />
                           ) : (
-                            <><Cloud className="w-2.5 h-2.5" />GCS</>
+                            <ChevronRight className="w-3.5 h-3.5 text-[#5A6561]" />
                           )}
+                          <FolderOpen className="w-3.5 h-3.5 text-[#C85A32]" />
+                          <span className="text-xs font-bold text-[#1C2421]">{dateStr}</span>
+                        </div>
+                        <span className="text-[10px] font-bold text-[#5A6561] bg-[#DCD8CF] px-2 py-0.5 rounded-full">
+                          {filesInDate.length} {filesInDate.length === 1 ? "theme" : "themes"}
                         </span>
-                      </div>
+                      </button>
 
-                      <p className={`mt-2 text-[10px] leading-relaxed line-clamp-2 ${isSelected ? "text-white/60" : "text-[#5A6561]"}`}>
-                        {file.preview}
-                      </p>
-                    </button>
+                      {/* Theme Files Inside Date Folder */}
+                      {isOpen && (
+                        <div className="pl-3 space-y-1.5 border-l-2 border-[#DCD8CF] ml-2.5">
+                          {filesInDate.map((file, idx) => {
+                            const isSelected = selectedFile?.gcs_path === file.gcs_path;
+                            return (
+                              <button
+                                key={`${file.gcs_path}-${idx}`}
+                                onClick={() => {
+                                  setSelectedFile(file);
+                                  resetPipeline();
+                                }}
+                                className={`w-full text-left p-3.5 rounded-xl border transition-all cursor-pointer ${
+                                  isSelected
+                                    ? "bg-[#0D5C46] border-[#0D5C46] text-white shadow-md"
+                                    : "bg-[#F9F8F3] border-[#DCD8CF] hover:border-[#0D5C46]/50 hover:bg-[#EFECE6]"
+                                }`}
+                              >
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <FileText className={`w-3.5 h-3.5 shrink-0 ${isSelected ? "text-white/80" : "text-[#C85A32]"}`} />
+                                    <span className={`text-xs font-bold truncate ${isSelected ? "text-white" : "text-[#1C2421]"}`}>
+                                      {file.name}
+                                    </span>
+                                  </div>
+                                  {isSelected && (
+                                    <span className="shrink-0 text-[10px] bg-white/20 text-white font-semibold px-1.5 py-0.5 rounded-md">
+                                      Selected
+                                    </span>
+                                  )}
+                                </div>
+
+                                <div className={`flex items-center gap-3 mt-1.5 text-[10px] ${isSelected ? "text-white/70" : "text-[#5A6561]"}`}>
+                                  <span className="flex items-center gap-1">
+                                    <Calendar className="w-2.5 h-2.5" />
+                                    {file.date}
+                                  </span>
+                                  <span className="flex items-center gap-1">
+                                    <Hash className="w-2.5 h-2.5" />
+                                    {file.prompt_count} prompts
+                                  </span>
+                                  <span className="flex items-center gap-1">
+                                    {file.local_path ? (
+                                      <><FileText className="w-2.5 h-2.5" />Local</>
+                                    ) : (
+                                      <><Cloud className="w-2.5 h-2.5" />GCS</>
+                                    )}
+                                  </span>
+                                </div>
+
+                                <p className={`mt-2 text-[10px] leading-relaxed line-clamp-2 ${isSelected ? "text-white/60" : "text-[#5A6561]"}`}>
+                                  {file.preview}
+                                </p>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
                   );
                 })
               )}

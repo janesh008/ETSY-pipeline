@@ -68,13 +68,17 @@ This specification details the **Seller Business Intent**, **Component State Mac
 
 ## 📄 5. 6-Stage Pipeline Runner (`/pipeline`)
 
-- **Business Intent:** Automated 6-stage digital asset production with resilient failure recovery.
-- **Stage Execution Order:**
-  `1. Image Gen (ComfyUI)` → `2. BG Removal (rembg)` → `3. AI Upscaling (Real-ESRGAN)` → `4. Mockup Creation` → `5. PDF Wrap` → `6. Etsy Metadata (300 DPI)`.
+- **Left Panel Prompt Browser (Date-Wise Collapsible Folder Tree):**
+  - **Date Accordions:** Displays saved prompt files grouped by date (e.g. `📁 2026-07-28`, `📁 2026-07-22`) with expand/collapse arrows (`ChevronDown`/`ChevronRight`) and total theme badges.
+  - **Theme Cards:** Indented file cards under each date folder displaying theme name, prompt count, local/GCS status badge, and prompt preview snippet.
+  - **Single-Click Selection:** Clicking a theme card selects it and prepares the pipeline runner.
+- **Control Actions:**
+  - **Run Pipeline Button:** Initiates execution for the selected prompt file.
+  - **Stop Execution Button:** Red cancel button available during active execution to halt the running job gracefully (`POST /pipeline/jobs/{job_id}/stop`).
 - **4 Visual States per Stage:**
   - `⏳ Pending`: Stage waiting in queue.
   - `⚡ Running`: Animated progress bar + percentage (0% → 50% → 100%).
-  - `✅ Completed`: Green checkmark badge with completion timestamp.
+  - `✅ Completed`: Green checkmark badge with completion timestamp. Supports 100% module checkpoint skipping when assets exist in GCS (`gs://bucket/Clipart/...`) or local storage.
   - `❌ Failed`: Crimson error card displaying root exception traceback, timestamp, **"View Stderr Log"** panel, and **"Retry Stage"** button.
 - **Retry Logic:** Clicking **"Retry Stage"** resets only that failed stage to `running`, preserving all previously completed stage outputs.
 

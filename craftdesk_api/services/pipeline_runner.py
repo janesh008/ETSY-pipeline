@@ -211,55 +211,89 @@ class PipelineRunnerService:
         total_expected = job.total_prompt_count or 1
 
         if stage_name == "image_gen":
-            raw_dir = (
-                Path(settings.output_root) / date_folder / theme_slug / "raw_images"
-            )
-            if raw_dir.exists():
-                pngs = [f for f in raw_dir.rglob("*.png") if f.stat().st_size > 10240]
-                if len(pngs) >= total_expected and total_expected > 0:
-                    return True
+            dirs_to_check = [
+                Path(settings.output_root)
+                / "Clipart"
+                / date_folder
+                / theme_slug
+                / "raw_images",
+                Path(settings.output_root) / date_folder / theme_slug / "raw_images",
+            ]
+            for local_dir in dirs_to_check:
+                if local_dir.exists():
+                    pngs = [
+                        f for f in local_dir.rglob("*.png") if f.stat().st_size > 10240
+                    ]
+                    if len(pngs) >= total_expected and total_expected > 0:
+                        return True
             if settings.gcs_bucket:
                 try:
                     from etsy_pipeline.services.gcs_store import GCSStore
 
                     gcs = GCSStore(settings=settings)
-                    prefix = f"Clipart/{date_folder}/{theme_slug}/raw_images/"
-                    objs = gcs.list_objects(prefix)
-                    if len(objs) >= total_expected and total_expected > 0:
-                        return True
+                    prefixes = [
+                        f"Clipart/{date_folder}/{theme_slug}/raw_images/",
+                        f"{date_folder}/{theme_slug}/raw_images/",
+                    ]
+                    for prefix in prefixes:
+                        objs = gcs.list_objects(prefix)
+                        png_objs = [o for o in objs if o.lower().endswith(".png")]
+                        if len(png_objs) >= total_expected and total_expected > 0:
+                            return True
                 except Exception:
                     pass
             return False
 
         elif stage_name == "bg_removal":
-            no_bg_dir = Path(settings.output_root) / date_folder / theme_slug / "no_bg"
-            if no_bg_dir.exists():
-                pngs = [f for f in no_bg_dir.rglob("*.png") if f.stat().st_size > 10240]
-                if len(pngs) >= total_expected and total_expected > 0:
-                    return True
+            dirs_to_check = [
+                Path(settings.output_root)
+                / "Clipart"
+                / date_folder
+                / theme_slug
+                / "no_bg",
+                Path(settings.output_root) / date_folder / theme_slug / "no_bg",
+            ]
+            for local_dir in dirs_to_check:
+                if local_dir.exists():
+                    pngs = [
+                        f for f in local_dir.rglob("*.png") if f.stat().st_size > 10240
+                    ]
+                    if len(pngs) >= total_expected and total_expected > 0:
+                        return True
             if settings.gcs_bucket:
                 try:
                     from etsy_pipeline.services.gcs_store import GCSStore
 
                     gcs = GCSStore(settings=settings)
-                    prefix = f"Clipart/{date_folder}/{theme_slug}/no_bg/"
-                    objs = gcs.list_objects(prefix)
-                    if len(objs) >= total_expected and total_expected > 0:
-                        return True
+                    prefixes = [
+                        f"Clipart/{date_folder}/{theme_slug}/no_bg/",
+                        f"{date_folder}/{theme_slug}/no_bg/",
+                    ]
+                    for prefix in prefixes:
+                        objs = gcs.list_objects(prefix)
+                        png_objs = [o for o in objs if o.lower().endswith(".png")]
+                        if len(png_objs) >= total_expected and total_expected > 0:
+                            return True
                 except Exception:
                     pass
             return False
 
         elif stage_name == "upscaling":
-            upscale_dir = (
-                Path(settings.output_root) / date_folder / theme_slug / "upscaled"
-            )
-            if upscale_dir.exists():
-                pngs = [
-                    f for f in upscale_dir.rglob("*.png") if f.stat().st_size > 100000
-                ]
-                if len(pngs) >= total_expected and total_expected > 0:
-                    return True
+            dirs_to_check = [
+                Path(settings.output_root)
+                / "Clipart"
+                / date_folder
+                / theme_slug
+                / "upscaled",
+                Path(settings.output_root) / date_folder / theme_slug / "upscaled",
+            ]
+            for local_dir in dirs_to_check:
+                if local_dir.exists():
+                    pngs = [
+                        f for f in local_dir.rglob("*.png") if f.stat().st_size > 100000
+                    ]
+                    if len(pngs) >= total_expected and total_expected > 0:
+                        return True
             if settings.google_drive_folder_id:
                 try:
                     from etsy_pipeline.services.google_drive import GoogleDriveService
