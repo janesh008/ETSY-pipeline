@@ -92,6 +92,7 @@ export default function PipelinePage() {
   const [selectedFile, setSelectedFile] = useState<PromptFile | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [filesError, setFilesError] = useState<string | null>(null);
+  const [openDates, setOpenDates] = useState<Record<string, boolean>>({});
 
   // ComfyUI state
   const [comfyRunning, setComfyRunning] = useState(false);
