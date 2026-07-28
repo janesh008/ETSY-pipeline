@@ -247,8 +247,10 @@ class PipelineRunnerService:
 
         # Start real worker in a separate thread to keep uvicorn async loop non-blocking
         try:
-            worker_task = asyncio.to_thread(
-                cls._execute_stage_worker_sync, job, stage_name
+            worker_task = asyncio.create_task(
+                asyncio.to_thread(
+                    cls._execute_stage_worker_sync, job, stage_name
+                )
             )
 
             # Map stage_name to internal stage key in Job

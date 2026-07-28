@@ -60,7 +60,7 @@ This document explains the technical architecture, data flow, GCS prompt injecti
    - Excludes prompt generation from stage execution. Initializes 6 stages in `pending` state with total prompt count.
 
 ### Step 2: Sequential Worker Execution in Background Threads
-To prevent blocking the FastAPI Uvicorn async event loop during heavy CUDA or subprocess operations, `PipelineRunnerService.run_full_pipeline_async` executes each worker in a separate thread via `asyncio.to_thread`:
+To prevent blocking the FastAPI Uvicorn async event loop during heavy CUDA or subprocess operations, `PipelineRunnerService.run_full_pipeline_async` wraps `asyncio.to_thread` with `asyncio.create_task` (`worker_task = asyncio.create_task(asyncio.to_thread(cls._execute_stage_worker_sync, job, stage_name))`). This produces a true `asyncio.Task` object supporting `.done()` polling while progress metrics and ETA are continuously updated.
 
 1. **Stage 1 — Image Generation (`image_gen`)**:
    - Worker: `ImageWorker.run(job)`
