@@ -1,27 +1,31 @@
 """Tests for craftdesk_api GCP VM router and service."""
+
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
+
 from craftdesk_api.core.security import create_access_token
 
 
 @pytest.fixture()
 def auth_headers(client) -> dict[str, str]:
     """Create a user and return Authorization Bearer header dict."""
-    resp = client.post("/api/v1/auth/register", json={
-        "full_name": "GCP User",
-        "email": "gcpuser@example.com",
-        "password": "GcpPassword123!",
-    })
+    resp = client.post(
+        "/api/v1/auth/register",
+        json={
+            "full_name": "GCP User",
+            "email": "gcpuser@example.com",
+            "password": "GcpPassword123!",
+        },
+    )
     user_id = resp.json()["user_id"]
     token = create_access_token(user_id)
     return {"Authorization": f"Bearer {token}"}
 
 
 class TestGcpConfigEndpoints:
-
     def test_save_gcp_config_success(self, client, auth_headers) -> None:
         payload = {
             "project_id": "my-gcp-project-123",
@@ -63,19 +67,22 @@ class TestGcpConfigEndpoints:
 
 
 class TestGcpVmActions:
-
     @patch("craftdesk_api.services.gcp_vm.GcpVmService.start_vm")
     def test_start_vm_success(self, mock_start, client, auth_headers) -> None:
         mock_start.return_value = {"status": "DONE"}
 
         # Save config first
-        client.post("/api/v1/gcp/config", json={
-            "project_id": "proj",
-            "zone": "us-central1-a",
-            "instance_name": "gpu-inst",
-            "service_account_json": '{"type": "service_account"}',
-            "comfy_ui_port": 8188,
-        }, headers=auth_headers)
+        client.post(
+            "/api/v1/gcp/config",
+            json={
+                "project_id": "proj",
+                "zone": "us-central1-a",
+                "instance_name": "gpu-inst",
+                "service_account_json": '{"type": "service_account"}',
+                "comfy_ui_port": 8188,
+            },
+            headers=auth_headers,
+        )
 
         resp = client.post("/api/v1/gcp/vm/start", headers=auth_headers)
         assert resp.status_code == 200
@@ -88,13 +95,17 @@ class TestGcpVmActions:
     def test_stop_vm_success(self, mock_stop, client, auth_headers) -> None:
         mock_stop.return_value = {"status": "DONE"}
 
-        client.post("/api/v1/gcp/config", json={
-            "project_id": "proj",
-            "zone": "us-central1-a",
-            "instance_name": "gpu-inst",
-            "service_account_json": '{"type": "service_account"}',
-            "comfy_ui_port": 8188,
-        }, headers=auth_headers)
+        client.post(
+            "/api/v1/gcp/config",
+            json={
+                "project_id": "proj",
+                "zone": "us-central1-a",
+                "instance_name": "gpu-inst",
+                "service_account_json": '{"type": "service_account"}',
+                "comfy_ui_port": 8188,
+            },
+            headers=auth_headers,
+        )
 
         resp = client.post("/api/v1/gcp/vm/stop", headers=auth_headers)
         assert resp.status_code == 200
@@ -105,20 +116,26 @@ class TestGcpVmActions:
 
     @patch("craftdesk_api.services.gcp_vm.GcpVmService.check_comfy_ui_health")
     @patch("craftdesk_api.services.gcp_vm.GcpVmService.get_vm_details")
-    def test_get_vm_status_running_and_ready(self, mock_details, mock_health, client, auth_headers) -> None:
+    def test_get_vm_status_running_and_ready(
+        self, mock_details, mock_health, client, auth_headers
+    ) -> None:
         mock_details.return_value = {
             "status": "RUNNING",
             "external_ip": "34.123.45.67",
         }
         mock_health.return_value = True
 
-        client.post("/api/v1/gcp/config", json={
-            "project_id": "proj",
-            "zone": "us-central1-a",
-            "instance_name": "gpu-inst",
-            "service_account_json": '{"type": "service_account"}',
-            "comfy_ui_port": 8188,
-        }, headers=auth_headers)
+        client.post(
+            "/api/v1/gcp/config",
+            json={
+                "project_id": "proj",
+                "zone": "us-central1-a",
+                "instance_name": "gpu-inst",
+                "service_account_json": '{"type": "service_account"}',
+                "comfy_ui_port": 8188,
+            },
+            headers=auth_headers,
+        )
 
         resp = client.get("/api/v1/gcp/vm/status", headers=auth_headers)
         assert resp.status_code == 200

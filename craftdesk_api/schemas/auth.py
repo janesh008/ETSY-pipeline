@@ -1,10 +1,11 @@
 """CraftDesk API — auth request/response Pydantic schemas."""
+
 from __future__ import annotations
 
 from pydantic import BaseModel, EmailStr, Field
 
-
 # ── Register ──────────────────────────────────────────────────────────────────
+
 
 class RegisterRequest(BaseModel):
     """Payload for POST /auth/register."""
@@ -25,6 +26,7 @@ class RegisterResponse(BaseModel):
 
 # ── Login ────────────────────────────────────────────────────────────────────
 
+
 class LoginRequest(BaseModel):
     """Payload for POST /auth/login."""
 
@@ -42,6 +44,7 @@ class TokenResponse(BaseModel):
 
 # ── Refresh ──────────────────────────────────────────────────────────────────
 
+
 class RefreshRequest(BaseModel):
     """Payload for POST /auth/refresh."""
 
@@ -49,6 +52,7 @@ class RefreshRequest(BaseModel):
 
 
 # ── Me ────────────────────────────────────────────────────────────────────────
+
 
 class UserMeResponse(BaseModel):
     """Current authenticated user profile."""

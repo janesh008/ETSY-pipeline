@@ -1,4 +1,5 @@
 """CraftDesk API — async SQLAlchemy engine and session factory for Neon.tech PostgreSQL."""
+
 from __future__ import annotations
 
 from collections.abc import AsyncGenerator

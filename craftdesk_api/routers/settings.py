@@ -1,4 +1,5 @@
 """CraftDesk API — User profile and encrypted API Keys router."""
+
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, status

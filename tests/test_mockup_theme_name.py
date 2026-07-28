@@ -14,7 +14,6 @@ if str(mockup_creator_dir) not in sys.path:
 
 def test_theme_name_resolution_from_no_bg_parent(tmp_path: Path) -> None:
     """Test theme name resolution falls back to parent folder when theme_dir is no_bg."""
-    from src.generator import Generator
 
     # Create dummy theme folder structure: <tmp>/wonder_woman_clipart/no_bg
     theme_dir = tmp_path / "wonder_woman_clipart" / "no_bg"
@@ -28,9 +27,15 @@ def test_theme_name_resolution_from_no_bg_parent(tmp_path: Path) -> None:
     path_obj = theme_dir
     theme_folder_name = path_obj.name
     if theme_folder_name.lower() in (
-        "no_bg", "no bg", "no-bg", "nobg",
-        "processed_no_bg", "processed no bg", "processed-no-bg",
-        "misc_category", "scen-pattern"
+        "no_bg",
+        "no bg",
+        "no-bg",
+        "nobg",
+        "processed_no_bg",
+        "processed no bg",
+        "processed-no-bg",
+        "misc_category",
+        "scen-pattern",
     ):
         theme_folder_name = path_obj.parent.name
 

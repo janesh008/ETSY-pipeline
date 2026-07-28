@@ -23,9 +23,7 @@ logger = get_logger(__name__)
 DEFAULT_FILE_PATTERNS = ["*.png", "*.jpg", "*.jpeg", "*.pdf", "*.csv", "*.txt"]
 
 
-def _get_local_matching_files(
-    local_dir: Path, file_patterns: list[str]
-) -> list[Path]:
+def _get_local_matching_files(local_dir: Path, file_patterns: list[str]) -> list[Path]:
     """Find all files in local_dir matching any pattern."""
     if not local_dir.exists():
         return []
@@ -70,7 +68,9 @@ def ensure_local_assets(
     # Step 1: Check Local VM Disk
     local_files = _get_local_matching_files(target_dir, patterns)
     if local_files:
-        logger.debug(f"[storage_helper] Local VM hit: {len(local_files)} files in {target_dir}")
+        logger.debug(
+            f"[storage_helper] Local VM hit: {len(local_files)} files in {target_dir}"
+        )
         return local_files
 
     # Step 2: GCS Fallback
@@ -84,13 +84,19 @@ def ensure_local_assets(
 
             objects = gcs.list_objects(gcs_prefix)
             if objects:
-                logger.info(f"[storage_helper] Local VM miss. Downloading {len(objects)} objects from GCS ({gcs_prefix})...")
+                logger.info(
+                    f"[storage_helper] Local VM miss. Downloading {len(objects)} objects from GCS ({gcs_prefix})..."
+                )
                 target_dir.mkdir(parents=True, exist_ok=True)
                 clean_prefix = gcs_prefix.rstrip("/") + "/"
                 for obj_path in objects:
                     if obj_path.endswith("/"):
                         continue
-                    filename = obj_path[len(clean_prefix):] if obj_path.startswith(clean_prefix) else Path(obj_path).name
+                    filename = (
+                        obj_path[len(clean_prefix) :]
+                        if obj_path.startswith(clean_prefix)
+                        else Path(obj_path).name
+                    )
                     dest_file = target_dir / filename
                     dest_file.parent.mkdir(parents=True, exist_ok=True)
                     if not dest_file.exists():
@@ -100,7 +106,9 @@ def ensure_local_assets(
                 if local_files:
                     return local_files
         except Exception as exc:
-            logger.warning(f"[storage_helper] GCS fallback failed for prefix {gcs_prefix}: {exc}")
+            logger.warning(
+                f"[storage_helper] GCS fallback failed for prefix {gcs_prefix}: {exc}"
+            )
 
     # Step 3: Google Drive Fallback
     if drive_path_parts and app_settings.google_drive_folder_id:
@@ -122,7 +130,9 @@ def ensure_local_assets(
             files = results.get("files", [])
 
             if files:
-                logger.info(f"[storage_helper] GCS miss. Downloading {len(files)} files from Google Drive ({'/'.join(drive_path_parts)})...")
+                logger.info(
+                    f"[storage_helper] GCS miss. Downloading {len(files)} files from Google Drive ({'/'.join(drive_path_parts)})..."
+                )
                 target_dir.mkdir(parents=True, exist_ok=True)
 
                 from googleapiclient.http import (
@@ -147,6 +157,8 @@ def ensure_local_assets(
                 if local_files:
                     return local_files
         except Exception as exc:
-            logger.warning(f"[storage_helper] Google Drive fallback failed for path {drive_path_parts}: {exc}")
+            logger.warning(
+                f"[storage_helper] Google Drive fallback failed for path {drive_path_parts}: {exc}"
+            )
 
     return _get_local_matching_files(target_dir, patterns)

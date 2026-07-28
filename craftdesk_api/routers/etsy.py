@@ -1,8 +1,9 @@
 """CraftDesk API — Etsy Shop Connector router: OAuth 2.0 PKCE, token encryption, and shop CRUD."""
+
 from __future__ import annotations
 
 import secrets
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
@@ -85,7 +86,7 @@ async def handle_etsy_callback(
     # Encrypt tokens with AES-256 Fernet
     encrypted_access = encrypt(access_token)
     encrypted_refresh = encrypt(refresh_token)
-    expires_at = datetime.now(timezone.utc) + timedelta(seconds=expires_in)
+    expires_at = datetime.now(UTC) + timedelta(seconds=expires_in)
 
     # Check if shop already connected for this user
     result = await db.execute(

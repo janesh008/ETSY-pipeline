@@ -1,7 +1,9 @@
 """CraftDesk API — Pipeline runner request/response Pydantic schemas."""
+
 from __future__ import annotations
 
 from datetime import datetime
+
 from pydantic import BaseModel, Field
 
 
@@ -12,6 +14,10 @@ class StageStatus(BaseModel):
     label: str
     status: str  # "pending" | "running" | "completed" | "failed"
     progress_percent: int = Field(0, ge=0, le=100)
+    images_done: int = 0
+    images_total: int = 0
+    elapsed_seconds: float | None = None
+    estimated_time_remaining_sec: float | None = None
     error_message: str | None = None
     stderr_log: str | None = None
     started_at: str | None = None
@@ -23,6 +29,9 @@ class PipelineStartRequest(BaseModel):
 
     prompt_job_id: str | None = None
     theme_name: str = Field("Wonder Woman Birthday", min_length=1)
+    prompt_file_path: str | None = Field(
+        None, description="Local or GCS prompt .txt file path"
+    )
     prompts: list[str] = Field(default_factory=list)
 
 

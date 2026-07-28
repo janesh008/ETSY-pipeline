@@ -1,4 +1,5 @@
 """CraftDesk API — GCP VM request/response Pydantic schemas."""
+
 from __future__ import annotations
 
 from pydantic import BaseModel, Field
@@ -8,7 +9,9 @@ class GcpConfigCreate(BaseModel):
     """Payload for saving user GCP Compute Engine credentials."""
 
     project_id: str = Field(..., min_length=1, max_length=255)
-    zone: str = Field(..., min_length=1, max_length=64, json_schema_extra={"example": "us-central1-a"})
+    zone: str = Field(
+        ..., min_length=1, max_length=64, json_schema_extra={"example": "us-central1-a"}
+    )
     instance_name: str = Field(..., min_length=1, max_length=255)
     service_account_json: str = Field(
         ..., min_length=1, description="Raw GCP service account key JSON string"

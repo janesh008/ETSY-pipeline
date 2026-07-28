@@ -1,4 +1,5 @@
 """CraftDesk API — EtsyShop ORM model."""
+
 from __future__ import annotations
 
 import uuid
@@ -23,7 +24,10 @@ class EtsyShop(Base):
         String(36), primary_key=True, default=lambda: str(uuid.uuid4())
     )
     user_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+        String(36),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     # Etsy shop identifiers
     shop_id: Mapped[str] = mapped_column(String(64), nullable=False)

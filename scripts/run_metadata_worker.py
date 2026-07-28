@@ -62,14 +62,18 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def process_single_job(job_id: str, store: Any, metadata_worker: MetadataWorker, csv_worker: CSVWorker) -> None:
+def process_single_job(
+    job_id: str, store: Any, metadata_worker: MetadataWorker, csv_worker: CSVWorker
+) -> None:
     """Process a single specific MongoDB job ID."""
     doc = store.get_job_doc(job_id)
     if not doc:
         logger.error(f"[run_metadata_worker] Job {job_id} not found in MongoDB.")
         sys.exit(1)
 
-    logger.info(f"[run_metadata_worker] Processing job {job_id} ({doc.get('theme', '?')})")
+    logger.info(
+        f"[run_metadata_worker] Processing job {job_id} ({doc.get('theme', '?')})"
+    )
     job = Job.model_validate(doc)
 
     try:
@@ -78,9 +82,13 @@ def process_single_job(job_id: str, store: Any, metadata_worker: MetadataWorker,
         job = csv_worker.run(job)
         store.update_stage_status(job_id, "csv_generation", "COMPLETED")
         store.upsert_job(job)
-        logger.info(f"[run_metadata_worker] ✅ Metadata & CSV complete for job {job_id}")
+        logger.info(
+            f"[run_metadata_worker] ✅ Metadata & CSV complete for job {job_id}"
+        )
     except Exception as exc:
-        logger.error(f"[run_metadata_worker] ❌ Job {job_id} metadata/csv failed: {exc}")
+        logger.error(
+            f"[run_metadata_worker] ❌ Job {job_id} metadata/csv failed: {exc}"
+        )
         store.update_stage_status(
             job_id, "metadata_generation", "FAILED", error_message=str(exc)
         )
@@ -145,7 +153,9 @@ def run_daemon_mode(settings: object, retry_failed: bool = False) -> None:
                 try:
                     # Run MetadataWorker
                     job = metadata_worker.run(job)
-                    store.update_stage_status(job_id, "metadata_generation", "COMPLETED")
+                    store.update_stage_status(
+                        job_id, "metadata_generation", "COMPLETED"
+                    )
 
                     # Run CSVWorker
                     job = csv_worker.run(job)
@@ -183,6 +193,7 @@ def main() -> None:
     logger.info("[run_metadata_worker] Starting Metadata & CSV Worker")
 
     from etsy_pipeline.services.mongo_store import MongoJobStore
+
     if args.job_id:
         store = MongoJobStore(settings=settings)
         metadata_worker = MetadataWorker(settings=settings, mongo_store=store)

@@ -1,7 +1,8 @@
 """CraftDesk API — security utilities: Fernet encryption, bcrypt hashing, JWT tokens."""
+
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import bcrypt
 from cryptography.fernet import Fernet
@@ -28,6 +29,7 @@ def decrypt(ciphertext: str) -> str:
 
 # ── bcrypt password hashing ──────────────────────────────────────────────────
 
+
 def hash_password(password: str) -> str:
     """Hash a plaintext password with bcrypt (cost factor 12).
 
@@ -43,11 +45,14 @@ def verify_password(plain: str, hashed: str) -> bool:
 
 # ── JWT ──────────────────────────────────────────────────────────────────────
 
+
 def _create_token(data: dict[str, object], expires_delta: timedelta) -> str:
     """Internal: encode a JWT with the given payload and expiry."""
     payload = data.copy()
-    payload["exp"] = datetime.now(timezone.utc) + expires_delta
-    return jwt.encode(payload, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
+    payload["exp"] = datetime.now(UTC) + expires_delta
+    return jwt.encode(
+        payload, settings.jwt_secret_key, algorithm=settings.jwt_algorithm
+    )
 
 
 def create_access_token(user_id: str) -> str:
@@ -68,7 +73,9 @@ def create_refresh_token(user_id: str) -> str:
 
 def decode_token(token: str) -> dict[str, object]:
     """Decode and verify a JWT. Raises JWTError on invalid/expired tokens."""
-    return jwt.decode(token, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm])
+    return jwt.decode(
+        token, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm]
+    )
 
 
 __all__ = [

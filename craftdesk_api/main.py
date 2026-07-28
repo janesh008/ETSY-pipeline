@@ -1,11 +1,13 @@
 """CraftDesk API — FastAPI application entry point."""
+
 from __future__ import annotations
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from craftdesk_api.core.config import settings
-from craftdesk_api.routers import auth, etsy, gcp, pipeline, prompts, review, settings as settings_router
+from craftdesk_api.routers import auth, etsy, gcp, pipeline, prompts, review
+from craftdesk_api.routers import settings as settings_router
 
 app = FastAPI(
     title=settings.app_name,

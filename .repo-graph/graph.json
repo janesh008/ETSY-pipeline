@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-07-24T20:10:11.366046+00:00",
+  "generated_at": "2026-07-28T17:17:05.427839+00:00",
   "generator": "scripts/build_graph.py",
   "static_only": true,
   "scan_roots": [
@@ -9,7 +9,7 @@
     "tests"
   ],
   "node_count": 316,
-  "edge_count": 1684,
+  "edge_count": 1701,
   "nodes": [
     {
       "id": "etsy_pipeline",
@@ -155,7 +155,7 @@
       "id": "etsy_pipeline.models.job.Job.theme_slug",
       "kind": "function",
       "module": "etsy_pipeline.models.job",
-      "docstring_summary": "URL and filesystem-safe theme identifier (e.g. 'Lilo_and_Stitch').",
+      "docstring_summary": "URL and filesystem-safe character + theme identifier (e.g. 'Winnie_The_Pooh_Birthday').",
       "signature": "(self)",
       "is_public": true,
       "is_async": false,
@@ -223,7 +223,7 @@
       "id": "etsy_pipeline.models.job.StageResult.duration_seconds",
       "kind": "function",
       "module": "etsy_pipeline.models.job",
-      "docstring_summary": "Calculate duration in seconds, if both timestamps exist.",
+      "docstring_summary": "Calculate duration in seconds, if both timestamps exist or while running.",
       "signature": "(self)",
       "is_public": true,
       "is_async": false,
@@ -3454,7 +3454,56 @@
     },
     {
       "from": "etsy_pipeline.models.job.Job.theme_slug",
+      "to": "append",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.models.job.Job.theme_slug",
+      "to": "isdigit",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.models.job.Job.theme_slug",
+      "to": "join",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.models.job.Job.theme_slug",
+      "to": "lower",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.models.job.Job.theme_slug",
       "to": "replace",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.models.job.Job.theme_slug",
+      "to": "split",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.models.job.Job.theme_slug",
+      "to": "strip",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.models.job.Job.theme_slug",
+      "to": "sub",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
@@ -3539,6 +3588,13 @@
     {
       "from": "etsy_pipeline.models.job.Job.total_prompt_count",
       "to": "values",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.models.job.StageResult.duration_seconds",
+      "to": "now",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
@@ -6784,6 +6840,13 @@
     },
     {
       "from": "etsy_pipeline.workers.csv_worker.CSVWorker.run",
+      "to": "_get_gcs",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.csv_worker.CSVWorker.run",
       "to": "_get_or_create_folder_by_path",
       "kind": "call",
       "static_only": true,
@@ -9473,6 +9536,12 @@
     },
     {
       "from": "etsy_pipeline.workers.prompt_worker",
+      "to": "os",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker",
       "to": "pathlib.Path",
       "kind": "import",
       "static_only": true
@@ -9674,7 +9743,28 @@
     },
     {
       "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._get_client",
+      "to": "getattr",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._get_client",
+      "to": "getenv",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._get_client",
       "to": "info",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._get_client",
+      "to": "startswith",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
@@ -9961,6 +10051,20 @@
     },
     {
       "from": "etsy_pipeline.workers.prompt_worker.PromptWorker.run",
+      "to": "Client",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker.run",
+      "to": "Path",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker.run",
       "to": "PromptGenerationError",
       "kind": "call",
       "static_only": true,
@@ -10017,6 +10121,20 @@
     },
     {
       "from": "etsy_pipeline.workers.prompt_worker.PromptWorker.run",
+      "to": "blob",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker.run",
+      "to": "bucket",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker.run",
       "to": "debug",
       "kind": "call",
       "static_only": true,
@@ -10031,14 +10149,14 @@
     },
     {
       "from": "etsy_pipeline.workers.prompt_worker.PromptWorker.run",
-      "to": "info",
+      "to": "getenv",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
     },
     {
       "from": "etsy_pipeline.workers.prompt_worker.PromptWorker.run",
-      "to": "items",
+      "to": "info",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
@@ -10073,6 +10191,13 @@
     },
     {
       "from": "etsy_pipeline.workers.prompt_worker.PromptWorker.run",
+      "to": "mkdir",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker.run",
       "to": "sum",
       "kind": "call",
       "static_only": true,
@@ -10080,7 +10205,28 @@
     },
     {
       "from": "etsy_pipeline.workers.prompt_worker.PromptWorker.run",
+      "to": "upload_from_string",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker.run",
       "to": "values",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker.run",
+      "to": "warning",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker.run",
+      "to": "write_text",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
@@ -14108,18 +14254,6 @@
       "static_only": true
     },
     {
-      "from": "tests.test_etsy_worker",
-      "to": "etsy_pipeline.workers.etsy_worker.sort_mockup_images",
-      "kind": "import",
-      "static_only": true
-    },
-    {
-      "from": "tests.test_etsy_worker",
-      "to": "pathlib.Path",
-      "kind": "import",
-      "static_only": true
-    },
-    {
       "from": "tests.test_etsy_worker.test_get_api_key_header_formatting",
       "to": "EtsyWorker",
       "kind": "call",
@@ -14210,12 +14344,6 @@
     {
       "from": "tests.test_metadata_worker",
       "to": "etsy_pipeline.config.settings.Settings",
-      "kind": "import",
-      "static_only": true
-    },
-    {
-      "from": "tests.test_metadata_worker",
-      "to": "etsy_pipeline.models.job.Job",
       "kind": "import",
       "static_only": true
     },
@@ -14682,12 +14810,6 @@
     {
       "from": "tests.test_storage_helper",
       "to": "__future__.annotations",
-      "kind": "import",
-      "static_only": true
-    },
-    {
-      "from": "tests.test_storage_helper",
-      "to": "etsy_pipeline.config.settings.Settings",
       "kind": "import",
       "static_only": true
     },

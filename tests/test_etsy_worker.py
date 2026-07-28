@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 from etsy_pipeline.config.settings import Settings
-from etsy_pipeline.workers.etsy_worker import EtsyWorker, sort_mockup_images
-from pathlib import Path
+from etsy_pipeline.workers.etsy_worker import EtsyWorker
 
 
 def test_get_api_key_header_formatting() -> None:

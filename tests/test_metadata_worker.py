@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import pytest
+
 from etsy_pipeline.config.settings import Settings
-from etsy_pipeline.models.job import Job
 from etsy_pipeline.workers.metadata_worker import MetadataWorker
 
 

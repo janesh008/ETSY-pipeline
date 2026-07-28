@@ -35,8 +35,13 @@ interface Stage {
   label: string;
   status: "pending" | "running" | "completed" | "failed";
   progress_percent: number;
+  images_done?: number;
+  images_total?: number;
+  elapsed_seconds?: number | null;
+  estimated_time_remaining_sec?: number | null;
   error_message?: string | null;
   stderr_log?: string | null;
+  started_at?: string | null;
   completed_at?: string | null;
 }
 
@@ -54,6 +59,15 @@ interface PromptFile {
 function getApiBaseUrl(): string {
   if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL;
   return "/api/v1";
+}
+
+function formatTimeSec(seconds?: number | null): string {
+  if (seconds == null || isNaN(seconds) || seconds < 0) return "--";
+  const secs = Math.round(seconds);
+  if (secs < 60) return `${secs}s`;
+  const mins = Math.floor(secs / 60);
+  const remSecs = secs % 60;
+  return `${mins}m ${remSecs}s`;
 }
 
 const INITIAL_STAGES: Stage[] = [
@@ -186,15 +200,42 @@ export default function PipelinePage() {
     }
   };
 
+  const pollJobProgress = (id: string) => {
+    setJobId(id);
+    const interval = setInterval(async () => {
+      try {
+        const token = localStorage.getItem("craftdesk_access_token");
+        const res = await fetch(`${getApiBaseUrl()}/pipeline/jobs/${id}`, {
+          headers: { Authorization: token ? `Bearer ${token}` : "" },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.stages && data.stages.length > 0) {
+            setStages(data.stages);
+          }
+          if (data.status === "completed") {
+            setJobStatus("completed");
+            clearInterval(interval);
+          } else if (data.status === "failed") {
+            setJobStatus("failed");
+            clearInterval(interval);
+          }
+        }
+      } catch {
+        // Continue polling if transient network error
+      }
+    }, 1000);
+  };
+
   const handleStartPipeline = async () => {
     if (!selectedFile) return;
     setJobStatus("running");
     setStages(INITIAL_STAGES.map((s) => ({ ...s, status: "pending", progress_percent: 0 })));
     try {
       const token = localStorage.getItem("craftdesk_access_token");
-      const res = await fetch("http://localhost:8000/api/v1/pipeline/jobs", {
+      const res = await fetch(`${getApiBaseUrl()}/pipeline/jobs`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers: { "Content-Type": "application/json", Authorization: token ? `Bearer ${token}` : "" },
         body: JSON.stringify({
           theme_name: selectedFile.theme,
           prompt_file_path: selectedFile.local_path || selectedFile.gcs_path,
@@ -203,37 +244,14 @@ export default function PipelinePage() {
       if (res.ok) {
         const data = await res.json();
         setJobId(data.job_id);
-        simulatePipelineProgress(data.job_id);
+        pollJobProgress(data.job_id);
       } else {
-        throw new Error("Failed to start job");
+        throw new Error("Failed to start pipeline job");
       }
     } catch {
-      simulatePipelineProgress("demo-job-1");
+      alert("Error starting pipeline execution. Check backend API status.");
+      setJobStatus("idle");
     }
-  };
-
-  const simulatePipelineProgress = (id: string) => {
-    setJobId(id);
-    let currentStep = 0;
-    const interval = setInterval(() => {
-      setStages((prev) => {
-        const next = [...prev];
-        if (currentStep < next.length) {
-          for (let i = 0; i < currentStep; i++) {
-            next[i] = { ...next[i], status: "completed", progress_percent: 100 };
-          }
-          next[currentStep] = { ...next[currentStep], status: "running", progress_percent: 65 };
-          currentStep++;
-        } else {
-          for (let i = 0; i < next.length; i++) {
-            next[i] = { ...next[i], status: "completed", progress_percent: 100 };
-          }
-          setJobStatus("completed");
-          clearInterval(interval);
-        }
-        return next;
-      });
-    }, 1200);
   };
 
   const handleSimulateFailure = () => {
@@ -603,11 +621,28 @@ export default function PipelinePage() {
                     </div>
                     <div>
                       <h3 className="font-bold text-sm text-[#1C2421] font-display">{stage.label}</h3>
-                      {stage.completed_at && (
+                      {stage.completed_at ? (
                         <p className="text-[11px] text-[#0D5C46] font-medium mt-0.5">
                           Completed at {new Date(stage.completed_at).toLocaleTimeString()}
+                          {stage.elapsed_seconds != null && ` (${formatTimeSec(stage.elapsed_seconds)})`}
                         </p>
-                      )}
+                      ) : stage.status === "running" ? (
+                        <div className="flex items-center gap-3 mt-1 text-[11px] text-[#5A6561]">
+                          {stage.images_total != null && stage.images_total > 0 && (
+                            <span className="font-semibold text-[#0D5C46]">
+                              {stage.images_done ?? 0} / {stage.images_total} items
+                            </span>
+                          )}
+                          {stage.elapsed_seconds != null && (
+                            <span>Elapsed: {formatTimeSec(stage.elapsed_seconds)}</span>
+                          )}
+                          {stage.estimated_time_remaining_sec != null && stage.estimated_time_remaining_sec > 0 && (
+                            <span className="font-semibold text-amber-700">
+                              ETA ~ {formatTimeSec(stage.estimated_time_remaining_sec)}
+                            </span>
+                          )}
+                        </div>
+                      ) : null}
                     </div>
                   </div>
 
@@ -639,11 +674,19 @@ export default function PipelinePage() {
                 </div>
 
                 {stage.status === "running" && (
-                  <div className="mt-4 w-full bg-[#DCD8CF]/50 rounded-full h-2 overflow-hidden">
-                    <div
-                      className="bg-[#0D5C46] h-full rounded-full transition-all duration-300"
-                      style={{ width: `${stage.progress_percent}%` }}
-                    />
+                  <div className="mt-4 space-y-1">
+                    <div className="w-full bg-[#DCD8CF]/50 rounded-full h-2.5 overflow-hidden">
+                      <div
+                        className="bg-[#0D5C46] h-full rounded-full transition-all duration-300"
+                        style={{ width: `${stage.progress_percent}%` }}
+                      />
+                    </div>
+                    <div className="flex justify-between items-center text-[10px] text-[#5A6561]">
+                      <span>Progress: {stage.progress_percent}%</span>
+                      {stage.estimated_time_remaining_sec != null && stage.estimated_time_remaining_sec > 0 && (
+                        <span>Est. Remaining: {formatTimeSec(stage.estimated_time_remaining_sec)}</span>
+                      )}
+                    </div>
                   </div>
                 )}
 

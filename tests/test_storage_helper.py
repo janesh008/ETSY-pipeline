@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from etsy_pipeline.config.settings import Settings
+
 from etsy_pipeline.services.storage_helper import ensure_local_assets
 
 

@@ -65,6 +65,10 @@ class StageResult(BaseModel):
         default=0.0,
         description="GPU compute hours consumed by this stage",
     )
+    estimated_time_remaining_sec: float | None = Field(
+        default=None,
+        description="Estimated seconds remaining for this stage to complete",
+    )
 
     def mark_running(self, worker_id: str | None = None) -> None:
         """Mark this stage as running."""
@@ -82,6 +86,7 @@ class StageResult(BaseModel):
         """Mark this stage as completed."""
         self.status = StageStatus.COMPLETED
         self.completed_at = datetime.now(UTC)
+        self.estimated_time_remaining_sec = 0.0
         if cost_usd is not None:
             self.cost_usd = cost_usd
         if images_done is not None:
@@ -99,9 +104,10 @@ class StageResult(BaseModel):
 
     @property
     def duration_seconds(self) -> float | None:
-        """Calculate duration in seconds, if both timestamps exist."""
-        if self.started_at and self.completed_at:
-            return (self.completed_at - self.started_at).total_seconds()
+        """Calculate duration in seconds, if both timestamps exist or while running."""
+        if self.started_at:
+            end = self.completed_at or datetime.now(UTC)
+            return (end - self.started_at).total_seconds()
         return None
 
     @property
@@ -143,6 +149,12 @@ class Job(BaseModel):
     )
     prompt_count: int | None = Field(
         default=None, description="Optional total prompt count override"
+    )
+    prompt_file_path: str | None = Field(
+        default=None, description="Path to local or GCS prompt .txt file"
+    )
+    prompt_gcs_uri: str | None = Field(
+        default=None, description="GCS URI (gs://...) for injected prompt file"
     )
     sections_requested: list[str] | None = Field(
         default=None,
@@ -290,14 +302,29 @@ class Job(BaseModel):
     def theme_slug(self) -> str:
         """URL and filesystem-safe character + theme identifier (e.g. 'Winnie_The_Pooh_Birthday')."""
         import re
+
         if not self.theme:
             return "Clipart_Set"
         cleaned = self.theme.replace("&", "and")
         cleaned = re.sub(r'[•·∙●|\\/:*?"<>,\.\-\(\)]', " ", cleaned)
         noise_words = {
-            "clipart", "png", "caricature", "bundle", "graphics", "backgrounds", 
-            "art", "illustration", "digital", "instant", "download", "svg", "eps", "design",
-            "set", "pack", "collection"
+            "clipart",
+            "png",
+            "caricature",
+            "bundle",
+            "graphics",
+            "backgrounds",
+            "art",
+            "illustration",
+            "digital",
+            "instant",
+            "download",
+            "svg",
+            "eps",
+            "design",
+            "set",
+            "pack",
+            "collection",
         }
         tokens = []
         for token in cleaned.split():

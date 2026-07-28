@@ -106,7 +106,13 @@ class EtsyWorker:
             / "mockups"
         )
         gcs_mockup_prefix = f"Clipart/{job.date_folder}/{job.theme_slug}/mockups/"
-        drive_mockup_parts = ["Clipart", "raw_data", job.date_folder, job.theme_slug, "mockups"]
+        drive_mockup_parts = [
+            "Clipart",
+            "raw_data",
+            job.date_folder,
+            job.theme_slug,
+            "mockups",
+        ]
         from etsy_pipeline.services.storage_helper import ensure_local_assets
 
         mockup_files = ensure_local_assets(
@@ -208,7 +214,9 @@ class EtsyWorker:
 
             env_path.write_text(updated, encoding="utf-8")
         except Exception as exc:
-            logger.warning(f"[etsy_upload] Failed to save updated tokens to .env: {exc}")
+            logger.warning(
+                f"[etsy_upload] Failed to save updated tokens to .env: {exc}"
+            )
 
     def _get_clip_art_taxonomy_id(self, headers: dict[str, str]) -> int:
         """Fetch taxonomy node ID for 'Clip Art'."""
@@ -377,7 +385,12 @@ class EtsyWorker:
         try:
             if theme_dir.exists():
                 import shutil
+
                 shutil.rmtree(theme_dir, ignore_errors=True)
-                logger.info(f"[etsy_upload] Purged local VM theme directory: {theme_dir}")
+                logger.info(
+                    f"[etsy_upload] Purged local VM theme directory: {theme_dir}"
+                )
         except Exception as exc:
-            logger.warning(f"[etsy_upload] Failed to purge local theme folder {theme_dir}: {exc}")
+            logger.warning(
+                f"[etsy_upload] Failed to purge local theme folder {theme_dir}: {exc}"
+            )

@@ -123,7 +123,12 @@ class PromptWorker:
             job.prompts = prompts
             job.character_roster = roster
 
-            output_dir = Path(self._settings.output_root) / "Clipart" / job.date_folder / job.theme_slug
+            output_dir = (
+                Path(self._settings.output_root)
+                / "Clipart"
+                / job.date_folder
+                / job.theme_slug
+            )
             output_dir.mkdir(parents=True, exist_ok=True)
             prompt_file = output_dir / f"{job.theme_slug}.txt"
             prompt_file.write_text(raw_response, encoding="utf-8")
@@ -131,14 +136,21 @@ class PromptWorker:
             # Automatic GCP Cloud Storage Bucket Upload for VM Cloud Execution
             gcs_bucket = self._settings.gcs_bucket or os.getenv("GCP_BUCKET_NAME")
             if gcs_bucket:
-                gcs_blob_path = f"Clipart/{job.date_folder}/{job.theme_slug}/{job.theme_slug}.txt"
+                gcs_blob_path = (
+                    f"Clipart/{job.date_folder}/{job.theme_slug}/{job.theme_slug}.txt"
+                )
                 try:
                     from google.cloud import storage
+
                     gcs_client = storage.Client()
                     bucket = gcs_client.bucket(gcs_bucket)
                     blob = bucket.blob(gcs_blob_path)
-                    blob.upload_from_string(raw_response, content_type="text/plain; charset=utf-8")
-                    logger.info(f"Uploaded prompt file to GCS: gs://{gcs_bucket}/{gcs_blob_path}")
+                    blob.upload_from_string(
+                        raw_response, content_type="text/plain; charset=utf-8"
+                    )
+                    logger.info(
+                        f"Uploaded prompt file to GCS: gs://{gcs_bucket}/{gcs_blob_path}"
+                    )
                 except Exception as gcs_err:
                     logger.warning(f"GCS upload skipped/failed: {gcs_err}")
 
@@ -261,7 +273,11 @@ class PromptWorker:
         if self._client is not None:
             return self._client
 
-        api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY") or getattr(self._settings, "gemini_api_key", None)
+        api_key = (
+            os.getenv("GEMINI_API_KEY")
+            or os.getenv("GOOGLE_API_KEY")
+            or getattr(self._settings, "gemini_api_key", None)
+        )
         if api_key and not api_key.startswith("your-"):
             logger.info("Initializing Gemini client with API Key auth")
             self._client = genai.Client(api_key=api_key)

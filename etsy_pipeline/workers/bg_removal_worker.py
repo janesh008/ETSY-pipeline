@@ -325,7 +325,14 @@ class BackgroundRemovalWorker:
             from etsy_pipeline.services.google_drive import GoogleDriveService
 
             drive = GoogleDriveService(settings=self._settings)
-            path_parts = ["Clipart", "raw_data", job.date_folder, job.theme_slug, "no_bg", subfolder]
+            path_parts = [
+                "Clipart",
+                "raw_data",
+                job.date_folder,
+                job.theme_slug,
+                "no_bg",
+                subfolder,
+            ]
             target_folder_id = drive._get_or_create_folder_by_path(
                 parent_id=self._settings.google_drive_folder_id,
                 path_parts=path_parts,
@@ -336,15 +343,21 @@ class BackgroundRemovalWorker:
                 f"[bg_removal] Google Drive no_bg upload failed for {dest_path.name}: {exc}"
             )
 
-    def _purge_raw_images_from_gcs_and_local(self, job: Job, raw_base_dir: Path) -> None:
+    def _purge_raw_images_from_gcs_and_local(
+        self, job: Job, raw_base_dir: Path
+    ) -> None:
         """Delete raw_images/ from both GCS and local VM disk post-stage to save storage."""
         # 1. Local VM disk cleanup
         try:
             if raw_base_dir.exists():
                 shutil.rmtree(raw_base_dir, ignore_errors=True)
-                logger.info(f"[bg_removal] Purged raw_images from local VM disk: {raw_base_dir}")
+                logger.info(
+                    f"[bg_removal] Purged raw_images from local VM disk: {raw_base_dir}"
+                )
         except Exception as exc:
-            logger.warning(f"[bg_removal] Failed to purge raw_images from local VM: {exc}")
+            logger.warning(
+                f"[bg_removal] Failed to purge raw_images from local VM: {exc}"
+            )
 
         # 2. GCS storage cleanup
         try:

@@ -1,4 +1,5 @@
 """CraftDesk API — Review Gallery and Etsy Publishing router."""
+
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -34,7 +35,9 @@ async def get_job_review_data(
     job = PipelineRunnerService.get_job(job_id)
     if not job or job["user_id"] != user_id:
         # Provide demo job payload if user views demo job
-        job = PipelineRunnerService.create_job(user_id, "Wonder Woman Birthday Watercolor", [])
+        job = PipelineRunnerService.create_job(
+            user_id, "Wonder Woman Birthday Watercolor", []
+        )
 
     meta = job.get("metadata", {})
     return ReviewJobResponse(
@@ -44,7 +47,10 @@ async def get_job_review_data(
         mockups=job.get("mockups", []),
         pdf_download_url=f"https://drive.google.com/file/d/demo-pdf-{job['job_id']}/view",
         title=meta.get("title", f"✨ {job['theme_name']} Watercolor Clipart Set"),
-        description=meta.get("description", "High-resolution digital watercolor clipart bundle for commercial use."),
+        description=meta.get(
+            "description",
+            "High-resolution digital watercolor clipart bundle for commercial use.",
+        ),
         tags=meta.get("tags", ["watercolor clipart", "digital download", "craft png"]),
         price=5.99,
         quantity=999,
@@ -106,11 +112,15 @@ async def push_to_etsy_shop(
     job = PipelineRunnerService.get_job(job_id)
     if not job or job["user_id"] != user_id:
         # Fallback for demo job
-        job = PipelineRunnerService.create_job(user_id, "Wonder Woman Birthday Watercolor", [])
+        job = PipelineRunnerService.create_job(
+            user_id, "Wonder Woman Birthday Watercolor", []
+        )
 
     # Fetch shop connection from DB
     result = await db.execute(
-        select(EtsyShop).where(EtsyShop.id == body.shop_db_id, EtsyShop.user_id == user_id)
+        select(EtsyShop).where(
+            EtsyShop.id == body.shop_db_id, EtsyShop.user_id == user_id
+        )
     )
     shop_row = result.scalar_one_or_none()
     if not shop_row:
@@ -125,7 +135,9 @@ async def push_to_etsy_shop(
 
     meta = job.get("metadata", {})
     title = meta.get("title", f"{job['theme_name']} Clipart Set")
-    description = meta.get("description", "Watercolor clipart bundle for commercial use.")
+    description = meta.get(
+        "description", "Watercolor clipart bundle for commercial use."
+    )
     tags = meta.get("tags", ["watercolor clipart", "digital download"])
 
     pub_result = await EtsyPublisherService.create_draft_listing(

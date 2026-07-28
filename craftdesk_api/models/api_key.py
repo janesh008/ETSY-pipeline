@@ -1,4 +1,5 @@
 """CraftDesk API — ApiKey ORM model."""
+
 from __future__ import annotations
 
 import uuid
@@ -23,7 +24,10 @@ class ApiKey(Base):
         String(36), primary_key=True, default=lambda: str(uuid.uuid4())
     )
     user_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+        String(36),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
 
     # Service identifier: "gemini" | "replicate"

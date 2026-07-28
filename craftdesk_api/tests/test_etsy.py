@@ -1,25 +1,30 @@
 """Tests for craftdesk_api Etsy router."""
+
 from __future__ import annotations
 
 from unittest.mock import patch
+
 import pytest
-from craftdesk_api.core.security import create_access_token, decrypt
+
+from craftdesk_api.core.security import create_access_token
 
 
 @pytest.fixture()
 def auth_headers(client) -> dict[str, str]:
-    resp = client.post("/api/v1/auth/register", json={
-        "full_name": "Etsy Shop Owner",
-        "email": "etsyowner@example.com",
-        "password": "EtsyOwnerPass123!",
-    })
+    resp = client.post(
+        "/api/v1/auth/register",
+        json={
+            "full_name": "Etsy Shop Owner",
+            "email": "etsyowner@example.com",
+            "password": "EtsyOwnerPass123!",
+        },
+    )
     user_id = resp.json()["user_id"]
     token = create_access_token(user_id)
     return {"Authorization": f"Bearer {token}"}
 
 
 class TestEtsyOAuthEndpoints:
-
     def test_get_auth_url_success(self, client, auth_headers) -> None:
         resp = client.get("/api/v1/etsy/auth/url", headers=auth_headers)
         assert resp.status_code == 200
@@ -29,7 +34,9 @@ class TestEtsyOAuthEndpoints:
         assert "code_verifier" in data
         assert "state" in data
 
-    @patch("craftdesk_api.services.etsy_oauth.EtsyOAuthService.exchange_code_for_tokens")
+    @patch(
+        "craftdesk_api.services.etsy_oauth.EtsyOAuthService.exchange_code_for_tokens"
+    )
     @patch("craftdesk_api.services.etsy_oauth.EtsyOAuthService.get_shop_details")
     def test_handle_callback_encrypts_tokens(
         self, mock_shop, mock_tokens, client, auth_headers
@@ -50,7 +57,9 @@ class TestEtsyOAuthEndpoints:
             "redirect_uri": "http://localhost:3000/shops/callback",
         }
 
-        resp = client.post("/api/v1/etsy/auth/callback", json=payload, headers=auth_headers)
+        resp = client.post(
+            "/api/v1/etsy/auth/callback", json=payload, headers=auth_headers
+        )
         assert resp.status_code == 201
         data = resp.json()
         assert data["shop_id"] == "66082828"
@@ -71,11 +80,15 @@ class TestEtsyOAuthEndpoints:
             "code_verifier": "verifier-123",
             "redirect_uri": "http://localhost:3000/shops/callback",
         }
-        callback_resp = client.post("/api/v1/etsy/auth/callback", json=payload, headers=auth_headers)
+        callback_resp = client.post(
+            "/api/v1/etsy/auth/callback", json=payload, headers=auth_headers
+        )
         shop_db_id = callback_resp.json()["id"]
 
         # Disconnect shop
-        del_resp = client.delete(f"/api/v1/etsy/shops/{shop_db_id}", headers=auth_headers)
+        del_resp = client.delete(
+            f"/api/v1/etsy/shops/{shop_db_id}", headers=auth_headers
+        )
         assert del_resp.status_code == 204
 
         # List should now be empty

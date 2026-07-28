@@ -1,4 +1,5 @@
 """CraftDesk API — Prompt Engine powered directly by etsy_pipeline.workers.prompt_worker.PromptWorker."""
+
 from __future__ import annotations
 
 import os
@@ -43,7 +44,9 @@ class PromptEngineService:
         # Determine style hint
         effective_style = style_hint or "watercolor clipart"
         if reference_images:
-            effective_style += f", matching visual style of {len(reference_images)} reference image(s)"
+            effective_style += (
+                f", matching visual style of {len(reference_images)} reference image(s)"
+            )
 
         # Build Job instance for etsy_pipeline PromptWorker
         job = Job(
@@ -132,8 +135,17 @@ class PromptEngineService:
         flat_prompts: list[str] = []
 
         # Define active sections and target distribution
-        active_sections = ["MAIN_CHARACTER", "SUB_CHARACTER_1", "SUB_CHARACTER_2", "SCENE", "PROP", "PATTERN", "LOGO_EMBLEM", "FRAME_BORDER"]
-        
+        active_sections = [
+            "MAIN_CHARACTER",
+            "SUB_CHARACTER_1",
+            "SUB_CHARACTER_2",
+            "SCENE",
+            "PROP",
+            "PATTERN",
+            "LOGO_EMBLEM",
+            "FRAME_BORDER",
+        ]
+
         # Calculate prompts per active section
         base_per_sec = max(1, count // len(active_sections))
         remainder = count - (base_per_sec * len(active_sections))
@@ -156,7 +168,7 @@ class PromptEngineService:
                     act = actions[idx % len(actions)]
                     variant = (idx // len(actions)) + 1
                     var_str = f" variation #{variant}" if variant > 1 else ""
-                    
+
                     p = (
                         f"Digital watercolor illustration of {theme}{var_str}, {act}, "
                         f"soft pastel watercolor splatters, isolated on transparent background, 300 DPI commercial quality."

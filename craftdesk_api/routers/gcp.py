@@ -1,12 +1,13 @@
 """CraftDesk API — GCP Compute Engine router: config, VM start/stop, health check."""
+
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, Header, status
+from fastapi import APIRouter, Depends, Header, HTTPException, status
 from jose import JWTError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from craftdesk_api.core.security import decrypt, decode_token, encrypt
+from craftdesk_api.core.security import decode_token, decrypt, encrypt
 from craftdesk_api.db.base import get_db
 from craftdesk_api.models.gcp_config import GcpConfig
 from craftdesk_api.schemas.gcp import (
@@ -43,6 +44,7 @@ async def get_current_user_id(
             token = header_val
         elif "access_token" in header_val:
             import json
+
             try:
                 data = json.loads(header_val)
                 token = data.get("access_token")
@@ -79,6 +81,7 @@ async def _get_user_gcp_config(db: AsyncSession, user_id: str) -> GcpConfig | No
 
 
 # ── Routes ────────────────────────────────────────────────────────────────────
+
 
 @router.post(
     "/config",
@@ -277,7 +280,9 @@ async def get_vm_status(
         if comfy_ready:
             message_text = f"GPU VM Ready ✅. ComfyUI responding at {comfy_url}"
         elif status_str == "RUNNING":
-            message_text = f"VM is RUNNING, but ComfyUI at {comfy_url} is still starting up..."
+            message_text = (
+                f"VM is RUNNING, but ComfyUI at {comfy_url} is still starting up..."
+            )
 
         return VmStatusResponse(
             instance_name=gcp_cfg.instance_name,

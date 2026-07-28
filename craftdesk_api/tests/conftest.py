@@ -1,4 +1,5 @@
 """pytest conftest — set required CraftDesk env vars and shared async client fixture."""
+
 from __future__ import annotations
 
 import asyncio
@@ -15,8 +16,8 @@ os.environ.setdefault("JWT_SECRET_KEY", "test-jwt-secret-key-for-pytest-only-32b
 os.environ.setdefault("FERNET_KEY", Fernet.generate_key().decode())
 os.environ.setdefault("DEBUG", "true")
 
-from craftdesk_api.main import app
 from craftdesk_api.db.base import Base, get_db
+from craftdesk_api.main import app
 
 
 @pytest.fixture()

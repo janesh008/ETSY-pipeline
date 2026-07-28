@@ -1,4 +1,5 @@
 """CraftDesk API — Etsy OAuth 2.0 PKCE flow service."""
+
 from __future__ import annotations
 
 import base64
@@ -83,7 +84,9 @@ class EtsyOAuthService:
             return response.json()
 
     @classmethod
-    async def get_shop_details(cls, access_token: str, keystring: str | None = None) -> dict[str, Any]:
+    async def get_shop_details(
+        cls, access_token: str, keystring: str | None = None
+    ) -> dict[str, Any]:
         """Fetch primary shop profile for the authorized Etsy user."""
         client_id = keystring or ETSY_KEYSTRING
         headers = {
@@ -93,14 +96,18 @@ class EtsyOAuthService:
 
         # Step 1: Get user ID from me endpoint
         async with httpx.AsyncClient(headers=headers, timeout=10.0) as client:
-            me_resp = await client.get("https://openapi.etsy.com/v3/application/users/me")
+            me_resp = await client.get(
+                "https://openapi.etsy.com/v3/application/users/me"
+            )
             if me_resp.status_code != 200:
                 return {"shop_id": "demo-shop-123", "shop_name": "Demo Etsy Craft Shop"}
             me_data = me_resp.json()
             etsy_user_id = me_data.get("user_id")
 
             # Step 2: Get user's shop
-            shop_resp = await client.get(f"https://openapi.etsy.com/v3/application/users/{etsy_user_id}/shops")
+            shop_resp = await client.get(
+                f"https://openapi.etsy.com/v3/application/users/{etsy_user_id}/shops"
+            )
             if shop_resp.status_code == 200:
                 shop_data = shop_resp.json()
                 return {

@@ -1,4 +1,5 @@
 """CraftDesk API — auth router: /register, /login, /refresh, /logout, /me."""
+
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -28,6 +29,7 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
+
 async def _get_user_by_email(db: AsyncSession, email: str) -> User | None:
     """Fetch a User row by email; returns None if not found."""
     result = await db.execute(select(User).where(User.email == email))
@@ -41,6 +43,7 @@ async def _get_user_by_id(db: AsyncSession, user_id: str) -> User | None:
 
 
 # ── Routes ────────────────────────────────────────────────────────────────────
+
 
 @router.post(
     "/register",

@@ -69,16 +69,18 @@ This document provides an exhaustive breakdown of every module in `craftdesk_api
   3. `exchange_code_for_tokens()`: POSTs `code` + `code_verifier` to `https://api.etsy.com/v3/public/oauth/token`.
   4. `get_shop_details()`: Calls `https://openapi.etsy.com/v3/application/users/me` and `/shops` to retrieve shop ID and shop name.
 
-### `services/pipeline_runner.py` — 6-Stage Assembly Line & Retry Engine
-- **Business Goal:** Manages pipeline job state transitions and single-stage failure retries.
+### `services/pipeline_runner.py` — 6-Stage Real Assembly Line & Retry Engine
+- **Business Goal:** Manages real 6-stage pipeline execution using `etsy_pipeline` worker modules, GCS prompt file injection, live item progress, ETA calculations, and single-stage failure retries. (See detailed guide in [`doc/PIPELINE_ARCHITECTURE.md`](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/doc/PIPELINE_ARCHITECTURE.md)).
 - **Business Logic Algorithm:**
-  1. Initializes job state with 6 stages (`image_gen`, `bg_removal`, `upscaling`, `mockup_creation`, `pdf_generation`, `metadata_generation`) in `pending` state.
-  2. Sequentially executes stages, updating `progress_percent` (0% → 50% → 100%) and status (`running` → `completed`).
-  3. If a stage throws an exception:
+  1. `create_job()`: Loads and parses the selected GCS prompt file (`gs://.../Clipart/<date>/<slug>/<slug>.txt`) or local file into `Job.prompts` using `PromptWorker._parse_response`. Excludes prompt generation from stage execution.
+  2. Initializes 6 stages (`image_gen`, `bg_removal`, `upscaling`, `mockup_creation`, `pdf_generation`, `metadata_generation`) in `pending` state.
+  3. `run_full_pipeline_async()`: Sequentially executes `etsy_pipeline` worker modules (`ImageWorker`, `BackgroundRemovalWorker`, `UpscaleWorker`, `MockupWorker`, `MetadataWorker`) in background threads (`asyncio.to_thread`).
+  4. Tracks live item counters (`images_done`/`images_total`), elapsed seconds, and estimated time remaining (ETA) per stage.
+  5. If a stage throws an exception:
      - Sets stage status to `failed`.
      - Captures root exception message (`error_message`) and full traceback (`stderr_log`).
-     - Sets job status to `failed` and halts execution.
-  4. `retry_stage(job_id, stage_name)`: Resets target stage status to `pending`, clears error log, and re-runs only that stage.
+     - Halts execution while preserving completed assets from earlier stages.
+  6. `run_stage_execution(job_id, stage_name)`: Resets target stage status to `pending`, clears error log, and re-executes only that specific stage.
 
 ### `services/etsy_publisher.py` — Etsy API v3 Draft Listing Publisher
 - **Business Goal:** Automatically creates draft digital clipart listings on Etsy.

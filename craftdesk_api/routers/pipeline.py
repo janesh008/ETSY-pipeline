@@ -1,4 +1,5 @@
 """CraftDesk API — 6-Stage Pipeline execution router."""
+
 from __future__ import annotations
 
 import asyncio
@@ -43,6 +44,7 @@ async def start_pipeline_job(
         user_id=user_id,
         theme_name=body.theme_name,
         prompts=body.prompts,
+        prompt_file_path=body.prompt_file_path,
     )
 
     job_id = job_data["job_id"]
@@ -145,7 +147,9 @@ async def retry_failed_stage(
     job["current_stage"] = stage_name
 
     # Trigger async stage simulation without failing
-    background_tasks.add_task(PipelineRunnerService.simulate_stage_execution, job_id, stage_name, False)
+    background_tasks.add_task(
+        PipelineRunnerService.simulate_stage_execution, job_id, stage_name, False
+    )
 
     return PipelineJobResponse(
         job_id=job["job_id"],
@@ -167,12 +171,14 @@ async def websocket_pipeline_stream(websocket: WebSocket, job_id: str) -> None:
         while True:
             job = PipelineRunnerService.get_job(job_id)
             if job:
-                await websocket.send_json({
-                    "job_id": job["job_id"],
-                    "status": job["status"],
-                    "current_stage": job["current_stage"],
-                    "stages": job["stages"],
-                })
+                await websocket.send_json(
+                    {
+                        "job_id": job["job_id"],
+                        "status": job["status"],
+                        "current_stage": job["current_stage"],
+                        "stages": job["stages"],
+                    }
+                )
                 if job["status"] in ("completed", "failed"):
                     break
             await asyncio.sleep(0.5)
@@ -215,13 +221,23 @@ async def start_comfyui(
     global _comfyui_process
 
     if _is_comfyui_running():
-        return {"status": "already_running", "message": "ComfyUI is already listening on port 8188."}
+        return {
+            "status": "already_running",
+            "message": "ComfyUI is already listening on port 8188.",
+        }
 
     log_path = f"{COMFYUI_DIR}/comfyui.log"
     try:
         log_file = open(log_path, "a")
         _comfyui_process = subprocess.Popen(
-            [COMFYUI_PYTHON, "main.py", "--listen", COMFYUI_HOST, "--port", str(COMFYUI_PORT)],
+            [
+                COMFYUI_PYTHON,
+                "main.py",
+                "--listen",
+                COMFYUI_HOST,
+                "--port",
+                str(COMFYUI_PORT),
+            ],
             cwd=COMFYUI_DIR,
             stdout=log_file,
             stderr=log_file,
@@ -230,9 +246,15 @@ async def start_comfyui(
         # Give it a moment to start
         await asyncio.sleep(2)
         if _is_comfyui_running():
-            return {"status": "started", "message": f"ComfyUI started (PID {_comfyui_process.pid}). Log: {log_path}"}
+            return {
+                "status": "started",
+                "message": f"ComfyUI started (PID {_comfyui_process.pid}). Log: {log_path}",
+            }
         else:
-            return {"status": "starting", "message": f"ComfyUI launched (PID {_comfyui_process.pid}) — still initializing, check in a few seconds."}
+            return {
+                "status": "starting",
+                "message": f"ComfyUI launched (PID {_comfyui_process.pid}) — still initializing, check in a few seconds.",
+            }
     except FileNotFoundError:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -254,7 +276,11 @@ async def comfyui_status(
 ) -> dict:
     """Return whether ComfyUI is currently listening on port 8188."""
     running = _is_comfyui_running()
-    pid = _comfyui_process.pid if (_comfyui_process and _comfyui_process.poll() is None) else None
+    pid = (
+        _comfyui_process.pid
+        if (_comfyui_process and _comfyui_process.poll() is None)
+        else None
+    )
     return {
         "running": running,
         "pid": pid,
@@ -285,5 +311,7 @@ async def stop_comfyui(
             )
     if not _is_comfyui_running():
         return {"status": "not_running", "message": "ComfyUI was not running."}
-    return {"status": "unknown", "message": "ComfyUI may have been started outside this API — stop it manually."}
-
+    return {
+        "status": "unknown",
+        "message": "ComfyUI may have been started outside this API — stop it manually.",
+    }

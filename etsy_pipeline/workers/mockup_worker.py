@@ -84,7 +84,13 @@ class MockupWorker:
 
         # Download/ensure no_bg transparent images locally if missing (VM -> GCS -> Drive fallback)
         gcs_no_bg_prefix = f"Clipart/{job.date_folder}/{theme_slug}/no_bg/"
-        drive_no_bg_parts = ["Clipart", "raw_data", job.date_folder, theme_slug, "no_bg"]
+        drive_no_bg_parts = [
+            "Clipart",
+            "raw_data",
+            job.date_folder,
+            theme_slug,
+            "no_bg",
+        ]
         from etsy_pipeline.services.storage_helper import ensure_local_assets
 
         ensure_local_assets(
@@ -101,7 +107,9 @@ class MockupWorker:
 
         # 2. Run Mockup Subprocess
         theme_display_name = job.theme or theme_slug.replace("_", " ")
-        self._run_mockup_creator(no_bg_dir, mockups_local_dir, theme_name=theme_display_name)
+        self._run_mockup_creator(
+            no_bg_dir, mockups_local_dir, theme_name=theme_display_name
+        )
 
         # 3. Share Upscaled GDrive Folder & Retrieve Link
         drive = self._get_drive()
@@ -344,9 +352,7 @@ class MockupWorker:
         if not gcs:
             return
 
-        gcs_no_bg_prefix = (
-            f"Clipart/{job.date_folder}/{job.theme_slug}/no_bg/"
-        )
+        gcs_no_bg_prefix = f"Clipart/{job.date_folder}/{job.theme_slug}/no_bg/"
         gcs_objects = gcs.list_objects(gcs_no_bg_prefix)
         if not gcs_objects:
             logger.warning(

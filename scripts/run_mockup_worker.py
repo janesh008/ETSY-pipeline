@@ -69,7 +69,9 @@ def process_single_job(job_id: str, store: Any, worker: MockupWorker) -> None:
         logger.error(f"[run_mockup_worker] Job {job_id} not found in MongoDB.")
         sys.exit(1)
 
-    logger.info(f"[run_mockup_worker] Processing job {job_id} ({doc.get('theme', '?')})")
+    logger.info(
+        f"[run_mockup_worker] Processing job {job_id} ({doc.get('theme', '?')})"
+    )
     job = Job(
         job_id=job_id,
         theme=doc.get("theme", "unknown"),
@@ -84,9 +86,7 @@ def process_single_job(job_id: str, store: Any, worker: MockupWorker) -> None:
         logger.info(f"[run_mockup_worker] ✅ Completed job {job_id}")
     except Exception as exc:
         logger.error(f"[run_mockup_worker] ❌ Job {job_id} failed: {exc}")
-        store.update_stage_status(
-            job_id, "mockups", "FAILED", error_message=str(exc)
-        )
+        store.update_stage_status(job_id, "mockups", "FAILED", error_message=str(exc))
         sys.exit(1)
 
 
@@ -180,6 +180,7 @@ def main() -> None:
     logger.info("[run_mockup_worker] Starting Mockup & PDF Worker")
 
     from etsy_pipeline.services.mongo_store import MongoJobStore
+
     if args.job_id:
         store = MongoJobStore(settings=settings)
         worker = MockupWorker(settings=settings, mongo_store=store)

@@ -1,4 +1,5 @@
 """CraftDesk API — Etsy Open API v3 Draft Listing Publishing Service."""
+
 from __future__ import annotations
 
 import os
@@ -59,7 +60,7 @@ class EtsyPublisherService:
                         "etsy_listing_url": f"https://www.etsy.com/your/shops/me/listings/{listing_id}",
                         "status": "DRAFT",
                     }
-            except Exception as err:
+            except Exception:
                 pass
 
         # Demo fallback for development/testing if API key permissions pending on Etsy dev portal

@@ -1,13 +1,15 @@
 """CraftDesk API — Prompt Studio router: Etsy scraper, PromptWorker integration, SKILL.md output, and GCP Bucket save."""
+
 from __future__ import annotations
 
-from datetime import UTC, datetime
 import os
-from pathlib import Path
 import re
 import uuid
+from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
 
+from etsy_pipeline.config.settings import get_settings
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 
 from craftdesk_api.routers.gcp import get_current_user_id
@@ -23,7 +25,6 @@ from craftdesk_api.schemas.prompts import (
 )
 from craftdesk_api.services.etsy_scraper import EtsyScraperService
 from craftdesk_api.services.prompt_engine import PromptEngineService
-from etsy_pipeline.config.settings import get_settings
 
 router = APIRouter(prefix="/prompts", tags=["prompts"])
 
@@ -43,9 +44,23 @@ def sanitize_slug(text: str) -> str:
     cleaned = re.sub(r'[•·∙●|\\/:*?"<>,\.\-\(\)]', " ", cleaned)
 
     noise_words = {
-        "clipart", "png", "caricature", "bundle", "graphics", "backgrounds",
-        "art", "illustration", "digital", "instant", "download", "svg", "eps", "design",
-        "set", "pack", "collection"
+        "clipart",
+        "png",
+        "caricature",
+        "bundle",
+        "graphics",
+        "backgrounds",
+        "art",
+        "illustration",
+        "digital",
+        "instant",
+        "download",
+        "svg",
+        "eps",
+        "design",
+        "set",
+        "pack",
+        "collection",
     }
 
     tokens = []
@@ -108,7 +123,12 @@ async def generate_prompts(
     """Run etsy_pipeline PromptWorker to output exact SKILL.md section-structured prompt set."""
     try:
         etsy_context: dict[str, Any] | None = body.scraped_context
-        if not etsy_context and body.etsy_url and body.etsy_url.strip() and body.etsy_url != "string":
+        if (
+            not etsy_context
+            and body.etsy_url
+            and body.etsy_url.strip()
+            and body.etsy_url != "string"
+        ):
             try:
                 etsy_context = await EtsyScraperService.scrape_listing(body.etsy_url)
             except Exception:
@@ -217,7 +237,9 @@ async def save_prompt_to_gcp(
     custom_name = (body and body.custom_name) or job_data.get("custom_name") or None
     if custom_name:
         # Sanitize only OS-unsafe chars from user-provided name
-        theme_slug = re.sub(r'[\\/:*?"<>|]', "_", custom_name.strip()).strip("_") or sanitize_slug(raw_theme)
+        theme_slug = re.sub(r'[\\/:*?"<>|]', "_", custom_name.strip()).strip(
+            "_"
+        ) or sanitize_slug(raw_theme)
     else:
         theme_slug = sanitize_slug(raw_theme)
 
@@ -305,23 +327,27 @@ async def list_prompt_files(
                 for txt_file in theme_dir.glob("*.txt"):
                     try:
                         content = txt_file.read_text(encoding="utf-8")
-                        preview_lines = [ln for ln in content.splitlines() if ln.strip()][:4]
+                        preview_lines = [
+                            ln for ln in content.splitlines() if ln.strip()
+                        ][:4]
                         preview = "\n".join(preview_lines)
                         prompt_lines = [
                             ln.strip()
                             for ln in content.splitlines()
                             if ln.strip() and not ln.startswith("#")
                         ]
-                        files.append({
-                            "name": txt_file.stem,
-                            "date": date_dir.name,
-                            "theme": theme_dir.name,
-                            "local_path": str(txt_file),
-                            "gcs_path": f"gs://{settings.gcs_bucket or 'etsy-pipeline-bucket'}/Clipart/{date_dir.name}/{theme_dir.name}/{txt_file.name}",
-                            "preview": preview,
-                            "prompt_count": len(prompt_lines),
-                            "raw_text": content,
-                        })
+                        files.append(
+                            {
+                                "name": txt_file.stem,
+                                "date": date_dir.name,
+                                "theme": theme_dir.name,
+                                "local_path": str(txt_file),
+                                "gcs_path": f"gs://{settings.gcs_bucket or 'etsy-pipeline-bucket'}/Clipart/{date_dir.name}/{theme_dir.name}/{txt_file.name}",
+                                "preview": preview,
+                                "prompt_count": len(prompt_lines),
+                                "raw_text": content,
+                            }
+                        )
                     except Exception:
                         continue
 
@@ -330,7 +356,11 @@ async def list_prompt_files(
     try:
         from google.cloud import storage as gcs_storage
 
-        bucket_name = settings.gcs_bucket or os.getenv("GCP_BUCKET_NAME") or "etsy-pipeline-bucket"
+        bucket_name = (
+            settings.gcs_bucket
+            or os.getenv("GCP_BUCKET_NAME")
+            or "etsy-pipeline-bucket"
+        )
         client = gcs_storage.Client()
         bucket = client.bucket(bucket_name)
         for blob in client.list_blobs(bucket_name, prefix="Clipart/"):
@@ -352,20 +382,21 @@ async def list_prompt_files(
                     for ln in content.splitlines()
                     if ln.strip() and not ln.startswith("#")
                 ]
-                files.append({
-                    "name": Path(blob.name).stem,
-                    "date": parts[1],
-                    "theme": parts[2],
-                    "local_path": None,
-                    "gcs_path": gcs_uri,
-                    "preview": preview,
-                    "prompt_count": len(prompt_lines),
-                    "raw_text": content,
-                })
+                files.append(
+                    {
+                        "name": Path(blob.name).stem,
+                        "date": parts[1],
+                        "theme": parts[2],
+                        "local_path": None,
+                        "gcs_path": gcs_uri,
+                        "preview": preview,
+                        "prompt_count": len(prompt_lines),
+                        "raw_text": content,
+                    }
+                )
             except Exception:
                 continue
     except Exception:
         pass  # GCS not available — local only
 
     return {"files": files, "total": len(files)}
-

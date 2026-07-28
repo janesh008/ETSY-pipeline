@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+
 from etsy_pipeline.config.settings import Settings
 from etsy_pipeline.models.job import Job
 from etsy_pipeline.workers.csv_worker import CSV_HEADERS, CSVWorker

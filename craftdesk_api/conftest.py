@@ -1,7 +1,9 @@
 """Root conftest — ensures craftdesk_api tests pick up env vars first."""
+
 from __future__ import annotations
 
 import os
+
 from cryptography.fernet import Fernet
 
 os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///:memory:")

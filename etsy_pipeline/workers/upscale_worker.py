@@ -176,7 +176,13 @@ class UpscaleWorker:
 
         # 1. Ensure no_bg images exist locally (VM -> GCS -> Drive fallback)
         gcs_no_bg_prefix = f"Clipart/{job.date_folder}/{job.theme_slug}/no_bg/"
-        drive_no_bg_parts = ["Clipart", "raw_data", job.date_folder, job.theme_slug, "no_bg"]
+        drive_no_bg_parts = [
+            "Clipart",
+            "raw_data",
+            job.date_folder,
+            job.theme_slug,
+            "no_bg",
+        ]
         from etsy_pipeline.services.storage_helper import ensure_local_assets
 
         ensure_local_assets(
@@ -346,12 +352,17 @@ class UpscaleWorker:
 
         # 3. Clean up local upscaled directory so upscaled images are not retained on local VM
         import shutil
+
         try:
             if upscaled_dir.exists():
                 shutil.rmtree(upscaled_dir, ignore_errors=True)
-                logger.info(f"[upscaling] Purged upscaled images from local VM disk: {upscaled_dir}")
+                logger.info(
+                    f"[upscaling] Purged upscaled images from local VM disk: {upscaled_dir}"
+                )
         except Exception as exc:
-            logger.warning(f"[upscaling] Failed to purge local upscaled directory: {exc}")
+            logger.warning(
+                f"[upscaling] Failed to purge local upscaled directory: {exc}"
+            )
 
         job.stages[self.STAGE_NAME].mark_completed(
             cost_usd=final_cost,

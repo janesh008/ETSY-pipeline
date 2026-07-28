@@ -1,20 +1,21 @@
 """Alembic env.py — loads DATABASE_URL from .env and runs async migrations."""
+
 from __future__ import annotations
 
 import asyncio
 from logging.config import fileConfig
 
-from alembic import context
-from sqlalchemy.ext.asyncio import create_async_engine
-
-from craftdesk_api.core.config import settings
-from craftdesk_api.db.base import Base
+import craftdesk_api.models.api_key  # noqa: F401
+import craftdesk_api.models.etsy_shop  # noqa: F401
+import craftdesk_api.models.gcp_config  # noqa: F401
 
 # Import all models so Alembic can detect them in metadata
 import craftdesk_api.models.user  # noqa: F401
-import craftdesk_api.models.etsy_shop  # noqa: F401
-import craftdesk_api.models.gcp_config  # noqa: F401
-import craftdesk_api.models.api_key  # noqa: F401
+from craftdesk_api.core.config import settings
+from craftdesk_api.db.base import Base
+from sqlalchemy.ext.asyncio import create_async_engine
+
+from alembic import context
 
 config = context.config
 if config.config_file_name is not None:

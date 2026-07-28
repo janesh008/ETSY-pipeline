@@ -106,7 +106,9 @@ class CSVWorker:
                     reader = csv.DictReader(f)
                     existing_rows = list(reader)
             except Exception as exc:
-                logger.warning(f"[csv] Failed to read existing CSV {csv_file_path}: {exc}")
+                logger.warning(
+                    f"[csv] Failed to read existing CSV {csv_file_path}: {exc}"
+                )
 
         # 3. Construct job row dictionary
         row_dict = self._build_row_dict(job)
@@ -137,6 +139,7 @@ class CSVWorker:
             raise CSVGenerationError(error_msg, job_id=job.job_id) from exc
 
         # 6. Dual Storage Sync: Upload updated CSV to both GCS and Google Drive
+        gcs = self._get_gcs()
         if gcs:
             try:
                 gcs.upload_file(csv_file_path, gcs_key)
@@ -166,7 +169,9 @@ class CSVWorker:
     def _build_row_dict(self, job: Job) -> dict[str, str]:
         """Convert Job state into Etsy listing CSV row mapping."""
         tags_str = "|".join(job.etsy_tags) if job.etsy_tags else ""
-        escaped_desc = (job.etsy_description or "").replace("\r\n", "\n").replace("\n", "\\n")
+        escaped_desc = (
+            (job.etsy_description or "").replace("\r\n", "\n").replace("\n", "\\n")
+        )
         mockup_gcs_prefix = f"Clipart/{job.date_folder}/{job.theme_slug}/mockups/"
 
         return {

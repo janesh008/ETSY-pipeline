@@ -83,7 +83,13 @@ class MetadataWorker:
 
         # 1. Ensure mockups exist locally (VM output/<date>/<theme_slug>/mockups/ -> GCS -> Drive fallback)
         gcs_mockup_prefix = f"Clipart/{job.date_folder}/{job.theme_slug}/mockups/"
-        drive_mockup_parts = ["Clipart", "raw_data", job.date_folder, job.theme_slug, "mockups"]
+        drive_mockup_parts = [
+            "Clipart",
+            "raw_data",
+            job.date_folder,
+            job.theme_slug,
+            "mockups",
+        ]
         from etsy_pipeline.services.storage_helper import ensure_local_assets
 
         mockup_files = ensure_local_assets(
@@ -131,20 +137,22 @@ class MetadataWorker:
             try:
                 temp_raw_file = local_base_dir / "raw_metadata_response.txt"
                 temp_raw_file.write_text(raw_response, encoding="utf-8")
-                gcs_raw_key = (
-                    f"Clipart/{job.date_folder}/{job.theme_slug}/metadata/raw_response.txt"
-                )
+                gcs_raw_key = f"Clipart/{job.date_folder}/{job.theme_slug}/metadata/raw_response.txt"
                 gcs.upload_file(temp_raw_file, gcs_raw_key)
                 if temp_raw_file.exists():
                     temp_raw_file.unlink()
             except Exception as exc:
-                logger.warning(f"[metadata] Failed to upload raw response to GCS: {exc}")
+                logger.warning(
+                    f"[metadata] Failed to upload raw response to GCS: {exc}"
+                )
 
         elapsed_hours = (datetime.now(UTC) - start_time).total_seconds() / 3600
         cost = round(elapsed_hours * 0.2, 4)
 
         stage.mark_completed(cost_usd=cost)
-        logger.info(f"[metadata] Successfully generated Etsy metadata for '{job.theme}'")
+        logger.info(
+            f"[metadata] Successfully generated Etsy metadata for '{job.theme}'"
+        )
         return job
 
     def _load_master_prompt(self) -> str:
@@ -175,7 +183,9 @@ class MetadataWorker:
         for img_path in mockup_files[:5]:  # Send up to top 5 mockup previews
             try:
                 img_bytes = img_path.read_bytes()
-                mime = "image/png" if img_path.suffix.lower() == ".png" else "image/jpeg"
+                mime = (
+                    "image/png" if img_path.suffix.lower() == ".png" else "image/jpeg"
+                )
                 part = types.Part.from_bytes(data=img_bytes, mime_type=mime)
                 contents.append(part)
             except Exception as exc:
@@ -205,18 +215,22 @@ class MetadataWorker:
             logger.error(f"[metadata] {error_msg}")
             raise MetadataGenerationError(error_msg, job_id=job.job_id) from exc
 
-    def _parse_and_validate_response(
-        self, raw_text: str
-    ) -> tuple[str, str, list[str]]:
+    def _parse_and_validate_response(self, raw_text: str) -> tuple[str, str, list[str]]:
         """Parse raw markdown output into validated Title, Description, and Tags."""
         # 1. Parse Title
         title_match = re.search(
             r"###\s*🏷️\s*ETSY TITLE\s*\n+`?([^`\n]+)`?", raw_text, re.IGNORECASE
         )
         if not title_match:
-            title_match = re.search(r"ETSY TITLE[^\n]*\n+`?([^`\n]+)`?", raw_text, re.IGNORECASE)
+            title_match = re.search(
+                r"ETSY TITLE[^\n]*\n+`?([^`\n]+)`?", raw_text, re.IGNORECASE
+            )
 
-        raw_title = title_match.group(1).strip() if title_match else "Digital Clipart Bundle PNG Clipart"
+        raw_title = (
+            title_match.group(1).strip()
+            if title_match
+            else "Digital Clipart Bundle PNG Clipart"
+        )
         title = self._validate_title(raw_title)
 
         # 2. Parse Description
@@ -230,7 +244,9 @@ class MetadataWorker:
 
         # 3. Parse Tags
         tags_match = re.search(
-            r"###\s*🔖\s*ETSY TAGS[^\n]*\n+(.*?)(?=\Z)", raw_text, re.DOTALL | re.IGNORECASE
+            r"###\s*🔖\s*ETSY TAGS[^\n]*\n+(.*?)(?=\Z)",
+            raw_text,
+            re.DOTALL | re.IGNORECASE,
         )
         raw_tags_block = tags_match.group(1) if tags_match else raw_text
         raw_tag_lines = re.findall(
@@ -331,7 +347,9 @@ class MetadataWorker:
         project = self._settings.gcp_project_id
         location = self._settings.gcp_location
         if not project:
-            raise MetadataGenerationError("GCP_PROJECT_ID is not configured in settings.")
+            raise MetadataGenerationError(
+                "GCP_PROJECT_ID is not configured in settings."
+            )
 
         self._client = genai.Client(vertexai=True, project=project, location=location)
         return self._client

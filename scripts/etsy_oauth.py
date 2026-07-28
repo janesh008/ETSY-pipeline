@@ -25,6 +25,7 @@ if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 
 import requests  # noqa: E402
+
 from etsy_pipeline.config.settings import get_settings  # noqa: E402
 from etsy_pipeline.utils.logging import get_logger  # noqa: E402
 
@@ -54,9 +55,7 @@ def generate_pkce_pair() -> tuple[str, str]:
     """Generate PKCE code_verifier and code_challenge (S256)."""
     code_verifier = secrets.token_urlsafe(64)[:96]
     hashed = hashlib.sha256(code_verifier.encode("utf-8")).digest()
-    code_challenge = (
-        base64.urlsafe_b64encode(hashed).decode("utf-8").replace("=", "")
-    )
+    code_challenge = base64.urlsafe_b64encode(hashed).decode("utf-8").replace("=", "")
     return code_verifier, code_challenge
 
 
@@ -159,9 +158,7 @@ def main() -> None:
 
     resp = requests.post(ETSY_TOKEN_URL, data=payload, timeout=30)
     if resp.status_code != 200:
-        logger.error(
-            f"Token exchange failed ({resp.status_code}): {resp.text}"
-        )
+        logger.error(f"Token exchange failed ({resp.status_code}): {resp.text}")
         sys.exit(1)
 
     data = resp.json()

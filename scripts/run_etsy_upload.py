@@ -79,7 +79,7 @@ def main() -> None:
             doc.pop("_id", None)
 
     if not doc:
-        logger.error(f"[run_etsy_upload] Job not found for input parameters.")
+        logger.error("[run_etsy_upload] Job not found for input parameters.")
         sys.exit(1)
 
     # Reconstruct complete Job object from MongoDB document
@@ -100,7 +100,7 @@ def main() -> None:
         store.update_stage_status(job_id, "csv_generation", "COMPLETED")
 
         store.upsert_job(job)
-        logger.info(f"[run_etsy_upload] 🎉 Listing published successfully!")
+        logger.info("[run_etsy_upload] 🎉 Listing published successfully!")
         logger.info(f"Listing ID:  {job.etsy_listing_id}")
         logger.info(f"Listing URL: {job.etsy_listing_url}")
     except Exception as exc:

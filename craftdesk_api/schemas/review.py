@@ -1,4 +1,5 @@
 """CraftDesk API — Review Gallery and Etsy Publishing request/response Pydantic schemas."""
+
 from __future__ import annotations
 
 from pydantic import BaseModel, Field
