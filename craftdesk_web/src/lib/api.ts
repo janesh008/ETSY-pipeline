@@ -1,14 +1,13 @@
 /** API client for CraftDesk FastAPI backend with network fallback. */
 
+// Always use a relative URL — Next.js rewrites in next.config.ts proxy
+// /api/* → http://127.0.0.1:8000/api/* server-side, so port 8000 never
+// needs to be publicly exposed. Works identically on local & GCP VM.
 function getApiBaseUrl(): string {
   if (process.env.NEXT_PUBLIC_API_URL) {
     return process.env.NEXT_PUBLIC_API_URL;
   }
-  if (typeof window !== "undefined") {
-    const host = window.location.hostname;
-    return `http://${host}:8000/api/v1`;
-  }
-  return "http://localhost:8000/api/v1";
+  return "/api/v1";
 }
 
 export interface RegisterPayload {

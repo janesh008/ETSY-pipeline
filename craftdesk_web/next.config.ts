@@ -11,6 +11,18 @@ const nextConfig: NextConfig = {
     "35.243.160.168",
     "35.243.160.168:3000",
   ],
+
+  // Proxy all /api/* requests through Next.js server → FastAPI on port 8000.
+  // This means the browser only ever talks to port 3000 — port 8000 never
+  // needs to be publicly exposed (works identically on local & GCP VM).
+  async rewrites() {
+    return [
+      {
+        source: "/api/:path*",
+        destination: "http://127.0.0.1:8000/api/:path*",
+      },
+    ];
+  },
 };
 
 export default nextConfig;

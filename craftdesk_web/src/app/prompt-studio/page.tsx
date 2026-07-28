@@ -38,11 +38,7 @@ function getApiBaseUrl(): string {
   if (process.env.NEXT_PUBLIC_API_URL) {
     return process.env.NEXT_PUBLIC_API_URL;
   }
-  if (typeof window !== "undefined") {
-    const host = window.location.hostname;
-    return `http://${host}:8000/api/v1`;
-  }
-  return "http://localhost:8000/api/v1";
+  return "/api/v1";
 }
 
 export default function PromptStudioPage() {
