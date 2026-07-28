@@ -55,11 +55,16 @@ This document explains the technical architecture, data flow, GCS prompt injecti
    }
    ```
 3. `PipelineRunnerService.create_job()` initializes `Job(job_id=..., theme=...)`:
+   - Extracts `date_folder` from `prompt_file_path` (e.g. `Clipart/2026-07-22/`) so all generated assets stay in the original date directory rather than creating a new folder with today's date.
    - Downloads/reads text content from GCS (`gs://...`) or local disk (`output/Clipart/...`).
    - Uses `PromptWorker._parse_response(raw_text)` to parse section headings (`## MAIN_CHARACTER`, `## PATTERN`, etc.) into `job.prompts` and `job.character_roster`.
    - Excludes prompt generation from stage execution. Initializes 6 stages in `pending` state with total prompt count.
 
-### Step 2: Sequential Worker Execution in Background Threads
+### Step 2: Sequential Worker Execution with 100% Module Resiliency
+Before executing each worker stage, `PipelineRunnerService` checks if **100% of that stage's expected output files** already exist in local storage or GCS/Drive (`_is_stage_100pct_complete`):
+- If 100% complete: The stage is marked `Completed ✅` immediately and worker execution is skipped.
+- If incomplete / interrupted: The stage is marked `Pending ⏳` and runs cleanly from start.
+
 To prevent blocking the FastAPI Uvicorn async event loop during heavy CUDA or subprocess operations, `PipelineRunnerService.run_full_pipeline_async` wraps `asyncio.to_thread` with `asyncio.create_task` (`worker_task = asyncio.create_task(asyncio.to_thread(cls._execute_stage_worker_sync, job, stage_name))`). This produces a true `asyncio.Task` object supporting `.done()` polling while progress metrics and ETA are continuously updated.
 
 1. **Stage 1 — Image Generation (`image_gen`)**:

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import re
 import traceback
 import uuid
 from datetime import UTC, datetime
@@ -66,18 +67,32 @@ class PipelineRunnerService:
         prompts: list[str] | None = None,
         prompt_file_path: str | None = None,
     ) -> dict[str, Any]:
-        """Initialize a new 6-stage pipeline job and load prompts from GCS or local file."""
+        """Initialize a new 6-stage pipeline job and load prompts from GCS or local file.
+
+        Preserves past date_folder if specified in prompt_file_path.
+        """
         job_id = f"job-{uuid.uuid4().hex[:12]}"
         _STOP_REQUESTS.discard(job_id)
         now = datetime.now(UTC)
         settings = get_settings()
 
+        # Extract date_folder from prompt_file_path if present (e.g. Clipart/2026-07-22/...)
+        extracted_date: str | None = None
+        if prompt_file_path:
+            m = re.search(r"Clipart/(\d{4}-\d{2}-\d{2})/", prompt_file_path)
+            if m:
+                extracted_date = m.group(1)
+
+        job_kwargs: dict[str, Any] = {
+            "job_id": job_id,
+            "theme": theme_name,
+            "prompt_file_path": prompt_file_path,
+        }
+        if extracted_date:
+            job_kwargs["date_folder"] = extracted_date
+
         # Instantiate real etsy_pipeline Job model
-        job = Job(
-            job_id=job_id,
-            theme=theme_name,
-            prompt_file_path=prompt_file_path,
-        )
+        job = Job(**job_kwargs)
 
         # Inject prompts if prompt_file_path is provided
         if prompt_file_path:
@@ -100,7 +115,6 @@ class PipelineRunnerService:
             else:
                 p_file = Path(prompt_file_path)
                 if not p_file.exists():
-                    # Check under output_root / Clipart / ...
                     alt_path = Path(settings.output_root) / prompt_file_path
                     if alt_path.exists():
                         p_file = alt_path
@@ -168,6 +182,7 @@ class PipelineRunnerService:
             "user_id": user_id,
             "theme_name": theme_name,
             "prompt_file_path": prompt_file_path,
+            "date_folder": job.date_folder,
             "prompts": job.prompts,
             "status": "running",
             "current_stage": "image_gen",
@@ -186,6 +201,112 @@ class PipelineRunnerService:
     def get_job(cls, job_id: str) -> dict[str, Any] | None:
         """Fetch job state by job_id."""
         return _PIPELINE_JOBS_STORE.get(job_id)
+
+    @classmethod
+    def _is_stage_100pct_complete(cls, job: Job, stage_name: str) -> bool:
+        """Check if 100% of output files for a stage exist on local disk or GCS/Drive."""
+        settings = get_settings()
+        theme_slug = job.theme_slug
+        date_folder = job.date_folder
+        total_expected = job.total_prompt_count or 1
+
+        if stage_name == "image_gen":
+            raw_dir = (
+                Path(settings.output_root) / date_folder / theme_slug / "raw_images"
+            )
+            if raw_dir.exists():
+                pngs = [f for f in raw_dir.rglob("*.png") if f.stat().st_size > 10240]
+                if len(pngs) >= total_expected and total_expected > 0:
+                    return True
+            if settings.gcs_bucket:
+                try:
+                    from etsy_pipeline.services.gcs_store import GCSStore
+
+                    gcs = GCSStore(settings=settings)
+                    prefix = f"Clipart/{date_folder}/{theme_slug}/raw_images/"
+                    objs = gcs.list_objects(prefix)
+                    if len(objs) >= total_expected and total_expected > 0:
+                        return True
+                except Exception:
+                    pass
+            return False
+
+        elif stage_name == "bg_removal":
+            no_bg_dir = Path(settings.output_root) / date_folder / theme_slug / "no_bg"
+            if no_bg_dir.exists():
+                pngs = [f for f in no_bg_dir.rglob("*.png") if f.stat().st_size > 10240]
+                if len(pngs) >= total_expected and total_expected > 0:
+                    return True
+            if settings.gcs_bucket:
+                try:
+                    from etsy_pipeline.services.gcs_store import GCSStore
+
+                    gcs = GCSStore(settings=settings)
+                    prefix = f"Clipart/{date_folder}/{theme_slug}/no_bg/"
+                    objs = gcs.list_objects(prefix)
+                    if len(objs) >= total_expected and total_expected > 0:
+                        return True
+                except Exception:
+                    pass
+            return False
+
+        elif stage_name == "upscaling":
+            upscale_dir = (
+                Path(settings.output_root) / date_folder / theme_slug / "upscaled"
+            )
+            if upscale_dir.exists():
+                pngs = [
+                    f for f in upscale_dir.rglob("*.png") if f.stat().st_size > 100000
+                ]
+                if len(pngs) >= total_expected and total_expected > 0:
+                    return True
+            if settings.google_drive_folder_id:
+                try:
+                    from etsy_pipeline.services.google_drive import GoogleDriveService
+
+                    drive = GoogleDriveService(settings=settings)
+                    parts = ["Clipart", "main_data", date_folder, theme_slug]
+                    folder_id = drive.get_folder_id_by_path(
+                        parent_id=settings.google_drive_folder_id, path_parts=parts
+                    )
+                    if folder_id:
+                        files = drive.list_files_in_folder(folder_id)
+                        if len(files) >= total_expected and total_expected > 0:
+                            return True
+                except Exception:
+                    pass
+            return False
+
+        elif stage_name in ("mockup_creation", "pdf_generation"):
+            local_base = Path(settings.output_root) / date_folder / theme_slug
+            pdf_file = local_base / f"{theme_slug}.pdf"
+            mockup_dir = local_base / "mockups"
+            if pdf_file.exists() and mockup_dir.exists():
+                mockup_pngs = list(mockup_dir.glob("*.png"))
+                if len(mockup_pngs) >= 4 and pdf_file.stat().st_size > 10240:
+                    return True
+            if settings.gcs_bucket:
+                try:
+                    from etsy_pipeline.services.gcs_store import GCSStore
+
+                    gcs = GCSStore(settings=settings)
+                    pdf_key = f"Clipart/{date_folder}/{theme_slug}/pdf/{theme_slug}.pdf"
+                    if gcs.object_exists(pdf_key):
+                        return True
+                except Exception:
+                    pass
+            return False
+
+        elif stage_name == "metadata_generation":
+            if (
+                job.metadata
+                and job.metadata.get("title")
+                and len(job.metadata.get("tags", [])) >= 5
+            ):
+                return True
+            return False
+
+        return False
 
     @classmethod
     def _execute_stage_worker_sync(cls, job: Job, stage_name: str) -> Job:
@@ -312,7 +433,6 @@ class PipelineRunnerService:
                                 avg_per_img * remaining_imgs, 1
                             )
                     else:
-                        # Fallback heuristic progress percent
                         stage_dict["progress_percent"] = min(
                             90, max(10, int(elapsed_sec * 5))
                         )
@@ -367,14 +487,34 @@ class PipelineRunnerService:
     async def run_full_pipeline_async(
         cls, job_id: str, simulate_fail_stage: str | None = None
     ) -> None:
-        """Run all 6 pipeline stages sequentially."""
+        """Run all 6 pipeline stages sequentially with 100% module checkpoint skipping."""
         job_data = _PIPELINE_JOBS_STORE.get(job_id)
-        if not job_data:
+        job = _ACTIVE_JOB_OBJECTS.get(job_id)
+        if not job_data or not job:
             return
 
         for stage in job_data["stages"]:
             s_name = stage["stage_name"]
+
+            # Check if 100% of stage outputs exist in storage
+            if cls._is_stage_100pct_complete(job, s_name):
+                logger.info(
+                    f"[pipeline_runner] Stage '{s_name}' is 100% completed in storage — skipping worker execution."
+                )
+                stage["status"] = "completed"
+                stage["progress_percent"] = 100
+                stage["images_done"] = job.total_prompt_count
+                stage["images_total"] = job.total_prompt_count
+                stage["completed_at"] = datetime.now(UTC).isoformat()
+                stage["error_message"] = None
+                continue
+
             should_fail = s_name == simulate_fail_stage
             await cls.run_stage_execution(job_id, s_name, force_fail=should_fail)
             if job_data["status"] == "failed":
                 break
+
+        if all(s["status"] == "completed" for s in job_data["stages"]):
+            job_data["status"] = "completed"
+            job_data["completed_at"] = datetime.now(UTC)
+            job_data["current_stage"] = None
