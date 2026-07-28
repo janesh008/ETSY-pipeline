@@ -219,6 +219,9 @@ class ImageWorker:
                             f"[image_worker] GCS upload failed for {image_path.name}: {exc}"
                         )
 
+                # Update stage object progress counter
+                stage.images_done = idx
+
                 # Update terminal progress bar
                 elapsed_hours = (datetime.now(UTC) - start_time).total_seconds() / 3600
                 cost = round(elapsed_hours * GPU_VM_HOURLY_RATE_USD, 4)

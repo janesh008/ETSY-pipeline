@@ -254,6 +254,21 @@ export default function PipelinePage() {
     }
   };
 
+  const handleStopPipeline = async () => {
+    if (!jobId) return;
+    try {
+      const token = localStorage.getItem("craftdesk_access_token");
+      await fetch(`${getApiBaseUrl()}/pipeline/jobs/${jobId}/stop`, {
+        method: "POST",
+        headers: { Authorization: token ? `Bearer ${token}` : "" },
+      });
+    } catch {
+      // Ignore network errors on stop
+    } finally {
+      setJobStatus("failed");
+    }
+  };
+
   const handleSimulateFailure = () => {
     setStages((prev) => {
       const next = [...prev];
@@ -551,6 +566,17 @@ export default function PipelinePage() {
                     title="Test error card & retry state"
                   >
                     Simulate Failure
+                  </button>
+                )}
+
+                {jobStatus === "running" && (
+                  <button
+                    onClick={handleStopPipeline}
+                    className="px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-semibold text-xs rounded-xl shadow-sm flex items-center gap-2 transition cursor-pointer"
+                    title="Stop/cancel running pipeline job"
+                  >
+                    <PowerOff className="w-4 h-4" />
+                    <span>Stop Execution</span>
                   </button>
                 )}
 

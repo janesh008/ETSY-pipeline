@@ -327,6 +327,7 @@ class UpscaleWorker:
                     clear_gpu()
 
                 # Update progress
+                job.stages[self.STAGE_NAME].images_done = idx
                 elapsed_hours = (datetime.now(UTC) - start_time).total_seconds() / 3600
                 cost = round(elapsed_hours * GPU_VM_HOURLY_RATE_USD, 4)
                 pbar.update(1)

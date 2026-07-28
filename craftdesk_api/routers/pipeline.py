@@ -163,6 +163,36 @@ async def retry_failed_stage(
     )
 
 
+@router.post(
+    "/jobs/{job_id}/stop",
+    response_model=PipelineJobResponse,
+    summary="Stop a running pipeline execution job",
+)
+async def stop_pipeline_job(
+    job_id: str,
+    user_id: str = Depends(get_current_user_id),
+) -> PipelineJobResponse:
+    """Stop/cancel a running pipeline execution job immediately."""
+    job = PipelineRunnerService.get_job(job_id)
+    if not job or job["user_id"] != user_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Pipeline job not found.",
+        )
+
+    stopped_job = PipelineRunnerService.stop_job(job_id) or job
+    return PipelineJobResponse(
+        job_id=stopped_job["job_id"],
+        user_id=stopped_job["user_id"],
+        theme_name=stopped_job["theme_name"],
+        status=stopped_job["status"],
+        current_stage=stopped_job["current_stage"],
+        stages=[StageStatus(**s) for s in stopped_job["stages"]],
+        hero_image_url=stopped_job["hero_image_url"],
+        created_at=stopped_job["created_at"],
+    )
+
+
 @router.websocket("/jobs/{job_id}/stream")
 async def websocket_pipeline_stream(websocket: WebSocket, job_id: str) -> None:
     """WebSocket connection streaming real-time stage progress updates."""

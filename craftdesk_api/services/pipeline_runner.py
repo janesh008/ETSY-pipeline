@@ -33,10 +33,30 @@ STAGE_DEFINITIONS = [
 # In-memory store for pipeline jobs
 _PIPELINE_JOBS_STORE: dict[str, dict[str, Any]] = {}
 _ACTIVE_JOB_OBJECTS: dict[str, Job] = {}
+_STOP_REQUESTS: set[str] = set()
 
 
 class PipelineRunnerService:
     """Orchestrates 6 pipeline stage execution using real etsy_pipeline worker modules."""
+
+    @classmethod
+    def stop_job(cls, job_id: str) -> dict[str, Any] | None:
+        """Stop/cancel a running pipeline execution job."""
+        _STOP_REQUESTS.add(job_id)
+        job_data = _PIPELINE_JOBS_STORE.get(job_id)
+        if job_data:
+            job_data["status"] = "failed"
+            curr_stage = job_data.get("current_stage")
+            if curr_stage:
+                stage_dict = next(
+                    (s for s in job_data["stages"] if s["stage_name"] == curr_stage),
+                    None,
+                )
+                if stage_dict and stage_dict["status"] == "running":
+                    stage_dict["status"] = "failed"
+                    stage_dict["error_message"] = "Pipeline execution stopped by user."
+                    stage_dict["completed_at"] = datetime.now(UTC).isoformat()
+        return job_data
 
     @classmethod
     def create_job(
@@ -48,6 +68,7 @@ class PipelineRunnerService:
     ) -> dict[str, Any]:
         """Initialize a new 6-stage pipeline job and load prompts from GCS or local file."""
         job_id = f"job-{uuid.uuid4().hex[:12]}"
+        _STOP_REQUESTS.discard(job_id)
         now = datetime.now(UTC)
         settings = get_settings()
 
@@ -248,9 +269,7 @@ class PipelineRunnerService:
         # Start real worker in a separate thread to keep uvicorn async loop non-blocking
         try:
             worker_task = asyncio.create_task(
-                asyncio.to_thread(
-                    cls._execute_stage_worker_sync, job, stage_name
-                )
+                asyncio.to_thread(cls._execute_stage_worker_sync, job, stage_name)
             )
 
             # Map stage_name to internal stage key in Job
@@ -266,6 +285,13 @@ class PipelineRunnerService:
             # Monitor progress while worker is running
             while not worker_task.done():
                 await asyncio.sleep(0.5)
+
+                if job_id in _STOP_REQUESTS:
+                    worker_task.cancel()
+                    stage_dict["status"] = "failed"
+                    stage_dict["error_message"] = "Pipeline execution stopped by user."
+                    job_data["status"] = "failed"
+                    return
 
                 elapsed_sec = round((datetime.now(UTC) - start_dt).total_seconds(), 1)
                 stage_dict["elapsed_seconds"] = elapsed_sec
