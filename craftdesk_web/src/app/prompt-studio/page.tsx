@@ -22,6 +22,8 @@ import {
   Upload,
   CloudUpload,
   CheckCircle2,
+  FolderOpen,
+  Pencil,
 } from "lucide-react";
 
 interface ScrapedEtsyData {
@@ -50,10 +52,10 @@ export default function PromptStudioPage() {
   const [referenceImages, setReferenceImages] = useState<string[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   const [isScraping, setIsScraping] = useState(false);
   const [scrapedData, setScrapedData] = useState<ScrapedEtsyData | null>(null);
-  
+
   const [isGenerating, setIsGenerating] = useState(false);
   const [rawPromptText, setRawPromptText] = useState<string>("");
   const [generatedPrompts, setGeneratedPrompts] = useState<string[]>([]);
@@ -63,11 +65,20 @@ export default function PromptStudioPage() {
   const [isSavingGcp, setIsSavingGcp] = useState(false);
   const [gcpSaveStatus, setGcpSaveStatus] = useState<{ path: string; msg: string } | null>(null);
 
+  // Custom filename for saving
+  const [customFileName, setCustomFileName] = useState("");
+
+  // Prompt file uploader state
+  const [isUploadingPromptFile, setIsUploadingPromptFile] = useState(false);
+  const [promptFileUploadStatus, setPromptFileUploadStatus] = useState<{ path: string; msg: string } | null>(null);
+  const [isDraggingPromptFile, setIsDraggingPromptFile] = useState(false);
+  const promptFileInputRef = useRef<HTMLInputElement>(null);
+
   // File Upload Handlers for Reference Images
   const handleFiles = (files: FileList | File[]) => {
     const fileArray = Array.from(files);
     const validImageFiles = fileArray.filter((file) => file.type.startsWith("image/"));
-    
+
     if (validImageFiles.length === 0) return;
 
     // Limit to max 5 reference images
@@ -119,6 +130,115 @@ export default function PromptStudioPage() {
     setReferenceImages((prev) => prev.filter((_, idx) => idx !== index));
   };
 
+  // Prompt file (.txt) uploader handlers
+  const handlePromptFileDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDraggingPromptFile(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file && (file.name.endsWith(".txt") || file.type === "text/plain")) {
+      loadPromptFile(file);
+    } else {
+      alert("Please drop a .txt prompt file.");
+    }
+  };
+
+  const handlePromptFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) loadPromptFile(file);
+    e.target.value = "";
+  };
+
+  const loadPromptFile = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = e.target?.result as string;
+      if (text) {
+        setRawPromptText(text);
+        setGeneratedPrompts([]);
+        setJobId(null);  // reset — will be registered when saved
+        setGcpSaveStatus(null);
+        setPromptFileUploadStatus(null);
+        // Auto-fill custom filename from file name (strip extension)
+        const nameWithoutExt = file.name.replace(/\.[^.]+$/, "");
+        setCustomFileName(nameWithoutExt);
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const handleSaveUploadedFileToGcp = async () => {
+    if (!rawPromptText) return;
+    setIsUploadingPromptFile(true);
+    try {
+      const token = localStorage.getItem("craftdesk_access_token");
+      const apiBase = getApiBaseUrl();
+
+      // Step 1: Register the raw prompt text with backend to get a real job_id
+      let regRes: Response | null = null;
+      const regPayload = JSON.stringify({
+        raw_prompt_text: rawPromptText,
+        theme: customFileName || themeText || "Uploaded_Prompt_File",
+        custom_name: customFileName || null,
+      });
+
+      try {
+        regRes = await fetch(`${apiBase}/prompts/upload`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: token ? `Bearer ${token}` : "" },
+          body: regPayload,
+        });
+      } catch {
+        if (apiBase.includes("192.168") || apiBase.includes("34.148")) {
+          regRes = await fetch("http://localhost:8000/api/v1/prompts/upload", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: token ? `Bearer ${token}` : "" },
+            body: regPayload,
+          });
+        }
+      }
+
+      if (!regRes || !regRes.ok) {
+        alert("Could not register prompt file with backend.");
+        return;
+      }
+
+      const regData = await regRes.json();
+      const uploadJobId: string = regData.job_id;
+      setJobId(uploadJobId);
+
+      // Step 2: Save to GCP using the real job_id
+      let saveRes: Response | null = null;
+      const savePayload = JSON.stringify({ custom_name: customFileName || null });
+      try {
+        saveRes = await fetch(`${apiBase}/prompts/jobs/${uploadJobId}/save-to-gcp`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: token ? `Bearer ${token}` : "" },
+          body: savePayload,
+        });
+      } catch {
+        if (apiBase.includes("192.168") || apiBase.includes("34.148")) {
+          saveRes = await fetch(`http://localhost:8000/api/v1/prompts/jobs/${uploadJobId}/save-to-gcp`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: token ? `Bearer ${token}` : "" },
+            body: savePayload,
+          });
+        }
+      }
+
+      if (saveRes && saveRes.ok) {
+        const sd = await saveRes.json();
+        setPromptFileUploadStatus({ path: sd.gcs_path, msg: sd.message });
+        setGcpSaveStatus({ path: sd.gcs_path, msg: sd.message });
+      } else {
+        alert("Upload registered but GCP save failed.");
+      }
+    } catch (err) {
+      alert(`Error: ${err}`);
+    } finally {
+      setIsUploadingPromptFile(false);
+    }
+  };
+
   const handleScrapeEtsy = async () => {
     if (!etsyUrl.trim()) return;
     setIsScraping(true);
@@ -126,7 +246,7 @@ export default function PromptStudioPage() {
       const token = localStorage.getItem("craftdesk_access_token");
       const apiBase = getApiBaseUrl();
       let res: Response | null = null;
-      
+
       try {
         res = await fetch(`${apiBase}/prompts/scrape-etsy`, {
           method: "POST",
@@ -280,6 +400,10 @@ export default function PromptStudioPage() {
       const apiBase = getApiBaseUrl();
       let res: Response | null = null;
 
+      const saveBody = customFileName
+        ? JSON.stringify({ custom_name: customFileName })
+        : undefined;
+
       try {
         res = await fetch(`${apiBase}/prompts/jobs/${jobId}/save-to-gcp`, {
           method: "POST",
@@ -287,6 +411,7 @@ export default function PromptStudioPage() {
             "Content-Type": "application/json",
             Authorization: token ? `Bearer ${token}` : "",
           },
+          body: saveBody,
         });
       } catch {
         if (apiBase.includes("192.168") || apiBase.includes("34.148")) {
@@ -296,6 +421,7 @@ export default function PromptStudioPage() {
               "Content-Type": "application/json",
               Authorization: token ? `Bearer ${token}` : "",
             },
+            body: saveBody,
           });
         }
       }
@@ -322,7 +448,7 @@ export default function PromptStudioPage() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `CraftDesk_SKILL_Prompts_${themeText.replace(/\s+/g, "_")}.txt`;
+    link.download = `${(customFileName || themeText).replace(/\s+/g, "_")}.txt`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -621,6 +747,95 @@ export default function PromptStudioPage() {
               )}
             </button>
           </div>
+
+          {/* Prompt File Uploader Card */}
+          <div className="bg-[#EFECE6] border border-[#DCD8CF] rounded-2xl p-6 shadow-sm space-y-4">
+            <div className="flex items-center gap-2 pb-3 border-b border-[#DCD8CF]">
+              <FolderOpen className="w-4 h-4 text-[#C85A32]" />
+              <h2 className="text-sm font-bold uppercase tracking-wider font-display text-[#1C2421]">
+                Upload Existing Prompt File
+              </h2>
+            </div>
+
+            <p className="text-[11px] text-[#5A6561] leading-relaxed">
+              Upload a <span className="font-mono font-semibold text-[#1C2421]">.txt</span> prompt file. Its contents will appear in the output panel and can be saved directly to GCP Bucket.
+            </p>
+
+            {/* Hidden .txt input */}
+            <input
+              ref={promptFileInputRef}
+              type="file"
+              accept=".txt,text/plain"
+              onChange={handlePromptFileInputChange}
+              className="hidden"
+            />
+
+            {/* Drag & Drop zone for .txt */}
+            <div
+              onClick={() => promptFileInputRef.current?.click()}
+              onDragOver={(e) => { e.preventDefault(); setIsDraggingPromptFile(true); }}
+              onDragLeave={(e) => { e.preventDefault(); setIsDraggingPromptFile(false); }}
+              onDrop={handlePromptFileDrop}
+              className={`border-2 border-dashed rounded-xl p-5 text-center cursor-pointer transition ${
+                isDraggingPromptFile
+                  ? "border-[#0D5C46] bg-[#E6F2EE]"
+                  : "border-[#DCD8CF] bg-[#F9F8F3] hover:border-[#0D5C46]/60 hover:bg-[#E6F2EE]/30"
+              }`}
+            >
+              <FileText className="w-6 h-6 text-[#0D5C46] mx-auto mb-1.5" />
+              <p className="text-xs font-semibold text-[#1C2421]">
+                Click to select or drag & drop a .txt prompt file
+              </p>
+              <span className="text-[10px] text-[#5A6561] block mt-1">
+                File will appear in the output panel on the right
+              </span>
+            </div>
+
+            {/* Custom File Name Input */}
+            <div>
+              <label className="block text-[10px] font-semibold uppercase tracking-wider text-[#5A6561] mb-1.5">
+                <Pencil className="w-3 h-3 inline mr-1" />
+                Custom File Name (optional — overrides auto-name)
+              </label>
+              <input
+                type="text"
+                value={customFileName}
+                onChange={(e) => setCustomFileName(e.target.value)}
+                placeholder="e.g. Winnie_The_Pooh_Birthday"
+                className="w-full px-3.5 py-2 bg-[#F9F8F3] border border-[#DCD8CF] rounded-xl text-sm text-[#1C2421] focus:outline-none focus:ring-2 focus:ring-[#0D5C46]/40 font-mono"
+              />
+              <p className="text-[10px] text-[#5A6561] mt-1">
+                Leave blank to use auto-generated name from theme text.
+              </p>
+            </div>
+
+            {/* Upload Loaded File to GCP Button */}
+            <button
+              type="button"
+              onClick={rawPromptText ? handleSaveUploadedFileToGcp : () => promptFileInputRef.current?.click()}
+              disabled={isUploadingPromptFile}
+              className="w-full py-2.5 px-4 bg-[#0D5C46] hover:bg-[#094534] text-white font-semibold text-xs rounded-xl shadow-sm flex items-center justify-center gap-2 transition disabled:opacity-50 cursor-pointer"
+            >
+              {isUploadingPromptFile ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <CloudUpload className="w-3.5 h-3.5" />
+              )}
+              <span>{rawPromptText ? "☁️ Save to GCP Bucket" : "Select a file first"}</span>
+            </button>
+
+            {/* Upload success banner */}
+            {promptFileUploadStatus && (
+              <div className="p-3 bg-[#E6F2EE] border border-[#0D5C46]/40 rounded-xl flex items-start gap-2.5 text-xs text-[#0D5C46]">
+                <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-bold">File Stored Successfully</p>
+                  <p className="font-mono text-[11px] mt-0.5">{promptFileUploadStatus.path}</p>
+                  <p className="text-[11px] opacity-80 mt-1">{promptFileUploadStatus.msg}</p>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Right Output Matrix Column (7 cols) */}
@@ -632,7 +847,11 @@ export default function PromptStudioPage() {
                   SKILL.md Unparsed Locked Section Output
                 </h2>
                 <p className="text-xs text-[#5A6561]">
-                  {generatedPrompts.length} prompts formatted under locked section headings (## MAIN_CHARACTER, ## SCENE, etc.)
+                  {generatedPrompts.length > 0
+                    ? `${generatedPrompts.length} prompts formatted under locked section headings (## MAIN_CHARACTER, ## SCENE, etc.)`
+                    : rawPromptText
+                    ? "Showing uploaded prompt file — ready to save to GCP Bucket"
+                    : "No prompt set generated yet"}
                 </p>
               </div>
 
@@ -670,7 +889,7 @@ export default function PromptStudioPage() {
             )}
 
             {/* SKILL.md Raw Unparsed Text Output Panel */}
-            <div className="flex-1 bg-[#1C2421] text-[#EFECE6] border border-[#DCD8CF] rounded-xl p-4 overflow-y-auto max-h-[560px] font-mono text-xs leading-relaxed space-y-2 select-all">
+            <div className="flex-1 bg-[#1C2421] text-[#EFECE6] border border-[#DCD8CF] rounded-xl p-4 overflow-y-auto max-h-[640px] font-mono text-xs leading-relaxed space-y-2 select-all">
               {rawPromptText ? (
                 <pre className="whitespace-pre-wrap font-mono text-xs">{rawPromptText}</pre>
               ) : (
@@ -678,7 +897,7 @@ export default function PromptStudioPage() {
                   <Wand2 className="w-8 h-8 text-[#5A6561]/40" />
                   <p className="text-xs text-gray-400">No prompt set generated yet.</p>
                   <p className="text-[11px] text-gray-500 max-w-xs">
-                    Click &quot;Generate SKILL.md Prompt Set&quot; to invoke PromptWorker and produce locked section headings for ComfyUI.
+                    Click &quot;Generate SKILL.md Prompt Set&quot; to invoke PromptWorker, or upload an existing .txt prompt file from the left panel.
                   </p>
                 </div>
               )}

@@ -288,21 +288,29 @@ class Job(BaseModel):
 
     @property
     def theme_slug(self) -> str:
-        """URL and filesystem-safe concise theme identifier (e.g. 'Cristiano_Ronaldo_Soccer')."""
+        """URL and filesystem-safe character + theme identifier (e.g. 'Winnie_The_Pooh_Birthday')."""
         import re
         if not self.theme:
             return "Clipart_Set"
         cleaned = self.theme.replace("&", "and")
-        cleaned = re.sub(r'[\\/:*?"<>|,\.\-\(\)]', " ", cleaned)
+        cleaned = re.sub(r'[•·∙●|\\/:*?"<>,\.\-\(\)]', " ", cleaned)
         noise_words = {
             "clipart", "png", "caricature", "bundle", "graphics", "backgrounds", 
-            "art", "illustration", "digital", "instant", "download", "svg", "eps", "design"
+            "art", "illustration", "digital", "instant", "download", "svg", "eps", "design",
+            "set", "pack", "collection"
         }
-        tokens = [t for t in cleaned.split() if t.lower() not in noise_words]
+        tokens = []
+        for token in cleaned.split():
+            t_lower = token.lower()
+            if t_lower in noise_words or token.isdigit():
+                continue
+            tokens.append(token)
         if not tokens:
-            tokens = cleaned.split()
-        short_slug = "_".join(tokens[:3])
-        return short_slug[:25].strip("_") or "Clipart_Set"
+            tokens = [t for t in cleaned.split() if not t.isdigit()]
+        if not tokens:
+            tokens = ["Clipart", "Set"]
+        short_slug = "_".join(tokens[:4])
+        return short_slug[:35].strip("_") or "Clipart_Set"
 
     def get_output_dir(self, output_root: str | Path) -> Path:
         """Get the output directory for this job."""

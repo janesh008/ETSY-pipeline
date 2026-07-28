@@ -44,10 +44,27 @@ class PromptGenerateResponse(BaseModel):
     etsy_title: str | None = None
 
 
+class UploadPromptFileRequest(BaseModel):
+    """Payload for POST /prompts/upload — registers raw .txt prompt text and returns a job_id."""
+
+    raw_prompt_text: str = Field(..., description="Raw prompt file text content")
+    theme: str = Field("", description="Optional theme / character name used to derive the filename")
+    custom_name: str | None = Field(None, description="Optional custom filename override (without extension)")
+
+
+class UploadPromptFileResponse(BaseModel):
+    """Response after uploading an existing prompt file."""
+
+    job_id: str
+    theme: str
+    message: str
+
+
 class SavePromptToGcpRequest(BaseModel):
     """Payload to save prompt set to GCP Storage Bucket."""
 
     bucket_name: str | None = Field(None, description="Optional GCP Storage bucket name override")
+    custom_name: str | None = Field(None, description="Optional custom filename override (without extension)")
 
 
 class SavePromptToGcpResponse(BaseModel):
