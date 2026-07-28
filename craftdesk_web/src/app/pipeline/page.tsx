@@ -25,6 +25,9 @@ import {
   Eye,
   X,
   ChevronRight,
+  Power,
+  PowerOff,
+  Activity,
 } from "lucide-react";
 
 interface Stage {
@@ -76,6 +79,12 @@ export default function PipelinePage() {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [filesError, setFilesError] = useState<string | null>(null);
 
+  // ComfyUI state
+  const [comfyRunning, setComfyRunning] = useState(false);
+  const [comfyStarting, setComfyStarting] = useState(false);
+  const [comfyStopping, setComfyStopping] = useState(false);
+  const [comfyPid, setComfyPid] = useState<number | null>(null);
+
   // Load prompt files from backend
   const loadPromptFiles = useCallback(async () => {
     setIsLoadingFiles(true);
@@ -111,6 +120,71 @@ export default function PipelinePage() {
   useEffect(() => {
     loadPromptFiles();
   }, [loadPromptFiles]);
+
+  // Poll ComfyUI status every 8 seconds
+  const checkComfyStatus = useCallback(async () => {
+    try {
+      const token = localStorage.getItem("craftdesk_access_token");
+      const res = await fetch(`${getApiBaseUrl()}/pipeline/comfyui/status`, {
+        headers: { Authorization: token ? `Bearer ${token}` : "" },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setComfyRunning(data.running);
+        setComfyPid(data.pid ?? null);
+      }
+    } catch {
+      // Backend not reachable yet — ignore silently
+    }
+  }, []);
+
+  useEffect(() => {
+    checkComfyStatus();
+    const interval = setInterval(checkComfyStatus, 8000);
+    return () => clearInterval(interval);
+  }, [checkComfyStatus]);
+
+  const handleStartComfy = async () => {
+    setComfyStarting(true);
+    try {
+      const token = localStorage.getItem("craftdesk_access_token");
+      const res = await fetch(`${getApiBaseUrl()}/pipeline/comfyui/start`, {
+        method: "POST",
+        headers: { Authorization: token ? `Bearer ${token}` : "" },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.status === "started" || data.status === "already_running") {
+          setComfyRunning(true);
+        }
+        // Poll again after a short wait to pick up "starting" state
+        setTimeout(checkComfyStatus, 4000);
+      }
+    } catch {
+      alert("Could not reach backend to start ComfyUI.");
+    } finally {
+      setComfyStarting(false);
+    }
+  };
+
+  const handleStopComfy = async () => {
+    setComfyStopping(true);
+    try {
+      const token = localStorage.getItem("craftdesk_access_token");
+      const res = await fetch(`${getApiBaseUrl()}/pipeline/comfyui/stop`, {
+        method: "POST",
+        headers: { Authorization: token ? `Bearer ${token}` : "" },
+      });
+      if (res.ok) {
+        setComfyRunning(false);
+        setComfyPid(null);
+      }
+    } catch {
+      alert("Could not reach backend to stop ComfyUI.");
+    } finally {
+      setComfyStopping(false);
+    }
+  };
 
   const handleStartPipeline = async () => {
     if (!selectedFile) return;
@@ -223,11 +297,38 @@ export default function PipelinePage() {
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="px-3 py-1.5 rounded-xl bg-[#F9F8F3] border border-[#DCD8CF] flex items-center gap-2 text-xs">
-              <Cpu className="w-3.5 h-3.5 text-[#0D5C46]" />
-              <span className="text-[#5A6561]">GPU VM:</span>
-              <span className="font-bold text-[#0D5C46]">Ready ✅ (:8188)</span>
+            {/* ComfyUI start/stop control */}
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#F9F8F3] border border-[#DCD8CF] text-xs">
+              <Activity className={`w-3.5 h-3.5 ${comfyRunning ? "text-[#0D5C46] animate-pulse" : "text-[#5A6561]"}`} />
+              <span className="text-[#5A6561]">ComfyUI:</span>
+              {comfyRunning ? (
+                <span className="font-bold text-[#0D5C46]">
+                  Running ✅{comfyPid ? ` (PID ${comfyPid})` : " (:8188)"}
+                </span>
+              ) : (
+                <span className="font-bold text-amber-600">Stopped ⚠️</span>
+              )}
             </div>
+
+            {comfyRunning ? (
+              <button
+                onClick={handleStopComfy}
+                disabled={comfyStopping}
+                className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-xl flex items-center gap-1.5 transition disabled:opacity-50 cursor-pointer"
+              >
+                {comfyStopping ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <PowerOff className="w-3.5 h-3.5" />}
+                <span>Stop ComfyUI</span>
+              </button>
+            ) : (
+              <button
+                onClick={handleStartComfy}
+                disabled={comfyStarting}
+                className="px-3 py-1.5 bg-[#0D5C46] hover:bg-[#094534] text-white text-xs font-semibold rounded-xl flex items-center gap-1.5 transition disabled:opacity-50 cursor-pointer"
+              >
+                {comfyStarting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Power className="w-3.5 h-3.5" />}
+                <span>{comfyStarting ? "Starting…" : "Start ComfyUI"}</span>
+              </button>
+            )}
 
             {jobStatus === "completed" && (
               <Link
