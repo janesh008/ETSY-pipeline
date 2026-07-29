@@ -314,6 +314,7 @@ class GoogleDriveService:
                     body=file_metadata,
                     media_body=media,
                     fields="id",
+                    supportsAllDrives=True,
                 )
                 .execute()
             )
@@ -454,7 +455,15 @@ class GoogleDriveService:
             )
             try:
                 results = (
-                    service.files().list(q=query, fields="files(id, name)").execute()
+                    service.files()
+                    .list(
+                        q=query,
+                        spaces="drive",
+                        fields="files(id, name)",
+                        supportsAllDrives=True,
+                        includeItemsFromAllDrives=True,
+                    )
+                    .execute()
                 )
                 files = results.get("files", [])
                 if files:
@@ -474,7 +483,11 @@ class GoogleDriveService:
                     }
                     folder = (
                         service.files()
-                        .create(body=file_metadata, fields="id")
+                        .create(
+                            body=file_metadata,
+                            fields="id",
+                            supportsAllDrives=True,
+                        )
                         .execute()
                     )
                     current_parent = folder.get("id")
