@@ -280,14 +280,17 @@ class PipelineRunnerService:
 
         elif stage_name == "upscaling":
             # Primary check: Google Drive folder Clipart/main_data/<date_folder>/<theme_slug>
-            if settings.google_drive_folder_id:
+            from etsy_pipeline.workers.upscale_worker_config import ETSY_DRIVE_FOLDER_ID
+
+            parent_drive_id = settings.google_drive_folder_id or ETSY_DRIVE_FOLDER_ID
+            if parent_drive_id:
                 try:
                     from etsy_pipeline.services.google_drive import GoogleDriveService
 
                     drive = GoogleDriveService(settings=settings)
                     parts = ["Clipart", "main_data", date_folder, theme_slug]
                     folder_id = drive.find_folder_id_by_path(
-                        parent_id=settings.google_drive_folder_id, path_parts=parts
+                        parent_id=parent_drive_id, path_parts=parts
                     )
                     if folder_id:
                         files = drive.list_files_in_folder(folder_id)
@@ -301,27 +304,16 @@ class PipelineRunnerService:
                                 f"[pipeline_runner] Stage 'upscaling' is 100% complete — found {len(png_files)} PNGs in Google Drive folder '{'/'.join(parts)}'."
                             )
                             return True
+                        else:
+                            logger.info(
+                                f"[pipeline_runner] Stage 'upscaling' in Google Drive contains {len(png_files)}/{total_expected} PNGs — stage will run."
+                            )
                 except Exception as exc:
                     logger.warning(
                         f"[pipeline_runner] Stage 'upscaling' Google Drive check failed: {exc}"
                     )
 
-            # Secondary fallback check: Local VM disk
-            dirs_to_check = [
-                Path(settings.output_root)
-                / "Clipart"
-                / date_folder
-                / theme_slug
-                / "upscaled",
-                Path(settings.output_root) / date_folder / theme_slug / "upscaled",
-            ]
-            for local_dir in dirs_to_check:
-                if local_dir.exists():
-                    pngs = [
-                        f for f in local_dir.rglob("*.png") if f.stat().st_size > 100000
-                    ]
-                    if len(pngs) >= total_expected and total_expected > 0:
-                        return True
+            # Local VM disk check removed for upscaling because upscaled files are delivered exclusively to Google Drive and purged locally.
             return False
 
         elif stage_name in ("mockup_creation", "pdf_generation"):
