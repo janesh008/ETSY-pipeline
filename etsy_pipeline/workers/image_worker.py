@@ -146,6 +146,9 @@ class ImageWorker:
 
         section_counters: dict[str, int] = {}
 
+        job.stages[self.STAGE_NAME].images_total = total
+        job.stages[self.STAGE_NAME].images_done = 0
+
         from tqdm import tqdm
 
         with tqdm(

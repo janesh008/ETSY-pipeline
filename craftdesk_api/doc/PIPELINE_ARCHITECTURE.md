@@ -68,7 +68,7 @@ Before executing each worker stage, `PipelineRunnerService` checks if **100% of 
 - If 100% complete: The stage is marked `Completed ✅` immediately and worker execution is skipped.
 - If incomplete / interrupted: The stage is marked `Pending ⏳` and runs cleanly from start.
 
-To prevent blocking the FastAPI Uvicorn async event loop during heavy CUDA or subprocess operations, `PipelineRunnerService.run_full_pipeline_async` wraps `asyncio.to_thread` with `asyncio.create_task` (`worker_task = asyncio.create_task(asyncio.to_thread(cls._execute_stage_worker_sync, job, stage_name))`). This produces a true `asyncio.Task` object supporting `.done()` polling while progress metrics and ETA are continuously updated.
+To prevent blocking the FastAPI Uvicorn async event loop during heavy CUDA or subprocess operations, `PipelineRunnerService.run_full_pipeline_async` wraps `asyncio.to_thread` with `asyncio.create_task` (`worker_task = asyncio.create_task(asyncio.to_thread(cls._execute_stage_worker_sync, job, stage_name))`). This produces a true `asyncio.Task` object supporting `.done()` polling while progress metrics, item counts (`images_done` / `images_total`), and ETA are continuously updated in real-time across workers (`ImageWorker`, `BackgroundRemovalWorker`, `UpscaleWorker`).
 
 1. **Stage 1 — Image Generation (`image_gen`)**:
    - Worker: `ImageWorker.run(job)`

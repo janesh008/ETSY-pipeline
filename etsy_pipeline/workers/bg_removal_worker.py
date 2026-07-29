@@ -146,6 +146,8 @@ class BackgroundRemovalWorker:
             raise BackgroundRemovalError(error_msg, job_id=job.job_id)
 
         total = len(all_raw_files)
+        job.stages[self.STAGE_NAME].images_total = total
+        job.stages[self.STAGE_NAME].images_done = 0
         logger.info(
             f"[bg_removal] Total images to process: {total} "
             f"({len(misc_raw_files)} misc, {len(pattern_raw_files)} pattern/scene/bonus)"

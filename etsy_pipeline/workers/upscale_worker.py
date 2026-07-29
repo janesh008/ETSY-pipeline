@@ -207,6 +207,8 @@ class UpscaleWorker:
             raise UpscalingError(error_msg, job_id=job.job_id)
 
         total = len(no_bg_files)
+        job.stages[self.STAGE_NAME].images_total = total
+        job.stages[self.STAGE_NAME].images_done = 0
         logger.info(f"[upscaling] Found {total} images to upscale")
 
         model_path = self._ensure_model_downloaded()
