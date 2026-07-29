@@ -279,21 +279,7 @@ class PipelineRunnerService:
             return False
 
         elif stage_name == "upscaling":
-            dirs_to_check = [
-                Path(settings.output_root)
-                / "Clipart"
-                / date_folder
-                / theme_slug
-                / "upscaled",
-                Path(settings.output_root) / date_folder / theme_slug / "upscaled",
-            ]
-            for local_dir in dirs_to_check:
-                if local_dir.exists():
-                    pngs = [
-                        f for f in local_dir.rglob("*.png") if f.stat().st_size > 100000
-                    ]
-                    if len(pngs) >= total_expected and total_expected > 0:
-                        return True
+            # Primary check: Google Drive folder Clipart/main_data/<date_folder>/<theme_slug>
             if settings.google_drive_folder_id:
                 try:
                     from etsy_pipeline.services.google_drive import GoogleDriveService
@@ -319,6 +305,23 @@ class PipelineRunnerService:
                     logger.warning(
                         f"[pipeline_runner] Stage 'upscaling' Google Drive check failed: {exc}"
                     )
+
+            # Secondary fallback check: Local VM disk
+            dirs_to_check = [
+                Path(settings.output_root)
+                / "Clipart"
+                / date_folder
+                / theme_slug
+                / "upscaled",
+                Path(settings.output_root) / date_folder / theme_slug / "upscaled",
+            ]
+            for local_dir in dirs_to_check:
+                if local_dir.exists():
+                    pngs = [
+                        f for f in local_dir.rglob("*.png") if f.stat().st_size > 100000
+                    ]
+                    if len(pngs) >= total_expected and total_expected > 0:
+                        return True
             return False
 
         elif stage_name in ("mockup_creation", "pdf_generation"):

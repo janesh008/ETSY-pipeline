@@ -71,6 +71,13 @@ class GoogleDriveService:
             )
 
         client_secrets_file = Path(client_secrets_path)
+        if not client_secrets_file.is_absolute() and not client_secrets_file.exists():
+            from etsy_pipeline.config.settings import _PROJECT_ROOT
+
+            alt_secrets = _PROJECT_ROOT / client_secrets_path
+            if alt_secrets.exists():
+                client_secrets_file = alt_secrets
+
         if not client_secrets_file.exists():
             raise ConfigurationError(
                 f"Google Drive Client Secrets file not found at: {client_secrets_file.resolve()}. "
@@ -81,6 +88,12 @@ class GoogleDriveService:
         # The file token.json stores the user's access and refresh tokens, and is
         # created automatically when the authorization flow completes for the first time.
         token_file = Path(token_path)
+        if not token_file.is_absolute() and not token_file.exists():
+            from etsy_pipeline.config.settings import _PROJECT_ROOT
+
+            alt_token = _PROJECT_ROOT / token_path
+            if alt_token.exists():
+                token_file = alt_token
         if token_file.exists():
             try:
                 creds = Credentials.from_authorized_user_file(

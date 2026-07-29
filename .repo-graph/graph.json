@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-07-29T16:32:29.851820+00:00",
+  "generated_at": "2026-07-29T16:55:12.617143+00:00",
   "generator": "scripts/build_graph.py",
   "static_only": true,
   "scan_roots": [
@@ -9,7 +9,7 @@
     "tests"
   ],
   "node_count": 318,
-  "edge_count": 1711,
+  "edge_count": 1712,
   "nodes": [
     {
       "id": "etsy_pipeline",
@@ -4470,6 +4470,13 @@
     {
       "from": "etsy_pipeline.services.google_drive.GoogleDriveService._get_credentials",
       "to": "info",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService._get_credentials",
+      "to": "is_absolute",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
