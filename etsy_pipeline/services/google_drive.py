@@ -79,9 +79,23 @@ class GoogleDriveService:
                 client_secrets_file = alt_secrets
 
         if not client_secrets_file.exists():
+            from etsy_pipeline.config.settings import _PROJECT_ROOT
+
+            cred_dir = _PROJECT_ROOT / "cred"
+            if cred_dir.exists():
+                json_candidates = [
+                    f for f in cred_dir.glob("*.json") if f.name.lower() != "token.json"
+                ]
+                if json_candidates:
+                    client_secrets_file = json_candidates[0]
+                    logger.info(
+                        f"Fallback: using credential file found at '{client_secrets_file}'"
+                    )
+
+        if not client_secrets_file.exists():
             raise ConfigurationError(
                 f"Google Drive Client Secrets file not found at: {client_secrets_file.resolve()}. "
-                f"Please download your credentials.json file and place it there."
+                f"Please upload your Service Account or OAuth credentials JSON file into the 'cred/' directory."
             )
 
         # 1. Check if the file is a GCP Service Account JSON Key
