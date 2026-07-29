@@ -59,4 +59,4 @@ This subpackage contains:
 2.  **Model Loading:** Standardizes 4x-UltraSharp weights setup.
 3.  **Enhancement & Tiling:** Runs `RealESRGANer` with dynamic tile sizing fallback (`512` → `256` → `128` on CUDA OOM).
 4.  **Standardization:** Resizes the upscaled image to exactly 4096px on its longest side at 300 DPI.
-5.  **Direct GDrive Delivery:** Delivers all upscaled PNGs directly to Google Drive under `Clipart/main_data/<date>/<theme_slug>/`. Cleans up local upscaled directory post-upload.
+5.  **Direct GDrive Delivery & Fail-Safe Cleanup:** Delivers all upscaled PNGs directly to Google Drive under `Clipart/main_data/<date>/<theme_slug>/`. Requires successful Drive upload before purging local upscaled directory (if Drive is missing or upload fails, local files are retained to prevent data loss).

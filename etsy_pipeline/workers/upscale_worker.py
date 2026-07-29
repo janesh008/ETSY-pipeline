@@ -406,10 +406,9 @@ class UpscaleWorker:
         """Upload all upscaled images directly to Google Drive under nested path."""
         drive = self._get_drive()
         if not drive:
-            logger.warning(
-                "[upscaling] Google Drive service not initialized. Skipping upload."
-            )
-            return
+            error_msg = "[upscaling] Google Drive service not initialized. Check GDrive credentials in settings/.env."
+            logger.error(error_msg)
+            raise UpscalingError(error_msg, job_id=job.job_id)
 
         # Folder structure: Clipart/main_data/<date>/<theme_slug>
         path_parts = DRIVE_PATH_PARTS_PREFIX + [job.date_folder, job.theme_slug]

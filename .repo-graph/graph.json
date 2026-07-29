@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-07-28T19:42:35.952769+00:00",
+  "generated_at": "2026-07-29T16:32:29.851820+00:00",
   "generator": "scripts/build_graph.py",
   "static_only": true,
   "scan_roots": [
@@ -8,8 +8,8 @@
     "scripts",
     "tests"
   ],
-  "node_count": 316,
-  "edge_count": 1701,
+  "node_count": 318,
+  "edge_count": 1711,
   "nodes": [
     {
       "id": "etsy_pipeline",
@@ -543,14 +543,18 @@
         "upload_folder_to_path",
         "_upload_file_direct",
         "share_folder_publicly",
-        "get_folder_id_by_path"
+        "get_folder_id_by_path",
+        "find_folder_id_by_path",
+        "list_files_in_folder"
       ],
       "public_methods": [
         "upload_file",
         "upload_folder",
         "upload_folder_to_path",
         "share_folder_publicly",
-        "get_folder_id_by_path"
+        "get_folder_id_by_path",
+        "find_folder_id_by_path",
+        "list_files_in_folder"
       ]
     },
     {
@@ -614,11 +618,31 @@
       "class": "GoogleDriveService"
     },
     {
+      "id": "etsy_pipeline.services.google_drive.GoogleDriveService.find_folder_id_by_path",
+      "kind": "function",
+      "module": "etsy_pipeline.services.google_drive",
+      "docstring_summary": "Lookup a folder's ID relative to a parent folder by walking path parts without creating missing folders.",
+      "signature": "(self, parent_id, path_parts)",
+      "is_public": true,
+      "is_async": false,
+      "class": "GoogleDriveService"
+    },
+    {
       "id": "etsy_pipeline.services.google_drive.GoogleDriveService.get_folder_id_by_path",
       "kind": "function",
       "module": "etsy_pipeline.services.google_drive",
       "docstring_summary": "Lookup or create a folder's ID relative to a parent folder by walking the path parts.",
       "signature": "(self, parent_id, path_parts)",
+      "is_public": true,
+      "is_async": false,
+      "class": "GoogleDriveService"
+    },
+    {
+      "id": "etsy_pipeline.services.google_drive.GoogleDriveService.list_files_in_folder",
+      "kind": "function",
+      "module": "etsy_pipeline.services.google_drive",
+      "docstring_summary": "List all non-trashed files directly inside a Google Drive folder.",
+      "signature": "(self, folder_id)",
       "is_public": true,
       "is_async": false,
       "class": "GoogleDriveService"
@@ -4745,6 +4769,48 @@
       "note": "name-only; may not resolve to correct module without runtime context"
     },
     {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService.find_folder_id_by_path",
+      "to": "_get_service",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService.find_folder_id_by_path",
+      "to": "execute",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService.find_folder_id_by_path",
+      "to": "files",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService.find_folder_id_by_path",
+      "to": "get",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService.find_folder_id_by_path",
+      "to": "list",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService.find_folder_id_by_path",
+      "to": "replace",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
       "from": "etsy_pipeline.services.google_drive.GoogleDriveService.get_folder_id_by_path",
       "to": "ValueError",
       "kind": "call",
@@ -4796,6 +4862,41 @@
     {
       "from": "etsy_pipeline.services.google_drive.GoogleDriveService.get_folder_id_by_path",
       "to": "replace",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService.list_files_in_folder",
+      "to": "_get_service",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService.list_files_in_folder",
+      "to": "execute",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService.list_files_in_folder",
+      "to": "files",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService.list_files_in_folder",
+      "to": "get",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService.list_files_in_folder",
+      "to": "list",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
@@ -10576,13 +10677,6 @@
     {
       "from": "etsy_pipeline.workers.upscale_worker.UpscaleWorker._upload_to_google_drive",
       "to": "upload_folder_to_path",
-      "kind": "call",
-      "static_only": true,
-      "note": "name-only; may not resolve to correct module without runtime context"
-    },
-    {
-      "from": "etsy_pipeline.workers.upscale_worker.UpscaleWorker._upload_to_google_drive",
-      "to": "warning",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"

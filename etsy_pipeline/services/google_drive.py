@@ -624,3 +624,80 @@ class GoogleDriveService:
                     current_parent_id = item["id"]
 
         return current_parent_id
+
+    def find_folder_id_by_path(
+        self, parent_id: str, path_parts: list[str]
+    ) -> str | None:
+        """Lookup a folder's ID relative to a parent folder by walking path parts without creating missing folders.
+
+        Args:
+            parent_id: The starting parent folder ID.
+            path_parts: List of directory names to resolve.
+
+        Returns:
+            The folder ID if found, or None if any folder in the path is missing.
+        """
+        service = self._get_service()
+        current_parent_id = parent_id
+
+        for part in path_parts:
+            escaped_name = part.replace("\\", "\\\\").replace("'", "\\'")
+            query = (
+                f"name = '{escaped_name}' and '{current_parent_id}' in parents and "
+                "trashed = false and "
+                "(mimeType = 'application/vnd.google-apps.folder' or "
+                "mimeType = 'application/vnd.google-apps.shortcut')"
+            )
+            response = (
+                service.files()
+                .list(
+                    q=query,
+                    spaces="drive",
+                    fields="files(id,name,mimeType,shortcutDetails(targetId,targetMimeType))",
+                    pageSize=1,
+                    supportsAllDrives=True,
+                    includeItemsFromAllDrives=True,
+                )
+                .execute()
+            )
+            matches = response.get("files", [])
+            if not matches:
+                return None
+            item = matches[0]
+            if item["mimeType"] == "application/vnd.google-apps.shortcut":
+                shortcut = item.get("shortcutDetails", {})
+                current_parent_id = shortcut.get("targetId", "")
+            else:
+                current_parent_id = item["id"]
+            if not current_parent_id:
+                return None
+
+        return current_parent_id
+
+    def list_files_in_folder(self, folder_id: str) -> list[dict[str, Any]]:
+        """List all non-trashed files directly inside a Google Drive folder.
+
+        Args:
+            folder_id: Target Google Drive folder ID.
+
+        Returns:
+            List of file dictionaries with keys 'id', 'name', 'mimeType', 'size'.
+        """
+        service = self._get_service()
+        query = (
+            f"'{folder_id}' in parents and trashed = false and "
+            "mimeType != 'application/vnd.google-apps.folder'"
+        )
+        response = (
+            service.files()
+            .list(
+                q=query,
+                spaces="drive",
+                fields="files(id,name,mimeType,size)",
+                pageSize=1000,
+                supportsAllDrives=True,
+                includeItemsFromAllDrives=True,
+            )
+            .execute()
+        )
+        return response.get("files", [])

@@ -300,15 +300,25 @@ class PipelineRunnerService:
 
                     drive = GoogleDriveService(settings=settings)
                     parts = ["Clipart", "main_data", date_folder, theme_slug]
-                    folder_id = drive.get_folder_id_by_path(
+                    folder_id = drive.find_folder_id_by_path(
                         parent_id=settings.google_drive_folder_id, path_parts=parts
                     )
                     if folder_id:
                         files = drive.list_files_in_folder(folder_id)
-                        if len(files) >= total_expected and total_expected > 0:
+                        png_files = [
+                            f
+                            for f in files
+                            if f.get("name", "").lower().endswith(".png")
+                        ]
+                        if len(png_files) >= total_expected and total_expected > 0:
+                            logger.info(
+                                f"[pipeline_runner] Stage 'upscaling' is 100% complete — found {len(png_files)} PNGs in Google Drive folder '{'/'.join(parts)}'."
+                            )
                             return True
-                except Exception:
-                    pass
+                except Exception as exc:
+                    logger.warning(
+                        f"[pipeline_runner] Stage 'upscaling' Google Drive check failed: {exc}"
+                    )
             return False
 
         elif stage_name in ("mockup_creation", "pdf_generation"):
