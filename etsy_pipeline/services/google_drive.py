@@ -84,6 +84,25 @@ class GoogleDriveService:
                 f"Please download your credentials.json file and place it there."
             )
 
+        # 1. Check if the file is a GCP Service Account JSON Key
+        try:
+            import json
+
+            secrets_data = json.loads(client_secrets_file.read_text(encoding="utf-8"))
+        except Exception:
+            secrets_data = {}
+
+        if secrets_data.get("type") == "service_account":
+            from google.oauth2 import service_account
+
+            logger.info(
+                f"Authenticating Google Drive via GCP Service Account: {client_secrets_file.name}"
+            )
+            return service_account.Credentials.from_service_account_file(
+                str(client_secrets_file), scopes=DRIVE_SCOPES
+            )
+
+        # 2. OAuth 2.0 InstalledAppFlow User Authentication
         creds = None
         # The file token.json stores the user's access and refresh tokens, and is
         # created automatically when the authorization flow completes for the first time.
@@ -138,9 +157,10 @@ class GoogleDriveService:
                 token_file.write_text(creds.to_json())
                 logger.info(f"GDrive OAuth session saved to: {token_file}")
             except Exception as e:
-                raise RuntimeError(
-                    f"Failed to run OAuth 2.0 InstalledAppFlow: {e}. "
-                    f"Make sure you run this script in an environment where a web browser can open."
+                raise ConfigurationError(
+                    f"Failed to run OAuth 2.0 browser login flow: {e}. "
+                    f"If running in a headless VM environment, please use Service Account credentials "
+                    f"by setting GOOGLE_DRIVE_CLIENT_SEC_JSON=cred/gen-lang-client-0665218091-2ad1abf3315e.json in .env"
                 ) from e
 
         return creds

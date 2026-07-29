@@ -64,7 +64,7 @@ This document explains the technical architecture, data flow, GCS prompt injecti
 Before executing each worker stage, `PipelineRunnerService` checks if **100% of that stage's expected output files** already exist in storage (`_is_stage_100pct_complete`):
 - For `image_gen`, `bg_removal`, `mockup_creation`: Checks local disk and GCS (`gs://bucket/Clipart/...`).
 - For `upscaling`: Queries Google Drive folder `Clipart/main_data/<date_folder>/<theme_slug>/` under root folder `1JWUBqtP-PG-hRLEQj4Kh_vNzfb_G_PCP` as the exclusive source of truth. Local VM disk checks are bypassed to prevent false-positive stage skips from leftover files.
-- `GoogleDriveService._get_credentials()` automatically resolves relative credential paths (`cred/token.json` and `cred/client_secret.json`) against `_PROJECT_ROOT` to prevent authentication failure across working directories.
+- `GoogleDriveService._get_credentials()` inspects credential files and automatically supports GCP Service Account JSON keys (`gen-lang-client-*.json`), enabling 100% browserless server-side authentication for headless VM environments. Also resolves relative paths against `_PROJECT_ROOT`.
 - If 100% complete: The stage is marked `Completed ✅` immediately and worker execution is skipped.
 - If incomplete / interrupted: The stage is marked `Pending ⏳` and runs cleanly from start.
 

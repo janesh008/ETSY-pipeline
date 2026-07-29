@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-07-29T17:13:38.481677+00:00",
+  "generated_at": "2026-07-29T17:27:01.885712+00:00",
   "generator": "scripts/build_graph.py",
   "static_only": true,
   "scan_roots": [
@@ -9,7 +9,7 @@
     "tests"
   ],
   "node_count": 318,
-  "edge_count": 1712,
+  "edge_count": 1715,
   "nodes": [
     {
       "id": "etsy_pipeline",
@@ -4434,13 +4434,6 @@
     },
     {
       "from": "etsy_pipeline.services.google_drive.GoogleDriveService._get_credentials",
-      "to": "RuntimeError",
-      "kind": "call",
-      "static_only": true,
-      "note": "name-only; may not resolve to correct module without runtime context"
-    },
-    {
-      "from": "etsy_pipeline.services.google_drive.GoogleDriveService._get_credentials",
       "to": "debug",
       "kind": "call",
       "static_only": true,
@@ -4469,6 +4462,20 @@
     },
     {
       "from": "etsy_pipeline.services.google_drive.GoogleDriveService._get_credentials",
+      "to": "from_service_account_file",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService._get_credentials",
+      "to": "get",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService._get_credentials",
       "to": "info",
       "kind": "call",
       "static_only": true,
@@ -4483,7 +4490,21 @@
     },
     {
       "from": "etsy_pipeline.services.google_drive.GoogleDriveService._get_credentials",
+      "to": "loads",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService._get_credentials",
       "to": "mkdir",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.google_drive.GoogleDriveService._get_credentials",
+      "to": "read_text",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
