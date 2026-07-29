@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-07-29T19:01:44.114614+00:00",
+  "generated_at": "2026-07-29T19:28:52.664684+00:00",
   "generator": "scripts/build_graph.py",
   "static_only": true,
   "scan_roots": [
@@ -9,7 +9,7 @@
     "tests"
   ],
   "node_count": 318,
-  "edge_count": 1717,
+  "edge_count": 1721,
   "nodes": [
     {
       "id": "etsy_pipeline",
@@ -10704,6 +10704,20 @@
     },
     {
       "from": "etsy_pipeline.workers.upscale_worker.UpscaleWorker._upload_to_google_drive",
+      "to": "exists",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.upscale_worker.UpscaleWorker._upload_to_google_drive",
+      "to": "glob",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.upscale_worker.UpscaleWorker._upload_to_google_drive",
       "to": "info",
       "kind": "call",
       "static_only": true,
@@ -10712,6 +10726,20 @@
     {
       "from": "etsy_pipeline.workers.upscale_worker.UpscaleWorker._upload_to_google_drive",
       "to": "join",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.upscale_worker.UpscaleWorker._upload_to_google_drive",
+      "to": "len",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.upscale_worker.UpscaleWorker._upload_to_google_drive",
+      "to": "list",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"

@@ -240,7 +240,7 @@ export default function PipelinePage() {
         headers: { "Content-Type": "application/json", Authorization: token ? `Bearer ${token}` : "" },
         body: JSON.stringify({
           theme_name: selectedFile.theme,
-          prompt_file_path: selectedFile.local_path || selectedFile.gcs_path,
+          prompt_file_path: selectedFile.gcs_path || selectedFile.local_path,
         }),
       });
       if (res.ok) {

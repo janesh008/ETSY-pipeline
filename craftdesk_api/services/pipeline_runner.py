@@ -97,16 +97,17 @@ class PipelineRunnerService:
         # Inject prompts if prompt_file_path is provided
         if prompt_file_path:
             raw_text: str | None = None
+            normalized_path = prompt_file_path.replace("\\", "/")
 
             # 1. Attempt downloading from GCS FIRST
-            gcs_uri = prompt_file_path
+            gcs_uri = normalized_path
             if not gcs_uri.startswith("gs://"):
                 bucket_name = settings.gcs_bucket or "etsy-pixelbar-clipart"
-                m_part = re.search(r"(Clipart/.*)", prompt_file_path)
+                m_part = re.search(r"(Clipart/.*)", normalized_path, re.IGNORECASE)
                 if m_part:
                     gcs_uri = f"gs://{bucket_name}/{m_part.group(1)}"
                 else:
-                    gcs_uri = f"gs://{bucket_name}/{prompt_file_path}"
+                    gcs_uri = f"gs://{bucket_name}/{normalized_path.lstrip('/')}"
 
             if gcs_uri.startswith("gs://"):
                 try:
@@ -136,7 +137,7 @@ class PipelineRunnerService:
                     if alt_path.exists():
                         p_file = alt_path
 
-                if p_file.exists():
+                if p_file.exists() and p_file.is_file():
                     try:
                         raw_text = p_file.read_text(encoding="utf-8")
                         logger.info(
@@ -165,8 +166,12 @@ class PipelineRunnerService:
                         for ln in raw_text.splitlines()
                         if ln.strip() and not ln.startswith("#")
                     ]
-                    job.prompts = {"MAIN_CHARACTER": lines}
-                    job.raw_prompt_text = raw_text
+                    if lines:
+                        job.prompts = {"main_category": lines}
+            else:
+                raise ValueError(
+                    f"[pipeline_runner] Failed to locate/read prompt file from GCS or disk: {prompt_file_path}"
+                )
 
         # Fallback if no prompts injected
         if not job.prompts and prompts:
