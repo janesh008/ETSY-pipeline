@@ -572,6 +572,7 @@ class GoogleDriveService:
                     body=file_metadata,
                     media_body=media,
                     fields="id",
+                    supportsAllDrives=True,
                 )
                 .execute()
             )

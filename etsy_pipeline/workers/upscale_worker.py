@@ -417,9 +417,12 @@ class UpscaleWorker:
         )
 
         try:
+            parent_drive_id = (
+                self._settings.google_drive_folder_id or ETSY_DRIVE_FOLDER_ID
+            )
             drive.upload_folder_to_path(
                 local_dir=upscaled_dir,
-                parent_id=ETSY_DRIVE_FOLDER_ID,
+                parent_id=parent_drive_id,
                 path_parts=path_parts,
             )
             logger.info("[upscaling] Google Drive delivery complete.")
