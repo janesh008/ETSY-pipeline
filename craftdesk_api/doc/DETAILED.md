@@ -124,8 +124,11 @@ This document provides an exhaustive breakdown of every module in `craftdesk_api
 - `GET /api/v1/etsy/shops`: Lists user's connected Etsy stores.
 - `DELETE /api/v1/etsy/shops/{shop_db_id}`: Deactivates shop connection.
 
+### `routers/prompts.py`
+- `GET /api/v1/prompts`: Scans GCS bucket (`gs://<bucket>/Clipart/`) **first** and local disk second. Returns list of available prompt files with `gcs_path`, `is_gcs`, `preview`, and prompt counts.
+
 ### `routers/pipeline.py`
-- `POST /api/v1/pipeline/jobs`: Starts 6-stage pipeline job in background.
+- `POST /api/v1/pipeline/jobs`: Starts 6-stage pipeline job in background. Resolves prompt text from GCS bucket first (`gs://...`), preventing missing local file errors.
 - `GET /api/v1/pipeline/jobs/{job_id}`: Returns job status and stage progress array.
 - `POST /api/v1/pipeline/jobs/{job_id}/stages/{stage_name}/retry`: Re-runs single failed stage.
 - `WS /api/v1/pipeline/jobs/{job_id}/stream`: WebSocket streaming real-time stage updates.

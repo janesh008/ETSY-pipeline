@@ -51,6 +51,7 @@ interface PromptFile {
   theme: string;
   local_path: string | null;
   gcs_path: string;
+  is_gcs?: boolean;
   preview: string;
   prompt_count: number;
   raw_text: string;
@@ -522,10 +523,10 @@ export default function PipelinePage() {
                                     {file.prompt_count} prompts
                                   </span>
                                   <span className="flex items-center gap-1">
-                                    {file.local_path ? (
-                                      <><FileText className="w-2.5 h-2.5" />Local</>
-                                    ) : (
+                                    {file.is_gcs !== false ? (
                                       <><Cloud className="w-2.5 h-2.5" />GCS</>
+                                    ) : (
+                                      <><FileText className="w-2.5 h-2.5" />Local</>
                                     )}
                                   </span>
                                 </div>
@@ -572,8 +573,8 @@ export default function PipelinePage() {
               <div className="flex gap-2 text-[10px] text-[#5A6561]">
                 <span className="px-2 py-1 bg-[#F9F8F3] border border-[#DCD8CF] rounded-lg">{selectedFile.date}</span>
                 <span className="px-2 py-1 bg-[#F9F8F3] border border-[#DCD8CF] rounded-lg">{selectedFile.prompt_count} prompts</span>
-                <span className={`px-2 py-1 rounded-lg border ${selectedFile.local_path ? "bg-[#E6F2EE] border-[#0D5C46]/30 text-[#0D5C46]" : "bg-blue-50 border-blue-200 text-blue-700"}`}>
-                  {selectedFile.local_path ? "💾 Local" : "☁️ GCS"}
+                <span className={`px-2 py-1 rounded-lg border ${selectedFile.is_gcs !== false ? "bg-blue-50 border-blue-200 text-blue-700" : "bg-[#E6F2EE] border-[#0D5C46]/30 text-[#0D5C46]"}`}>
+                  {selectedFile.is_gcs !== false ? "☁️ GCS" : "💾 Local"}
                 </span>
               </div>
             </div>

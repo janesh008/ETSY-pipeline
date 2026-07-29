@@ -406,22 +406,38 @@ class UpscaleWorker:
 
     def _upload_to_google_drive(self, job: Job, upscaled_dir: Path) -> None:
         """Upload all upscaled images directly to Google Drive under nested path."""
+        # Diagnostic: log what is in upscaled_dir before attempting upload
+        files_in_dir = list(upscaled_dir.glob("*")) if upscaled_dir.exists() else []
+        logger.info(
+            f"[upscaling] Upload attempt: upscaled_dir={upscaled_dir} | exists={upscaled_dir.exists()} | file_count={len(files_in_dir)}"
+        )
+        if not files_in_dir:
+            logger.error(
+                f"[upscaling] upscaled_dir is EMPTY or does not exist — nothing to upload to Drive! Path: {upscaled_dir}"
+            )
+            raise UpscalingError(
+                f"upscaled_dir is empty or missing: {upscaled_dir}", job_id=job.job_id
+            )
+
         drive = self._get_drive()
         if not drive:
             error_msg = "[upscaling] Google Drive service not initialized. Check GDrive credentials in settings/.env."
             logger.error(error_msg)
             raise UpscalingError(error_msg, job_id=job.job_id)
 
+        # Diagnostic: log which credentials file and folder ID will be used
+        logger.info(
+            f"[upscaling] Drive credentials source: GOOGLE_DRIVE_CLIENT_SEC_JSON={self._settings.google_drive_client_sec_json}"
+        )
+        parent_drive_id = self._settings.google_drive_folder_id or ETSY_DRIVE_FOLDER_ID
+
         # Folder structure: Clipart/main_data/<date>/<theme_slug>
         path_parts = DRIVE_PATH_PARTS_PREFIX + [job.date_folder, job.theme_slug]
         logger.info(
-            f"[upscaling] Uploading upscaled files to Google Drive path: {'/'.join(path_parts)}"
+            f"[upscaling] Uploading {len(files_in_dir)} files to Drive path: {'/'.join(path_parts)} under parent_id={parent_drive_id}"
         )
 
         try:
-            parent_drive_id = (
-                self._settings.google_drive_folder_id or ETSY_DRIVE_FOLDER_ID
-            )
             drive.upload_folder_to_path(
                 local_dir=upscaled_dir,
                 parent_id=parent_drive_id,

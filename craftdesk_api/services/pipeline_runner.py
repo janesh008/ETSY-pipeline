@@ -97,22 +97,39 @@ class PipelineRunnerService:
         # Inject prompts if prompt_file_path is provided
         if prompt_file_path:
             raw_text: str | None = None
-            if prompt_file_path.startswith("gs://"):
+
+            # 1. Attempt downloading from GCS FIRST
+            gcs_uri = prompt_file_path
+            if not gcs_uri.startswith("gs://"):
+                bucket_name = settings.gcs_bucket or "etsy-pixelbar-clipart"
+                m_part = re.search(r"(Clipart/.*)", prompt_file_path)
+                if m_part:
+                    gcs_uri = f"gs://{bucket_name}/{m_part.group(1)}"
+                else:
+                    gcs_uri = f"gs://{bucket_name}/{prompt_file_path}"
+
+            if gcs_uri.startswith("gs://"):
                 try:
                     from google.cloud import storage
 
-                    uri_parts = prompt_file_path.replace("gs://", "").split("/", 1)
-                    bucket_name = uri_parts[0]
+                    uri_parts = gcs_uri.replace("gs://", "").split("/", 1)
+                    b_name = uri_parts[0]
                     blob_path = uri_parts[1]
                     client = storage.Client()
-                    bucket = client.bucket(bucket_name)
+                    bucket = client.bucket(b_name)
                     blob = bucket.blob(blob_path)
-                    raw_text = blob.download_as_text(encoding="utf-8")
+                    if blob.exists():
+                        raw_text = blob.download_as_text(encoding="utf-8")
+                        logger.info(
+                            f"[pipeline_runner] Downloaded prompt text from GCS: {gcs_uri}"
+                        )
                 except Exception as exc:
                     logger.warning(
-                        f"Could not download GCS prompt file '{prompt_file_path}': {exc}"
+                        f"[pipeline_runner] Could not download GCS prompt file '{gcs_uri}': {exc}"
                     )
-            else:
+
+            # 2. Fallback to local VM disk reading if GCS download did not return raw_text
+            if not raw_text:
                 p_file = Path(prompt_file_path)
                 if not p_file.exists():
                     alt_path = Path(settings.output_root) / prompt_file_path
@@ -122,9 +139,12 @@ class PipelineRunnerService:
                 if p_file.exists():
                     try:
                         raw_text = p_file.read_text(encoding="utf-8")
+                        logger.info(
+                            f"[pipeline_runner] Read prompt text from local disk: {p_file}"
+                        )
                     except Exception as exc:
                         logger.warning(
-                            f"Could not read local prompt file '{prompt_file_path}': {exc}"
+                            f"[pipeline_runner] Could not read local prompt file '{prompt_file_path}': {exc}"
                         )
 
             if raw_text:

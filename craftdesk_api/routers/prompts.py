@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from etsy_pipeline.config.settings import get_settings
+from etsy_pipeline.utils.logging import get_logger
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 
 from craftdesk_api.routers.gcp import get_current_user_id
@@ -27,6 +28,8 @@ from craftdesk_api.services.etsy_scraper import EtsyScraperService
 from craftdesk_api.services.prompt_engine import PromptEngineService
 
 router = APIRouter(prefix="/prompts", tags=["prompts"])
+
+logger = get_logger(__name__)
 
 # In-memory store for generated prompt jobs
 _PROMPT_JOBS_STORE: dict[str, dict[str, Any]] = {}
@@ -316,7 +319,63 @@ async def list_prompt_files(
 
     files: list[dict] = []
 
-    # Walk local output/Clipart/ directory
+    # 1. Scan GCS bucket FIRST (primary source of truth)
+    gcs_keys: set[str] = set()
+    try:
+        from google.cloud import storage as gcs_storage
+
+        bucket_name = (
+            settings.gcs_bucket
+            or os.getenv("GCP_BUCKET_NAME")
+            or "etsy-pixelbar-clipart"
+        )
+        client = gcs_storage.Client()
+        for blob in client.list_blobs(bucket_name, prefix="Clipart/"):
+            if not blob.name.endswith(".txt"):
+                continue
+            gcs_uri = f"gs://{bucket_name}/{blob.name}"
+            parts = blob.name.split("/")
+            # Expected: Clipart/<date>/<theme>/<filename>.txt  → >=4 parts
+            if len(parts) < 4:
+                continue
+            try:
+                date_str = parts[1]
+                theme_str = parts[2]
+                file_name = Path(blob.name).stem
+
+                content = blob.download_as_text(encoding="utf-8")
+                preview_lines = [ln for ln in content.splitlines() if ln.strip()][:4]
+                preview = "\n".join(preview_lines)
+                prompt_lines = [
+                    ln.strip()
+                    for ln in content.splitlines()
+                    if ln.strip() and not ln.startswith("#")
+                ]
+
+                # Check if file also exists on local disk
+                local_check = clipart_root / date_str / theme_str / Path(blob.name).name
+                local_path_val = str(local_check) if local_check.exists() else None
+
+                gcs_keys.add(f"{date_str}/{theme_str}/{file_name}")
+                files.append(
+                    {
+                        "name": file_name,
+                        "date": date_str,
+                        "theme": theme_str,
+                        "local_path": local_path_val,
+                        "gcs_path": gcs_uri,
+                        "is_gcs": True,
+                        "preview": preview,
+                        "prompt_count": len(prompt_lines),
+                        "raw_text": content,
+                    }
+                )
+            except Exception:
+                continue
+    except Exception as exc:
+        logger.warning(f"[prompts] GCS bucket prompt list failed: {exc}")
+
+    # 2. Scan local disk output/Clipart/ SECOND for any extra non-GCS files
     if clipart_root.exists():
         for date_dir in sorted(clipart_root.iterdir(), reverse=True):
             if not date_dir.is_dir():
@@ -325,6 +384,9 @@ async def list_prompt_files(
                 if not theme_dir.is_dir():
                     continue
                 for txt_file in theme_dir.glob("*.txt"):
+                    key = f"{date_dir.name}/{theme_dir.name}/{txt_file.stem}"
+                    if key in gcs_keys:
+                        continue
                     try:
                         content = txt_file.read_text(encoding="utf-8")
                         preview_lines = [
@@ -342,7 +404,8 @@ async def list_prompt_files(
                                 "date": date_dir.name,
                                 "theme": theme_dir.name,
                                 "local_path": str(txt_file),
-                                "gcs_path": f"gs://{settings.gcs_bucket or 'etsy-pipeline-bucket'}/Clipart/{date_dir.name}/{theme_dir.name}/{txt_file.name}",
+                                "gcs_path": f"gs://{settings.gcs_bucket or 'etsy-pixelbar-clipart'}/Clipart/{date_dir.name}/{theme_dir.name}/{txt_file.name}",
+                                "is_gcs": False,
                                 "preview": preview,
                                 "prompt_count": len(prompt_lines),
                                 "raw_text": content,
@@ -350,53 +413,5 @@ async def list_prompt_files(
                         )
                     except Exception:
                         continue
-
-    # Also try GCS if google-cloud-storage is available (non-blocking)
-    gcs_names = {f["gcs_path"] for f in files}
-    try:
-        from google.cloud import storage as gcs_storage
-
-        bucket_name = (
-            settings.gcs_bucket
-            or os.getenv("GCP_BUCKET_NAME")
-            or "etsy-pipeline-bucket"
-        )
-        client = gcs_storage.Client()
-        bucket = client.bucket(bucket_name)
-        for blob in client.list_blobs(bucket_name, prefix="Clipart/"):
-            if not blob.name.endswith(".txt"):
-                continue
-            gcs_uri = f"gs://{bucket_name}/{blob.name}"
-            if gcs_uri in gcs_names:
-                continue
-            parts = blob.name.split("/")
-            # Expected: Clipart/<date>/<theme>/<theme>.txt  → 4 parts
-            if len(parts) < 4:
-                continue
-            try:
-                content = blob.download_as_text(encoding="utf-8")
-                preview_lines = [ln for ln in content.splitlines() if ln.strip()][:4]
-                preview = "\n".join(preview_lines)
-                prompt_lines = [
-                    ln.strip()
-                    for ln in content.splitlines()
-                    if ln.strip() and not ln.startswith("#")
-                ]
-                files.append(
-                    {
-                        "name": Path(blob.name).stem,
-                        "date": parts[1],
-                        "theme": parts[2],
-                        "local_path": None,
-                        "gcs_path": gcs_uri,
-                        "preview": preview,
-                        "prompt_count": len(prompt_lines),
-                        "raw_text": content,
-                    }
-                )
-            except Exception:
-                continue
-    except Exception:
-        pass  # GCS not available — local only
 
     return {"files": files, "total": len(files)}
