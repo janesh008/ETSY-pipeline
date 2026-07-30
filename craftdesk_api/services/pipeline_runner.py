@@ -643,3 +643,5 @@ class PipelineRunnerService:
             job_data["status"] = "completed"
             job_data["completed_at"] = datetime.now(UTC)
             job_data["current_stage"] = None
+
+        _save_jobs_cache()
