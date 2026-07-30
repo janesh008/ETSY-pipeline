@@ -861,13 +861,15 @@ export default function PipelinePage() {
                         <span>{stage.error_message || "Stage execution failed."}</span>
                       </div>
                     </div>
+                  </div>
+                )}
 
-                <div className="mt-3 pt-2 border-t border-[#DCD8CF]/40 flex items-center justify-between">
+                <div className="mt-4 pt-3 border-t border-[#DCD8CF]/40 flex items-center justify-between">
                   <button
                     onClick={() =>
                       setExpandedLogStage(expandedLogStage === stage.stage_name ? null : stage.stage_name)
                     }
-                    className="text-xs text-[#5A6561] hover:text-[#1C2421] font-medium flex items-center gap-1 cursor-pointer"
+                    className="text-xs text-[#5A6561] hover:text-[#1C2421] font-semibold flex items-center gap-1.5 cursor-pointer"
                   >
                     <Terminal className="w-3.5 h-3.5 text-[#0D5C46]" />
                     <span>{expandedLogStage === stage.stage_name ? "Hide Logs" : "View Logs"}</span>
@@ -890,11 +892,9 @@ export default function PipelinePage() {
                 </div>
 
                 {expandedLogStage === stage.stage_name && (
-                  <pre className="mt-2 p-3.5 bg-slate-900 text-emerald-400 rounded-xl text-[11px] font-mono overflow-x-auto border border-slate-800 leading-relaxed max-h-60">
+                  <pre className="mt-3 p-3.5 bg-slate-900 text-emerald-400 rounded-xl text-[11px] font-mono overflow-x-auto border border-slate-800 leading-relaxed max-h-60">
                     {stage.stderr_log || stage.live_log || stage.error_message || `[${stage.stage_name}] Status: ${stage.status}. Progress: ${stage.progress_percent}%. Elapsed: ${stage.elapsed_seconds || 0}s.`}
                   </pre>
-                )}
-                  </div>
                 )}
               </div>
             ))}
