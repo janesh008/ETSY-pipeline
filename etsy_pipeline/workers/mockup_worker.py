@@ -101,6 +101,7 @@ class MockupWorker:
             gcs_store=self._gcs,
             drive_service=self._drive,
         )
+        job.stages[self.STAGE_NAME].update_progress(1, 5)
 
         # Find first image for PDF preview before processing
         preview_image = self._find_first_image(no_bg_dir)
@@ -110,6 +111,7 @@ class MockupWorker:
         self._run_mockup_creator(
             no_bg_dir, mockups_local_dir, theme_name=theme_display_name
         )
+        job.stages[self.STAGE_NAME].update_progress(2, 5)
 
         # 3. Share Upscaled GDrive Folder & Retrieve Link
         drive = self._get_drive()
@@ -130,6 +132,8 @@ class MockupWorker:
             job.add_error(error_msg)
             raise MockupError(error_msg, job_id=job.job_id) from exc
 
+        job.stages[self.STAGE_NAME].update_progress(3, 5)
+
         # 4. Generate Clickable A4 PDF wrapping
         pdf_local_path = local_base_dir / f"{theme_slug}.pdf"
         try:
@@ -143,6 +147,8 @@ class MockupWorker:
             job.stages[self.STAGE_NAME].mark_failed(error_msg)
             job.add_error(error_msg)
             raise MockupError(error_msg, job_id=job.job_id) from exc
+
+        job.stages[self.STAGE_NAME].update_progress(4, 5)
 
         # Update job fields
         job.pdf_path = str(pdf_local_path)

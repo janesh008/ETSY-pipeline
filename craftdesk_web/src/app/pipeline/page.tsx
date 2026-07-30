@@ -764,7 +764,7 @@ export default function PipelinePage() {
                     <div className="w-full bg-[#DCD8CF]/50 rounded-full h-2.5 overflow-hidden">
                       <div
                         className="bg-[#0D5C46] h-full rounded-full transition-all duration-300"
-                        style={{ width: `${stage.progress_percent}%` }}
+                        style={{ width: `${Math.max(5, stage.progress_percent)}%` }}
                       />
                     </div>
                     <div className="flex justify-between items-center text-[10px] text-[#5A6561]">

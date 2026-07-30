@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-07-30T13:00:44.059864+00:00",
+  "generated_at": "2026-07-30T13:39:45.631615+00:00",
   "generator": "scripts/build_graph.py",
   "static_only": true,
   "scan_roots": [
@@ -9,7 +9,7 @@
     "tests"
   ],
   "node_count": 319,
-  "edge_count": 1731,
+  "edge_count": 1734,
   "nodes": [
     {
       "id": "etsy_pipeline",
@@ -9475,6 +9475,13 @@
     },
     {
       "from": "etsy_pipeline.workers.mockup_worker.MockupWorker.run",
+      "to": "is_file",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.mockup_worker.MockupWorker.run",
       "to": "len",
       "kind": "call",
       "static_only": true,
@@ -9559,6 +9566,13 @@
     },
     {
       "from": "etsy_pipeline.workers.mockup_worker.MockupWorker.run",
+      "to": "sorted",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.mockup_worker.MockupWorker.run",
       "to": "str",
       "kind": "call",
       "static_only": true,
@@ -9567,6 +9581,13 @@
     {
       "from": "etsy_pipeline.workers.mockup_worker.MockupWorker.run",
       "to": "total_seconds",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.mockup_worker.MockupWorker.run",
+      "to": "update_progress",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
