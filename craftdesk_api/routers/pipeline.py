@@ -112,16 +112,49 @@ async def download_pipeline_job_pdf(
         )
 
     pdf_path = job.get("pdf_local_path")
-    if not pdf_path or not Path(pdf_path).exists():
+    target_file: Path | None = Path(pdf_path) if pdf_path else None
+
+    if not target_file or not target_file.exists():
+        from etsy_pipeline.config.settings import get_settings
+
+        settings = get_settings()
+        date_folder = job.get("date_folder", "")
+        theme_slug = job.get("theme_name", "").replace(" ", "_")
+        possible_local = [
+            Path(settings.output_root) / date_folder / theme_slug / f"{theme_slug}.pdf",
+            Path(settings.output_root) / "Clipart" / date_folder / theme_slug / f"{theme_slug}.pdf",
+        ]
+        for p in possible_local:
+            if p.exists():
+                target_file = p
+                break
+
+        if (not target_file or not target_file.exists()) and settings.gcs_bucket:
+            try:
+                from etsy_pipeline.services.gcs_store import GCSStore
+
+                gcs = GCSStore(settings=settings)
+                gcs_key = f"Clipart/{date_folder}/{theme_slug}/pdf/{theme_slug}.pdf"
+                local_dest = (
+                    Path(settings.output_root) / date_folder / theme_slug / f"{theme_slug}.pdf"
+                )
+                local_dest.parent.mkdir(parents=True, exist_ok=True)
+                gcs.download_file(gcs_key, local_dest)
+                if local_dest.exists():
+                    target_file = local_dest
+            except Exception:
+                pass
+
+    if not target_file or not target_file.exists():
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="PDF file not found for this job. Ensure Stage 5 (Clickable PDF Wrap) has completed.",
         )
 
     return FileResponse(
-        path=pdf_path,
+        path=str(target_file),
         media_type="application/pdf",
-        filename=Path(pdf_path).name,
+        filename=target_file.name,
     )
 
 

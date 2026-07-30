@@ -147,6 +147,12 @@ class MockupWorker:
         # Update job fields
         job.pdf_path = str(pdf_local_path)
         job.pdf_drive_link = public_folder_link
+        mockup_files_sorted = sorted(
+            [str(f) for f in mockups_local_dir.rglob("*.png") if f.is_file()]
+        )
+        job.mockups = mockup_files_sorted
+        if mockup_files_sorted:
+            job.hero_image_url = mockup_files_sorted[0]
 
         # 5. Delivery: Upload Mockups + PDF to GCS & Google Drive
         # Google Drive Raw Data path: Clipart/raw_data/<date>/<theme_slug>/

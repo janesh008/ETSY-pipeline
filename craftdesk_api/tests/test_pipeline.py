@@ -80,3 +80,29 @@ class TestPipelineEndpoints:
         )
         assert image_gen_stage["status"] in ("pending", "running")
         assert image_gen_stage["error_message"] is None
+
+    def test_download_pipeline_job_pdf(self, client, auth_headers, tmp_path) -> None:
+        start_resp = client.post(
+            "/api/v1/pipeline/jobs",
+            json={
+                "theme_name": "PDF Download Test Theme",
+            },
+            headers=auth_headers,
+        )
+        job_id = start_resp.json()["job_id"]
+
+        # Create dummy PDF file on disk and attach path to stored job
+        from craftdesk_api.services.pipeline_runner import PipelineRunnerService
+
+        job = PipelineRunnerService.get_job(job_id)
+        assert job is not None
+
+        pdf_file = tmp_path / "test_theme.pdf"
+        pdf_file.write_bytes(b"%PDF-1.4 mock binary content")
+
+        job["pdf_local_path"] = str(pdf_file)
+
+        pdf_resp = client.get(f"/api/v1/pipeline/jobs/{job_id}/pdf", headers=auth_headers)
+        assert pdf_resp.status_code == 200
+        assert "application/pdf" in pdf_resp.headers["content-type"]
+        assert pdf_resp.content == b"%PDF-1.4 mock binary content"

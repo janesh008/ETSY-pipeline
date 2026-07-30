@@ -359,19 +359,21 @@ class PipelineRunnerService:
             pdf_file = local_base / f"{theme_slug}.pdf"
             mockup_dir = local_base / "mockups"
             if pdf_file.exists() and mockup_dir.exists():
-                mockup_pngs = list(mockup_dir.glob("*.png"))
+                mockup_pngs = sorted(
+                    [str(f) for f in mockup_dir.glob("*.png") if f.stat().st_size > 10240]
+                )
                 if len(mockup_pngs) >= 4 and pdf_file.stat().st_size > 10240:
+                    job.pdf_path = str(pdf_file)
+                    job.mockups = mockup_pngs
+                    if mockup_pngs:
+                        job.hero_image_url = mockup_pngs[0]
+                    stored_job = _PIPELINE_JOBS_STORE.get(job.job_id)
+                    if stored_job:
+                        stored_job["pdf_local_path"] = str(pdf_file)
+                        stored_job["mockups"] = mockup_pngs
+                        if mockup_pngs:
+                            stored_job["hero_image_url"] = mockup_pngs[0]
                     return True
-            if settings.gcs_bucket:
-                try:
-                    from etsy_pipeline.services.gcs_store import GCSStore
-
-                    gcs = GCSStore(settings=settings)
-                    pdf_key = f"Clipart/{date_folder}/{theme_slug}/pdf/{theme_slug}.pdf"
-                    if gcs.object_exists(pdf_key):
-                        return True
-                except Exception:
-                    pass
             return False
 
         elif stage_name == "metadata_generation":
