@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import re
 import traceback
 import uuid
@@ -31,10 +32,47 @@ STAGE_DEFINITIONS = [
     },
 ]
 
-# In-memory store for pipeline jobs
+# In-memory store for pipeline jobs with disk persistence
 _PIPELINE_JOBS_STORE: dict[str, dict[str, Any]] = {}
 _ACTIVE_JOB_OBJECTS: dict[str, Job] = {}
 _STOP_REQUESTS: set[str] = set()
+
+
+def _get_cache_file() -> Path:
+    return Path(get_settings().output_root) / ".jobs_cache.json"
+
+
+def _save_jobs_cache() -> None:
+    try:
+        cache_file = _get_cache_file()
+        cache_file.parent.mkdir(parents=True, exist_ok=True)
+        serializable_jobs = {}
+        for jid, data in _PIPELINE_JOBS_STORE.items():
+            s_data = dict(data)
+            if isinstance(s_data.get("created_at"), datetime):
+                s_data["created_at"] = s_data["created_at"].isoformat()
+            if isinstance(s_data.get("completed_at"), datetime):
+                s_data["completed_at"] = s_data["completed_at"].isoformat()
+            serializable_jobs[jid] = s_data
+        cache_file.write_text(json.dumps(serializable_jobs, indent=2))
+    except Exception as exc:
+        logger.warning(f"[pipeline_runner] Failed to save jobs cache: {exc}")
+
+
+def _load_jobs_cache() -> None:
+    cache_file = _get_cache_file()
+    if cache_file.exists():
+        try:
+            cached_jobs = json.loads(cache_file.read_text())
+            _PIPELINE_JOBS_STORE.update(cached_jobs)
+            logger.info(
+                f"[pipeline_runner] Restored {len(cached_jobs)} jobs from disk cache."
+            )
+        except Exception as exc:
+            logger.warning(f"[pipeline_runner] Failed to load jobs cache: {exc}")
+
+
+_load_jobs_cache()
 
 
 class PipelineRunnerService:
@@ -222,6 +260,7 @@ class PipelineRunnerService:
         }
 
         _PIPELINE_JOBS_STORE[job_id] = job_data
+        _save_jobs_cache()
         return job_data
 
     @classmethod
@@ -547,6 +586,8 @@ class PipelineRunnerService:
                 job_data["completed_at"] = completed_dt
                 job_data["current_stage"] = None
 
+            _save_jobs_cache()
+
         except Exception as exc:
             error_str = str(exc)
             tb_str = traceback.format_exc()
@@ -555,6 +596,7 @@ class PipelineRunnerService:
             stage_dict["error_message"] = error_str
             stage_dict["stderr_log"] = tb_str
             job_data["status"] = "failed"
+            _save_jobs_cache()
             logger.error(
                 f"Pipeline stage '{stage_name}' failed: {error_str}", exc_info=True
             )

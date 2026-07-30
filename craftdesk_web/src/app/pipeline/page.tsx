@@ -237,6 +237,17 @@ export default function PipelinePage() {
             setJobStatus("failed");
             clearInterval(interval);
           }
+        } else if (res.status === 404) {
+          clearInterval(interval);
+          setJobStatus("failed");
+          setStages((prev) =>
+            prev.map((s) => ({
+              ...s,
+              status: s.status === "running" ? "failed" : s.status,
+              error_message:
+                "Backend server process reloaded or job reset. Please click 'Start Pipeline Execution' to launch a new job.",
+            }))
+          );
         }
       } catch {
         // Continue polling if transient network error
