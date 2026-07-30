@@ -693,6 +693,7 @@ class PipelineRunnerService:
 
         for stage in job_data["stages"]:
             s_name = stage["stage_name"]
+            job_data["current_stage"] = s_name
 
             # Check if 100% of stage outputs exist in storage or stage is already marked completed
             if stage.get("status") == "completed" or cls._is_stage_100pct_complete(

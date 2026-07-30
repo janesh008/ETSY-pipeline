@@ -32,12 +32,25 @@ router = APIRouter(prefix="/pipeline", tags=["pipeline"])
 
 def _build_job_response(job: dict[str, Any]) -> PipelineJobResponse:
     """Helper to convert job_data dict into PipelineJobResponse pydantic model."""
+    current_stage = job.get("current_stage")
+    if job.get("status") == "running":
+        active_stage = next(
+            (
+                s["stage_name"]
+                for s in job.get("stages", [])
+                if s.get("status") in ("running", "pending")
+            ),
+            None,
+        )
+        if active_stage:
+            current_stage = active_stage
+
     return PipelineJobResponse(
         job_id=job["job_id"],
         user_id=job["user_id"],
         theme_name=job["theme_name"],
         status=job["status"],
-        current_stage=job["current_stage"],
+        current_stage=current_stage,
         stages=[StageStatus(**s) for s in job["stages"]],
         hero_image_url=job.get("hero_image_url"),
         mockups=job.get("mockups", []),

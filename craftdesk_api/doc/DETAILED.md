@@ -78,12 +78,13 @@ This document provides an exhaustive breakdown of every module in `craftdesk_api
   4. `stop_job(job_id)`: Cancels active `asyncio.Task`, sets job and running stage status to `failed` (`"Pipeline execution stopped by user."`).
   5. `run_full_pipeline_async()`: Sequentially executes `etsy_pipeline` worker modules (`ImageWorker`, `BackgroundRemovalWorker`, `UpscaleWorker`, `MockupWorker`, `MetadataWorker`) in background threads (`asyncio.create_task(asyncio.to_thread(...))`).
   6. Tracks live item counters (`images_done`/`images_total`), elapsed seconds, and estimated time remaining (ETA) per stage. Safely accesses `st_res.error_message` on `StageResult` models to prevent `AttributeError` crashes in the stage monitoring loop.
-  7. For `mockup_creation`, dynamically counts generated mockup PNG files in the local `mockups` workspace directory to scale progress smoothly between 10% and 90% during subprocess execution.
-  8. If a stage throws an exception:
+  7. Updates `job_data["current_stage"]` dynamically at the start of evaluating each stage loop iteration in `run_full_pipeline_async()`, and synchronizes `current_stage` in `_build_job_response()` to the active non-completed stage (`running` or `pending`) when `status == "running"`.
+  8. For `mockup_creation`, dynamically counts generated mockup PNG files in the local `mockups` workspace directory to scale progress smoothly between 10% and 90% during subprocess execution.
+  9. If a stage throws an exception:
      - Sets stage status to `failed`.
      - Captures root exception message (`error_message`) and full traceback (`stderr_log`).
      - Halts execution while preserving completed assets from earlier stages.
-  9. `run_stage_execution(job_id, stage_name)`: Resets target stage status to `pending`, clears error log, and re-executes only that specific stage.
+  10. `run_stage_execution(job_id, stage_name)`: Resets target stage status to `pending`, clears error log, and re-executes only that specific stage.
 
 ### `services/etsy_publisher.py` — Etsy API v3 Draft Listing Publisher
 - **Business Goal:** Automatically creates draft digital clipart listings on Etsy.
