@@ -438,12 +438,15 @@ class UpscaleWorker:
         )
 
         try:
-            drive.upload_folder_to_path(
+            uploaded_ids = drive.upload_folder_to_path(
                 local_dir=upscaled_dir,
                 parent_id=parent_drive_id,
                 path_parts=path_parts,
             )
-            logger.info("[upscaling] Google Drive delivery complete.")
+            logger.info(
+                f"[upscaling] Google Drive delivery complete: {len(uploaded_ids)} files uploaded "
+                f"to '{'/'.join(path_parts)}'."
+            )
         except Exception as exc:
             logger.error(f"[upscaling] Google Drive upload failed: {exc}")
             raise UpscalingError(

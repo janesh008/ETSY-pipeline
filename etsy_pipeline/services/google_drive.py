@@ -501,6 +501,7 @@ class GoogleDriveService:
 
         return current_parent
 
+
     def upload_folder_to_path(
         self,
         local_dir: Path | str,
@@ -516,6 +517,10 @@ class GoogleDriveService:
 
         Returns:
             List of Drive file IDs for the uploaded files.
+
+        Raises:
+            NotADirectoryError: If local_dir is not a valid directory.
+            RuntimeError: If ALL file uploads fail (zero successful uploads).
         """
         local_path = Path(local_dir)
         if not local_path.is_dir():
@@ -524,22 +529,40 @@ class GoogleDriveService:
         target_folder_id = self._get_or_create_folder_by_path(parent_id, path_parts)
 
         uploaded_ids = []
-        # Upload all files directly under this folder (flat structure)
-        for file_path in sorted(local_path.iterdir()):
-            if not file_path.is_file():
-                continue
+        failed_files: list[str] = []
+        files_to_upload = [f for f in sorted(local_path.iterdir()) if f.is_file()]
 
+        for file_path in files_to_upload:
             try:
                 # Custom file upload helper that directly uses parent folder_id without date fallback
                 file_id = self._upload_file_direct(file_path, target_folder_id)
                 uploaded_ids.append(file_id)
+                logger.debug(f"Uploaded '{file_path.name}' to Drive (ID: {file_id})")
             except Exception as e:
                 logger.error(
-                    f"Failed to upload {file_path.name} in batch to nested path: {e}"
+                    f"Failed to upload {file_path.name} to Drive path {'/'.join(path_parts)}: {e}"
                 )
+                failed_files.append(file_path.name)
+
+        total = len(files_to_upload)
+        success = len(uploaded_ids)
+        failed = len(failed_files)
+
+        if total > 0 and success == 0:
+            raise RuntimeError(
+                f"All {total} file upload(s) to Drive path '{'/'.join(path_parts)}' failed. "
+                f"Failed files: {failed_files[:5]}{'...' if failed > 5 else ''}. "
+                "Check Drive API quota, credentials, and folder permissions."
+            )
+
+        if failed > 0:
+            logger.warning(
+                f"Partial Drive upload: {success}/{total} files uploaded successfully to "
+                f"'{'/'.join(path_parts)}'. Failed: {failed_files}"
+            )
 
         logger.info(
-            f"Batch uploaded {len(uploaded_ids)} files to nested path {path_parts} on Drive."
+            f"Drive upload complete: {success}/{total} files uploaded to path {path_parts}."
         )
         return uploaded_ids
 
