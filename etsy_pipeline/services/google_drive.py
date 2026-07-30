@@ -530,6 +530,7 @@ class GoogleDriveService:
 
         uploaded_ids = []
         failed_files: list[str] = []
+        first_error: str | None = None
         files_to_upload = [f for f in sorted(local_path.iterdir()) if f.is_file()]
 
         for file_path in files_to_upload:
@@ -539,6 +540,8 @@ class GoogleDriveService:
                 uploaded_ids.append(file_id)
                 logger.debug(f"Uploaded '{file_path.name}' to Drive (ID: {file_id})")
             except Exception as e:
+                if first_error is None:
+                    first_error = str(e)
                 logger.error(
                     f"Failed to upload {file_path.name} to Drive path {'/'.join(path_parts)}: {e}"
                 )
@@ -549,9 +552,9 @@ class GoogleDriveService:
         failed = len(failed_files)
 
         if total > 0 and success == 0:
+            err_details = f" Root cause: {first_error}." if first_error else ""
             raise RuntimeError(
-                f"All {total} file upload(s) to Drive path '{'/'.join(path_parts)}' failed. "
-                f"Failed files: {failed_files[:5]}{'...' if failed > 5 else ''}. "
+                f"All {total} file upload(s) to Drive path '{'/'.join(path_parts)}' failed.{err_details} "
                 "Check Drive API quota, credentials, and folder permissions."
             )
 
