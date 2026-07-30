@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import asyncio
+from pathlib import Path
+from typing import Any
 
 from fastapi import (
     APIRouter,
@@ -13,6 +15,7 @@ from fastapi import (
     WebSocketDisconnect,
     status,
 )
+from fastapi.responses import FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from craftdesk_api.db.base import get_db
@@ -25,6 +28,24 @@ from craftdesk_api.schemas.pipeline import (
 from craftdesk_api.services.pipeline_runner import PipelineRunnerService
 
 router = APIRouter(prefix="/pipeline", tags=["pipeline"])
+
+
+def _build_job_response(job: dict[str, Any]) -> PipelineJobResponse:
+    """Helper to convert job_data dict into PipelineJobResponse pydantic model."""
+    return PipelineJobResponse(
+        job_id=job["job_id"],
+        user_id=job["user_id"],
+        theme_name=job["theme_name"],
+        status=job["status"],
+        current_stage=job["current_stage"],
+        stages=[StageStatus(**s) for s in job["stages"]],
+        hero_image_url=job.get("hero_image_url"),
+        mockups=job.get("mockups", []),
+        pdf_drive_link=job.get("pdf_drive_link"),
+        pdf_local_path=job.get("pdf_local_path"),
+        created_at=job["created_at"],
+        completed_at=job.get("completed_at"),
+    )
 
 
 @router.post(
@@ -51,16 +72,7 @@ async def start_pipeline_job(
     # Trigger background pipeline runner
     background_tasks.add_task(PipelineRunnerService.run_full_pipeline_async, job_id)
 
-    return PipelineJobResponse(
-        job_id=job_id,
-        user_id=user_id,
-        theme_name=job_data["theme_name"],
-        status=job_data["status"],
-        current_stage=job_data["current_stage"],
-        stages=[StageStatus(**s) for s in job_data["stages"]],
-        hero_image_url=job_data["hero_image_url"],
-        created_at=job_data["created_at"],
-    )
+    return _build_job_response(job_data)
 
 
 @router.get(
@@ -80,16 +92,36 @@ async def get_pipeline_job(
             detail="Pipeline job not found or access denied.",
         )
 
-    return PipelineJobResponse(
-        job_id=job["job_id"],
-        user_id=job["user_id"],
-        theme_name=job["theme_name"],
-        status=job["status"],
-        current_stage=job["current_stage"],
-        stages=[StageStatus(**s) for s in job["stages"]],
-        hero_image_url=job["hero_image_url"],
-        created_at=job["created_at"],
-        completed_at=job["completed_at"],
+    return _build_job_response(job)
+
+
+@router.get(
+    "/jobs/{job_id}/pdf",
+    summary="Download the generated clickable PDF wrapper for a pipeline job",
+)
+async def download_pipeline_job_pdf(
+    job_id: str,
+    user_id: str = Depends(get_current_user_id),
+):
+    """Return the generated A4 Clickable Catalog PDF wrapper as a downloadable file."""
+    job = PipelineRunnerService.get_job(job_id)
+    if not job or job["user_id"] != user_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Pipeline job not found.",
+        )
+
+    pdf_path = job.get("pdf_local_path")
+    if not pdf_path or not Path(pdf_path).exists():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="PDF file not found for this job. Ensure Stage 5 (Clickable PDF Wrap) has completed.",
+        )
+
+    return FileResponse(
+        path=pdf_path,
+        media_type="application/pdf",
+        filename=Path(pdf_path).name,
     )
 
 
@@ -151,16 +183,7 @@ async def retry_failed_stage(
         PipelineRunnerService.simulate_stage_execution, job_id, stage_name, False
     )
 
-    return PipelineJobResponse(
-        job_id=job["job_id"],
-        user_id=job["user_id"],
-        theme_name=job["theme_name"],
-        status=job["status"],
-        current_stage=job["current_stage"],
-        stages=[StageStatus(**s) for s in job["stages"]],
-        hero_image_url=job["hero_image_url"],
-        created_at=job["created_at"],
-    )
+    return _build_job_response(job)
 
 
 @router.post(
@@ -181,16 +204,7 @@ async def stop_pipeline_job(
         )
 
     stopped_job = PipelineRunnerService.stop_job(job_id) or job
-    return PipelineJobResponse(
-        job_id=stopped_job["job_id"],
-        user_id=stopped_job["user_id"],
-        theme_name=stopped_job["theme_name"],
-        status=stopped_job["status"],
-        current_stage=stopped_job["current_stage"],
-        stages=[StageStatus(**s) for s in stopped_job["stages"]],
-        hero_image_url=stopped_job["hero_image_url"],
-        created_at=stopped_job["created_at"],
-    )
+    return _build_job_response(stopped_job)
 
 
 @router.websocket("/jobs/{job_id}/stream")

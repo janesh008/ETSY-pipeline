@@ -10,12 +10,12 @@ class ReviewJobResponse(BaseModel):
 
     job_id: str
     theme_name: str
-    hero_image_url: str
-    mockups: list[str]
+    hero_image_url: str | None = None
+    mockups: list[str] = Field(default_factory=list)
     pdf_download_url: str
     title: str
     description: str
-    tags: list[str]
+    tags: list[str] = Field(default_factory=list)
     price: float = 5.99
     quantity: int = 999
     status: str  # "READY_FOR_REVIEW" | "PUBLISHED"

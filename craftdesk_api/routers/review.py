@@ -40,12 +40,23 @@ async def get_job_review_data(
         )
 
     meta = job.get("metadata", {})
+    mockups = job.get("mockups") or [
+        "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=600",
+        "https://images.unsplash.com/photo-1579783902614-a3fb3927b675?w=600",
+        "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=600",
+        "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=600",
+    ]
+    hero = job.get("hero_image_url") or mockups[0]
+    pdf_url = (
+        job.get("pdf_drive_link")
+        or f"https://drive.google.com/file/d/demo-pdf-{job['job_id']}/view"
+    )
     return ReviewJobResponse(
         job_id=job["job_id"],
         theme_name=job["theme_name"],
-        hero_image_url=job["hero_image_url"],
-        mockups=job.get("mockups", []),
-        pdf_download_url=f"https://drive.google.com/file/d/demo-pdf-{job['job_id']}/view",
+        hero_image_url=hero,
+        mockups=mockups,
+        pdf_download_url=pdf_url,
         title=meta.get("title", f"✨ {job['theme_name']} Watercolor Clipart Set"),
         description=meta.get(
             "description",
@@ -81,12 +92,23 @@ async def update_job_metadata(
     job["metadata"]["tags"] = body.tags
 
     meta = job["metadata"]
+    mockups = job.get("mockups") or [
+        "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=600",
+        "https://images.unsplash.com/photo-1579783902614-a3fb3927b675?w=600",
+        "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=600",
+        "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=600",
+    ]
+    hero = job.get("hero_image_url") or mockups[0]
+    pdf_url = (
+        job.get("pdf_drive_link")
+        or f"https://drive.google.com/file/d/demo-pdf-{job['job_id']}/view"
+    )
     return ReviewJobResponse(
         job_id=job["job_id"],
         theme_name=job["theme_name"],
-        hero_image_url=job["hero_image_url"],
-        mockups=job.get("mockups", []),
-        pdf_download_url=f"https://drive.google.com/file/d/demo-pdf-{job['job_id']}/view",
+        hero_image_url=hero,
+        mockups=mockups,
+        pdf_download_url=pdf_url,
         title=meta["title"],
         description=meta["description"],
         tags=meta["tags"],

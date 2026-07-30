@@ -91,12 +91,17 @@ To prevent blocking the FastAPI Uvicorn async event loop during heavy CUDA or su
    - Uploads upscaled files directly to Google Drive path (`Clipart/main_data/<date>/<theme_slug>`).
    - Purges local upscaled temporary folder after upload.
 
-4. **Stage 4 & 5 — Mockup Creation & PDF Generation (`mockup_creation`, `pdf_generation`)**:
+4. **Stage 4 — Mockup Creation (`mockup_creation`)**:
    - Worker: `MockupWorker.run(job)`
    - Executes `etsy mockup creator` subprocess to generate 4 high-resolution Etsy product mockups (`Hero.png`, grid mockups, style mockups).
-   - Shares upscaled Google Drive folder publicly and retrieves share link.
+   - Serves generated mockup image URLs (`hero_image_url`, `mockups[]`) to `PipelineJobResponse` and renders a 4-item visual thumbnail grid inside the Stage 4 card in `craftdesk_web` (`/pipeline`).
+
+5. **Stage 5 — Clickable PDF Wrap Generation (`pdf_generation`)**:
+   - Worker: `MockupWorker.run(job)`
+   - Shares upscaled Google Drive folder publicly and retrieves public share URL (`job.pdf_drive_link`).
    - Renders single-page A4 clickable PDF catalog wrapper (`<theme_slug>.pdf`) using ReportLab.
    - Uploads mockups and PDF wrapper to Google Drive (`Clipart/raw_data/<date>/<theme_slug>/mockups/`) and GCS.
+   - Serves `GET /api/v1/pipeline/jobs/{job_id}/pdf` to stream the PDF file, and renders interactive **📄 Open Google Drive Clipart Bundle** and **💾 Download PDF Wrapper** action buttons in `craftdesk_web` (`/pipeline` and `/review/[job_id]`).
 
 5. **Stage 6 — Etsy Metadata Generation (`metadata_generation`)**:
    - Worker: `MetadataWorker.run(job)`

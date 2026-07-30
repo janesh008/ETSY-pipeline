@@ -214,6 +214,8 @@ class PipelineRunnerService:
             "stages": stages,
             "hero_image_url": None,
             "mockups": [],
+            "pdf_drive_link": None,
+            "pdf_local_path": None,
             "metadata": job.metadata or {},
             "created_at": now,
             "completed_at": None,
@@ -530,6 +532,10 @@ class PipelineRunnerService:
             if job.mockups:
                 job_data["hero_image_url"] = job.mockups[0]
                 job_data["mockups"] = job.mockups
+            if job.pdf_drive_link:
+                job_data["pdf_drive_link"] = job.pdf_drive_link
+            if job.pdf_path:
+                job_data["pdf_local_path"] = job.pdf_path
             if job.metadata:
                 job_data["metadata"] = job.metadata
 

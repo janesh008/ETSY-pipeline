@@ -80,12 +80,26 @@ const INITIAL_STAGES: Stage[] = [
   { stage_name: "metadata_generation", label: "📝 Stage 6: Etsy Metadata (300 DPI & 13 Tags)", status: "pending", progress_percent: 0 },
 ];
 
+interface PipelineJobData {
+  job_id: string;
+  user_id: string;
+  theme_name: string;
+  status: string;
+  current_stage?: string | null;
+  stages: Stage[];
+  hero_image_url?: string | null;
+  mockups?: string[];
+  pdf_drive_link?: string | null;
+  pdf_local_path?: string | null;
+}
+
 export default function PipelinePage() {
   const [vmReady] = useState(true);
   const [jobId, setJobId] = useState<string | null>(null);
   const [jobStatus, setJobStatus] = useState<"idle" | "running" | "completed" | "failed">("idle");
   const [expandedLogStage, setExpandedLogStage] = useState<string | null>(null);
   const [stages, setStages] = useState<Stage[]>(INITIAL_STAGES);
+  const [jobData, setJobData] = useState<PipelineJobData | null>(null);
 
   // Prompt file browser state
   const [promptFiles, setPromptFiles] = useState<PromptFile[]>([]);
@@ -211,7 +225,8 @@ export default function PipelinePage() {
           headers: { Authorization: token ? `Bearer ${token}` : "" },
         });
         if (res.ok) {
-          const data = await res.json();
+          const data: PipelineJobData = await res.json();
+          setJobData(data);
           if (data.stages && data.stages.length > 0) {
             setStages(data.stages);
           }
@@ -756,6 +771,61 @@ export default function PipelinePage() {
                       <span>Progress: {stage.progress_percent}%</span>
                       {stage.estimated_time_remaining_sec != null && stage.estimated_time_remaining_sec > 0 && (
                         <span>Est. Remaining: {formatTimeSec(stage.estimated_time_remaining_sec)}</span>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {stage.status === "completed" && stage.stage_name === "mockup_creation" && (
+                  <div className="mt-4 pt-3 border-t border-[#DCD8CF]/60 space-y-2">
+                    <p className="text-xs font-bold text-[#0D5C46] flex items-center gap-1.5">
+                      <Eye className="w-3.5 h-3.5" />
+                      Generated Mockup Previews:
+                    </p>
+                    {jobData?.mockups && jobData.mockups.length > 0 ? (
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+                        {jobData.mockups.slice(0, 4).map((url, i) => (
+                          <div key={i} className="aspect-square bg-[#F9F8F3] border border-[#DCD8CF] rounded-xl overflow-hidden shadow-xs relative group">
+                            <img src={url} alt={`Mockup ${i + 1}`} className="w-full h-full object-cover group-hover:scale-105 transition" />
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-[11px] text-[#5A6561] italic">
+                        4 Etsy product mockups (Hero.png, grid, style preview) generated in local output directory.
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {stage.status === "completed" && stage.stage_name === "pdf_generation" && (
+                  <div className="mt-4 pt-3 border-t border-[#DCD8CF]/60 space-y-3">
+                    <p className="text-xs font-bold text-[#0D5C46] flex items-center gap-1.5">
+                      <FileText className="w-3.5 h-3.5" />
+                      Clickable PDF Download Bundle Ready:
+                    </p>
+                    <div className="flex flex-wrap items-center gap-3">
+                      {jobData?.pdf_drive_link && (
+                        <a
+                          href={jobData.pdf_drive_link}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="px-3.5 py-2 bg-[#0D5C46] hover:bg-[#094534] text-white text-xs font-semibold rounded-xl flex items-center gap-1.5 shadow-sm transition"
+                        >
+                          <Cloud className="w-3.5 h-3.5" />
+                          <span>Open Google Drive Clipart Bundle 🔗</span>
+                        </a>
+                      )}
+
+                      {jobId && (
+                        <a
+                          href={`${getApiBaseUrl()}/pipeline/jobs/${jobId}/pdf`}
+                          download
+                          className="px-3.5 py-2 bg-[#F9F8F3] hover:bg-white text-[#1C2421] border border-[#DCD8CF] text-xs font-semibold rounded-xl flex items-center gap-1.5 transition shadow-xs"
+                        >
+                          <FileText className="w-3.5 h-3.5 text-[#C85A32]" />
+                          <span>Download A4 Catalog PDF 💾</span>
+                        </a>
                       )}
                     </div>
                   </div>

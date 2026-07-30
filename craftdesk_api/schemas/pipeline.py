@@ -45,5 +45,8 @@ class PipelineJobResponse(BaseModel):
     current_stage: str | None = None
     stages: list[StageStatus]
     hero_image_url: str | None = None
+    mockups: list[str] = Field(default_factory=list)
+    pdf_drive_link: str | None = None
+    pdf_local_path: str | None = None
     created_at: datetime
     completed_at: datetime | None = None
