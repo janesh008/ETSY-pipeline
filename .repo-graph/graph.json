@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-07-29T19:28:52.664684+00:00",
+  "generated_at": "2026-07-30T05:18:52.428493+00:00",
   "generator": "scripts/build_graph.py",
   "static_only": true,
   "scan_roots": [
@@ -8,8 +8,8 @@
     "scripts",
     "tests"
   ],
-  "node_count": 318,
-  "edge_count": 1721,
+  "node_count": 319,
+  "edge_count": 1726,
   "nodes": [
     {
       "id": "etsy_pipeline",
@@ -3078,6 +3078,7 @@
       "methods": [
         "test_parses_all_sections",
         "test_active_sections_have_prompts",
+        "test_parses_unnumbered_prompts",
         "test_inactive_sections_are_empty",
         "test_prompts_are_clean_strings",
         "test_roster_extraction",
@@ -3087,6 +3088,7 @@
       "public_methods": [
         "test_parses_all_sections",
         "test_active_sections_have_prompts",
+        "test_parses_unnumbered_prompts",
         "test_inactive_sections_are_empty",
         "test_prompts_are_clean_strings",
         "test_roster_extraction",
@@ -3140,6 +3142,16 @@
       "module": "tests.test_prompt_worker",
       "docstring_summary": "Verify all locked sections are present in parsed output.",
       "signature": "(self, worker, sample_gemini_response)",
+      "is_public": true,
+      "is_async": false,
+      "class": "TestParseResponse"
+    },
+    {
+      "id": "tests.test_prompt_worker.TestParseResponse.test_parses_unnumbered_prompts",
+      "kind": "function",
+      "module": "tests.test_prompt_worker",
+      "docstring_summary": "Verify unnumbered prompt text separated by blank lines is parsed correctly.",
+      "signature": "(self, worker)",
       "is_public": true,
       "is_async": false,
       "class": "TestParseResponse"
@@ -9823,6 +9835,20 @@
     },
     {
       "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._extract_prompts_from_section",
+      "to": "lower",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._extract_prompts_from_section",
+      "to": "replace",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._extract_prompts_from_section",
       "to": "split",
       "kind": "call",
       "static_only": true,
@@ -9831,6 +9857,13 @@
     {
       "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._extract_prompts_from_section",
       "to": "start",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.prompt_worker.PromptWorker._extract_prompts_from_section",
+      "to": "startswith",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
@@ -14820,6 +14853,20 @@
     {
       "from": "tests.test_prompt_worker.TestParseResponse.test_parses_all_sections",
       "to": "_parse_response",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_prompt_worker.TestParseResponse.test_parses_unnumbered_prompts",
+      "to": "_parse_response",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_prompt_worker.TestParseResponse.test_parses_unnumbered_prompts",
+      "to": "len",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"

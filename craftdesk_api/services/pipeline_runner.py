@@ -173,11 +173,11 @@ class PipelineRunnerService:
                     f"[pipeline_runner] Failed to locate/read prompt file from GCS or disk: {prompt_file_path}"
                 )
 
-        # Fallback if no prompts injected
-        if not job.prompts and prompts:
+        # Fallback if no prompts injected or prompt count is 0
+        if job.total_prompt_count == 0 and prompts:
             job.prompts = {"MAIN_CHARACTER": prompts}
 
-        if not job.prompts:
+        if job.total_prompt_count == 0:
             job.prompts = {
                 "MAIN_CHARACTER": [f"Digital watercolor clipart of {theme_name}"]
             }

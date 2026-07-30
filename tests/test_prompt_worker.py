@@ -314,6 +314,29 @@ class TestParseResponse:
                 f"Section {section} has {len(prompts[section])} prompts (expected >= 10)"
             )
 
+    def test_parses_unnumbered_prompts(self, worker: PromptWorker) -> None:
+        """Verify unnumbered prompt text separated by blank lines is parsed correctly."""
+        raw_text = """
+## MAIN_CHARACTER
+Digital watercolor illustration of Cristiano Ronaldo, heroic action stance.
+
+Digital watercolor illustration of Cristiano Ronaldo, holding a vibrant birthday cake.
+
+## SUB_CHARACTER_1
+Digital watercolor illustration of Cristiano Ronaldo, floating joyfully with balloons.
+
+## SUB_CHARACTER_2
+(not applicable for this roster)
+"""
+        prompts, _ = worker._parse_response(raw_text)
+        assert len(prompts["MAIN_CHARACTER"]) == 2
+        assert (
+            prompts["MAIN_CHARACTER"][0]
+            == "Digital watercolor illustration of Cristiano Ronaldo, heroic action stance."
+        )
+        assert len(prompts["SUB_CHARACTER_1"]) == 1
+        assert len(prompts["SUB_CHARACTER_2"]) == 0
+
     def test_inactive_sections_are_empty(
         self, worker: PromptWorker, sample_gemini_response: str
     ) -> None:

@@ -499,6 +499,22 @@ class PromptWorker:
             if prompt_text:
                 prompts.append(prompt_text)
 
+        if not prompt_starts and section_content.strip():
+            # Fallback for unnumbered prompt blocks separated by blank lines
+            blocks = [b.strip() for b in section_content.split("\n\n") if b.strip()]
+            for block in blocks:
+                # Skip comments, notes, or inactive section markers
+                if block.startswith("(") or block.startswith("#"):
+                    continue
+                if (
+                    INACTIVE_SECTION_MARKER in block.lower().replace("—", "-")
+                    or "(not applicable" in block.lower()
+                ):
+                    continue
+                prompt_text = " ".join(block.split())
+                if prompt_text:
+                    prompts.append(prompt_text)
+
         return prompts
 
     def _extract_roster(self, preamble: str) -> dict[str, str]:
