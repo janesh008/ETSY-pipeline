@@ -62,10 +62,11 @@ This document explains the technical architecture, data flow, GCS prompt injecti
 
 ### Step 2: Sequential Worker Execution with 100% Module Resiliency
 Before executing each worker stage, `PipelineRunnerService` checks if **100% of that stage's expected output files** already exist in storage (`_is_stage_100pct_complete`):
-- For `image_gen`, `bg_removal`, `mockup_creation`: Checks local disk and GCS (`gs://bucket/Clipart/...`).
-- For `upscaling`: Queries Google Drive folder `Clipart/main_data/<date_folder>/<theme_slug>/` under root folder `1JWUBqtP-PG-hRLEQj4Kh_vNzfb_G_PCP` as the exclusive source of truth. Local VM disk checks are bypassed to prevent false-positive stage skips from leftover files.
+- For `image_gen`, `bg_removal`, `mockup_creation`: Checks local disk and GCS (`gs://bucket/Clipart/...`), requiring file count $\ge$ `job.total_prompt_count`.
+- For `image_gen` & `bg_removal` post-stage cleanup fallback: If `raw_images/` was purged post-stage cleanup, checks whether downstream stage outputs (`no_bg/` or Google Drive upscaled folder) match $\ge$ `job.total_prompt_count`.
+- For `upscaling`: Queries Google Drive folder `Clipart/main_data/<date_folder>/<theme_slug>/` under root folder `1JWUBqtP-PG-hRLEQj4Kh_vNzfb_G_PCP` as the exclusive source of truth, requiring PNG file count $\ge$ `job.total_prompt_count`. Local VM disk checks are bypassed to prevent false-positive stage skips from leftover files.
 - `GoogleDriveService._get_credentials()` inspects credential files and automatically supports GCP Service Account JSON keys (`gen-lang-client-*.json`), enabling 100% browserless server-side authentication for headless VM environments. Also resolves relative paths against `_PROJECT_ROOT`.
-- If 100% complete: The stage is marked `Completed ✅` immediately and worker execution is skipped.
+- If 100% complete (or status is `completed` in `job_data`): The stage is marked `Completed ✅` immediately and worker execution is skipped.
 - If incomplete / interrupted: The stage is marked `Pending ⏳` and runs cleanly from start.
 
 To prevent blocking the FastAPI Uvicorn async event loop during heavy CUDA or subprocess operations, `PipelineRunnerService.run_full_pipeline_async` wraps `asyncio.to_thread` with `asyncio.create_task` (`worker_task = asyncio.create_task(asyncio.to_thread(cls._execute_stage_worker_sync, job, stage_name))`). This produces a true `asyncio.Task` object supporting `.done()` polling while progress metrics, item counts (`images_done` / `images_total`), and ETA are continuously updated in real-time across workers (`ImageWorker`, `BackgroundRemovalWorker`, `UpscaleWorker`).

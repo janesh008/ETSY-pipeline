@@ -267,6 +267,12 @@ class PipelineRunnerService:
                             return True
                 except Exception:
                     pass
+
+            # Downstream completion fallback: raw_images is purged after bg_removal.
+            # If bg_removal or upscaling outputs match total_expected, image_gen is 100% complete.
+            if cls._is_stage_100pct_complete(job, "bg_removal") or cls._is_stage_100pct_complete(job, "upscaling"):
+                return True
+
             return False
 
         elif stage_name == "bg_removal":
@@ -301,6 +307,11 @@ class PipelineRunnerService:
                             return True
                 except Exception:
                     pass
+
+            # Downstream completion fallback: if upscaling is 100% complete on Drive, bg_removal is complete.
+            if cls._is_stage_100pct_complete(job, "upscaling"):
+                return True
+
             return False
 
         elif stage_name == "upscaling":
@@ -560,8 +571,8 @@ class PipelineRunnerService:
         for stage in job_data["stages"]:
             s_name = stage["stage_name"]
 
-            # Check if 100% of stage outputs exist in storage
-            if cls._is_stage_100pct_complete(job, s_name):
+            # Check if 100% of stage outputs exist in storage or stage is already marked completed
+            if stage.get("status") == "completed" or cls._is_stage_100pct_complete(job, s_name):
                 logger.info(
                     f"[pipeline_runner] Stage '{s_name}' is 100% completed in storage — skipping worker execution."
                 )
@@ -569,7 +580,7 @@ class PipelineRunnerService:
                 stage["progress_percent"] = 100
                 stage["images_done"] = job.total_prompt_count
                 stage["images_total"] = job.total_prompt_count
-                stage["completed_at"] = datetime.now(UTC).isoformat()
+                stage["completed_at"] = stage.get("completed_at") or datetime.now(UTC).isoformat()
                 stage["error_message"] = None
                 continue
 
