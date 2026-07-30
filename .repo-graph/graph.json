@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-07-30T16:55:46.485300+00:00",
+  "generated_at": "2026-07-30T17:08:04.398968+00:00",
   "generator": "scripts/build_graph.py",
   "static_only": true,
   "scan_roots": [
@@ -8,7 +8,7 @@
     "scripts",
     "tests"
   ],
-  "node_count": 319,
+  "node_count": 320,
   "edge_count": 1734,
   "nodes": [
     {
@@ -208,6 +208,7 @@
         "mark_running",
         "mark_completed",
         "mark_failed",
+        "update_progress",
         "duration_seconds",
         "progress_pct"
       ],
@@ -215,6 +216,7 @@
         "mark_running",
         "mark_completed",
         "mark_failed",
+        "update_progress",
         "duration_seconds",
         "progress_pct"
       ]
@@ -265,6 +267,16 @@
       "module": "etsy_pipeline.models.job",
       "docstring_summary": "Image generation progress as a 0.0–100.0 percentage, or None if not applicable.",
       "signature": "(self)",
+      "is_public": true,
+      "is_async": false,
+      "class": "StageResult"
+    },
+    {
+      "id": "etsy_pipeline.models.job.StageResult.update_progress",
+      "kind": "function",
+      "module": "etsy_pipeline.models.job",
+      "docstring_summary": "Update progress metrics for this stage.",
+      "signature": "(self, images_done, images_total, estimated_time_remaining_sec)",
       "is_public": true,
       "is_async": false,
       "class": "StageResult"

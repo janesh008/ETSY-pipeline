@@ -122,7 +122,11 @@ async def download_pipeline_job_pdf(
         theme_slug = job.get("theme_name", "").replace(" ", "_")
         possible_local = [
             Path(settings.output_root) / date_folder / theme_slug / f"{theme_slug}.pdf",
-            Path(settings.output_root) / "Clipart" / date_folder / theme_slug / f"{theme_slug}.pdf",
+            Path(settings.output_root)
+            / "Clipart"
+            / date_folder
+            / theme_slug
+            / f"{theme_slug}.pdf",
         ]
         for p in possible_local:
             if p.exists():
@@ -136,7 +140,10 @@ async def download_pipeline_job_pdf(
                 gcs = GCSStore(settings=settings)
                 gcs_key = f"Clipart/{date_folder}/{theme_slug}/pdf/{theme_slug}.pdf"
                 local_dest = (
-                    Path(settings.output_root) / date_folder / theme_slug / f"{theme_slug}.pdf"
+                    Path(settings.output_root)
+                    / date_folder
+                    / theme_slug
+                    / f"{theme_slug}.pdf"
                 )
                 local_dest.parent.mkdir(parents=True, exist_ok=True)
                 gcs.download_file(gcs_key, local_dest)

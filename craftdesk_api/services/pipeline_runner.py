@@ -340,7 +340,9 @@ class PipelineRunnerService:
 
             # Downstream completion fallback: raw_images is purged after bg_removal.
             # If bg_removal or upscaling outputs match total_expected, image_gen is 100% complete.
-            if cls._is_stage_100pct_complete(job, "bg_removal") or cls._is_stage_100pct_complete(job, "upscaling"):
+            if cls._is_stage_100pct_complete(
+                job, "bg_removal"
+            ) or cls._is_stage_100pct_complete(job, "upscaling"):
                 return True
 
             return False
@@ -428,7 +430,11 @@ class PipelineRunnerService:
             mockup_dir = local_base / "mockups"
             if pdf_file.exists() and mockup_dir.exists():
                 mockup_pngs = sorted(
-                    [str(f) for f in mockup_dir.glob("*.png") if f.stat().st_size > 10240]
+                    [
+                        str(f)
+                        for f in mockup_dir.glob("*.png")
+                        if f.stat().st_size > 10240
+                    ]
                 )
                 if len(mockup_pngs) >= 4 and pdf_file.stat().st_size > 10240:
                     job.pdf_path = str(pdf_file)
@@ -502,6 +508,8 @@ class PipelineRunnerService:
         if not job_data:
             return
 
+        settings = get_settings()
+
         job = _ACTIVE_JOB_OBJECTS.get(job_id)
         if not job:
             job = _reconstruct_job_object(job_data)
@@ -570,12 +578,35 @@ class PipelineRunnerService:
 
                 st_res = job.stages.get(internal_stage_key)
                 if st_res:
+                    err_msg = getattr(st_res, "error_message", None)
                     log_msg = f"[{stage_name}] Status: {st_res.status}. Step {st_res.images_done}/{st_res.images_total or 1}. Elapsed: {elapsed_sec}s."
-                    if st_res.error:
-                        log_msg += f"\nError: {st_res.error}"
+                    if err_msg:
+                        log_msg += f"\nError: {err_msg}"
                     stage_dict["live_log"] = log_msg
 
-                    if st_res.images_total > 0:
+                    if stage_name in ("mockup_creation", "pdf_generation"):
+                        local_mockups_dir = (
+                            Path(settings.output_root)
+                            / job.date_folder
+                            / job.theme_slug
+                            / "mockups"
+                        )
+                        if local_mockups_dir.exists():
+                            m_count = len(list(local_mockups_dir.glob("*.png")))
+                            if m_count > 0:
+                                stage_dict["images_done"] = m_count
+                                stage_dict["images_total"] = max(4, m_count)
+                                pct = int((m_count / 4) * 80) + 10
+                                stage_dict["progress_percent"] = max(10, min(90, pct))
+                            else:
+                                stage_dict["progress_percent"] = min(
+                                    90, max(10, int(elapsed_sec * 3))
+                                )
+                        else:
+                            stage_dict["progress_percent"] = min(
+                                90, max(10, int(elapsed_sec * 3))
+                            )
+                    elif st_res.images_total > 0:
                         stage_dict["images_done"] = st_res.images_done
                         stage_dict["images_total"] = st_res.images_total
                         pct = int((st_res.images_done / st_res.images_total) * 100)
@@ -664,7 +695,9 @@ class PipelineRunnerService:
             s_name = stage["stage_name"]
 
             # Check if 100% of stage outputs exist in storage or stage is already marked completed
-            if stage.get("status") == "completed" or cls._is_stage_100pct_complete(job, s_name):
+            if stage.get("status") == "completed" or cls._is_stage_100pct_complete(
+                job, s_name
+            ):
                 logger.info(
                     f"[pipeline_runner] Stage '{s_name}' is 100% completed in storage — skipping worker execution."
                 )
@@ -672,7 +705,9 @@ class PipelineRunnerService:
                 stage["progress_percent"] = 100
                 stage["images_done"] = job.total_prompt_count
                 stage["images_total"] = job.total_prompt_count
-                stage["completed_at"] = stage.get("completed_at") or datetime.now(UTC).isoformat()
+                stage["completed_at"] = (
+                    stage.get("completed_at") or datetime.now(UTC).isoformat()
+                )
                 stage["error_message"] = None
                 continue
 

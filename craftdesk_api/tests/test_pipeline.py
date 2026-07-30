@@ -102,7 +102,9 @@ class TestPipelineEndpoints:
 
         job["pdf_local_path"] = str(pdf_file)
 
-        pdf_resp = client.get(f"/api/v1/pipeline/jobs/{job_id}/pdf", headers=auth_headers)
+        pdf_resp = client.get(
+            f"/api/v1/pipeline/jobs/{job_id}/pdf", headers=auth_headers
+        )
         assert pdf_resp.status_code == 200
         assert "application/pdf" in pdf_resp.headers["content-type"]
         assert pdf_resp.content == b"%PDF-1.4 mock binary content"

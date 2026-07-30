@@ -102,6 +102,19 @@ class StageResult(BaseModel):
         self.completed_at = datetime.now(UTC)
         self.error_message = error_message
 
+    def update_progress(
+        self,
+        images_done: int,
+        images_total: int | None = None,
+        estimated_time_remaining_sec: float | None = None,
+    ) -> None:
+        """Update progress metrics for this stage."""
+        self.images_done = images_done
+        if images_total is not None:
+            self.images_total = images_total
+        if estimated_time_remaining_sec is not None:
+            self.estimated_time_remaining_sec = estimated_time_remaining_sec
+
     @property
     def duration_seconds(self) -> float | None:
         """Calculate duration in seconds, if both timestamps exist or while running."""

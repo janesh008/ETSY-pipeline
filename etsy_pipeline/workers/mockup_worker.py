@@ -122,6 +122,22 @@ class MockupWorker:
             if list(raw_dir.glob("*.png")):
                 no_bg_dir = raw_dir
 
+        # Third fallback to upscaled main_data folder on Drive/GCS if no_bg and raw_images are empty
+        if not list(no_bg_dir.glob("*.png")):
+            ensure_local_assets(
+                local_dir=no_bg_dir,
+                gcs_prefix=f"Clipart/{job.date_folder}/{theme_slug}/upscaled/",
+                drive_path_parts=[
+                    "Clipart",
+                    "main_data",
+                    job.date_folder,
+                    theme_slug,
+                ],
+                settings=self._settings,
+                gcs_store=self._gcs,
+                drive_service=self._drive,
+            )
+
         job.stages[self.STAGE_NAME].update_progress(1, 5)
 
         # Find first image for PDF preview before processing
@@ -141,9 +157,10 @@ class MockupWorker:
 
         # Walk to upscale path: Clipart/main_data/<date>/<theme_slug>
         upscale_parts = ["Clipart", "main_data", job.date_folder, theme_slug]
+        parent_drive_id = self._settings.google_drive_folder_id or ETSY_DRIVE_FOLDER_ID
         try:
             upscale_folder_id = drive.get_folder_id_by_path(
-                parent_id=ETSY_DRIVE_FOLDER_ID, path_parts=upscale_parts
+                parent_id=parent_drive_id, path_parts=upscale_parts
             )
             public_folder_link = drive.share_folder_publicly(upscale_folder_id)
         except Exception as exc:

@@ -77,12 +77,13 @@ This document provides an exhaustive breakdown of every module in `craftdesk_api
   3. `_is_stage_100pct_complete()`: Checks GCS bucket prefix `Clipart/<date>/<theme>/<stage>/` and local `output/Clipart/<date>/<theme>/<stage>/`. If 100% of expected PNG files exist, marks stage `Completed ✅` immediately and skips worker execution.
   4. `stop_job(job_id)`: Cancels active `asyncio.Task`, sets job and running stage status to `failed` (`"Pipeline execution stopped by user."`).
   5. `run_full_pipeline_async()`: Sequentially executes `etsy_pipeline` worker modules (`ImageWorker`, `BackgroundRemovalWorker`, `UpscaleWorker`, `MockupWorker`, `MetadataWorker`) in background threads (`asyncio.create_task(asyncio.to_thread(...))`).
-  6. Tracks live item counters (`images_done`/`images_total`), elapsed seconds, and estimated time remaining (ETA) per stage.
-  7. If a stage throws an exception:
+  6. Tracks live item counters (`images_done`/`images_total`), elapsed seconds, and estimated time remaining (ETA) per stage. Safely accesses `st_res.error_message` on `StageResult` models to prevent `AttributeError` crashes in the stage monitoring loop.
+  7. For `mockup_creation`, dynamically counts generated mockup PNG files in the local `mockups` workspace directory to scale progress smoothly between 10% and 90% during subprocess execution.
+  8. If a stage throws an exception:
      - Sets stage status to `failed`.
      - Captures root exception message (`error_message`) and full traceback (`stderr_log`).
      - Halts execution while preserving completed assets from earlier stages.
-  8. `run_stage_execution(job_id, stage_name)`: Resets target stage status to `pending`, clears error log, and re-executes only that specific stage.
+  9. `run_stage_execution(job_id, stage_name)`: Resets target stage status to `pending`, clears error log, and re-executes only that specific stage.
 
 ### `services/etsy_publisher.py` — Etsy API v3 Draft Listing Publisher
 - **Business Goal:** Automatically creates draft digital clipart listings on Etsy.

@@ -501,7 +501,6 @@ class GoogleDriveService:
 
         return current_parent
 
-
     def upload_folder_to_path(
         self,
         local_dir: Path | str,
