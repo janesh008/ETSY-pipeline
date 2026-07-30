@@ -20,6 +20,7 @@ class StageStatus(BaseModel):
     estimated_time_remaining_sec: float | None = None
     error_message: str | None = None
     stderr_log: str | None = None
+    live_log: str | None = None
     started_at: str | None = None
     completed_at: str | None = None
 

@@ -854,36 +854,38 @@ export default function PipelinePage() {
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between">
-                      <button
-                        onClick={() =>
-                          setExpandedLogStage(expandedLogStage === stage.stage_name ? null : stage.stage_name)
-                        }
-                        className="text-xs text-red-700 hover:text-red-900 font-semibold flex items-center gap-1 cursor-pointer"
-                      >
-                        <Terminal className="w-3.5 h-3.5" />
-                        <span>{expandedLogStage === stage.stage_name ? "Hide Stderr Log" : "View Stderr Log"}</span>
-                        {expandedLogStage === stage.stage_name ? (
-                          <ChevronUp className="w-3.5 h-3.5" />
-                        ) : (
-                          <ChevronDown className="w-3.5 h-3.5" />
-                        )}
-                      </button>
-
-                      <button
-                        onClick={() => handleRetryStage(stage.stage_name)}
-                        className="px-3 py-1.5 bg-[#C85A32] hover:bg-[#B24D28] text-white text-xs font-semibold rounded-xl flex items-center gap-1.5 transition shadow-sm cursor-pointer"
-                      >
-                        <RotateCcw className="w-3.5 h-3.5" />
-                        <span>Retry Stage</span>
-                      </button>
-                    </div>
-
-                    {expandedLogStage === stage.stage_name && stage.stderr_log && (
-                      <pre className="p-3.5 bg-slate-900 text-slate-100 rounded-xl text-[11px] font-mono overflow-x-auto border border-slate-800 leading-relaxed">
-                        {stage.stderr_log}
-                      </pre>
+                <div className="mt-3 pt-2 border-t border-[#DCD8CF]/40 flex items-center justify-between">
+                  <button
+                    onClick={() =>
+                      setExpandedLogStage(expandedLogStage === stage.stage_name ? null : stage.stage_name)
+                    }
+                    className="text-xs text-[#5A6561] hover:text-[#1C2421] font-medium flex items-center gap-1 cursor-pointer"
+                  >
+                    <Terminal className="w-3.5 h-3.5 text-[#0D5C46]" />
+                    <span>{expandedLogStage === stage.stage_name ? "Hide Logs" : "View Logs"}</span>
+                    {expandedLogStage === stage.stage_name ? (
+                      <ChevronUp className="w-3.5 h-3.5" />
+                    ) : (
+                      <ChevronDown className="w-3.5 h-3.5" />
                     )}
+                  </button>
+
+                  {stage.status === "failed" && (
+                    <button
+                      onClick={() => handleRetryStage(stage.stage_name)}
+                      className="px-3 py-1.5 bg-[#C85A32] hover:bg-[#B24D28] text-white text-xs font-semibold rounded-xl flex items-center gap-1.5 transition shadow-sm cursor-pointer"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      <span>Retry Stage</span>
+                    </button>
+                  )}
+                </div>
+
+                {expandedLogStage === stage.stage_name && (
+                  <pre className="mt-2 p-3.5 bg-slate-900 text-emerald-400 rounded-xl text-[11px] font-mono overflow-x-auto border border-slate-800 leading-relaxed max-h-60">
+                    {stage.stderr_log || stage.live_log || stage.error_message || `[${stage.stage_name}] Status: ${stage.status}. Progress: ${stage.progress_percent}%. Elapsed: ${stage.elapsed_seconds || 0}s.`}
+                  </pre>
+                )}
                   </div>
                 )}
               </div>

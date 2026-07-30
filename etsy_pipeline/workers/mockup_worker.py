@@ -101,6 +101,27 @@ class MockupWorker:
             gcs_store=self._gcs,
             drive_service=self._drive,
         )
+
+        # Fallback to raw_images if no_bg is empty
+        if not list(no_bg_dir.glob("*.png")):
+            raw_dir = local_base_dir / "raw_images"
+            ensure_local_assets(
+                local_dir=raw_dir,
+                gcs_prefix=f"Clipart/{job.date_folder}/{theme_slug}/raw_images/",
+                drive_path_parts=[
+                    "Clipart",
+                    "raw_data",
+                    job.date_folder,
+                    theme_slug,
+                    "raw_images",
+                ],
+                settings=self._settings,
+                gcs_store=self._gcs,
+                drive_service=self._drive,
+            )
+            if list(raw_dir.glob("*.png")):
+                no_bg_dir = raw_dir
+
         job.stages[self.STAGE_NAME].update_progress(1, 5)
 
         # Find first image for PDF preview before processing

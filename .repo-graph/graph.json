@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-07-30T16:08:20.039062+00:00",
+  "generated_at": "2026-07-30T16:27:26.485110+00:00",
   "generator": "scripts/build_graph.py",
   "static_only": true,
   "scan_roots": [

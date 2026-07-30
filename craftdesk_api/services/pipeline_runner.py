@@ -570,6 +570,11 @@ class PipelineRunnerService:
 
                 st_res = job.stages.get(internal_stage_key)
                 if st_res:
+                    log_msg = f"[{stage_name}] Status: {st_res.status}. Step {st_res.images_done}/{st_res.images_total or 1}. Elapsed: {elapsed_sec}s."
+                    if st_res.error:
+                        log_msg += f"\nError: {st_res.error}"
+                    stage_dict["live_log"] = log_msg
+
                     if st_res.images_total > 0:
                         stage_dict["images_done"] = st_res.images_done
                         stage_dict["images_total"] = st_res.images_total
