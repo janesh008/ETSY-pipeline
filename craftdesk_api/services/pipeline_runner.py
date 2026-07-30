@@ -75,6 +75,35 @@ def _load_jobs_cache() -> None:
 _load_jobs_cache()
 
 
+def _reconstruct_job_object(job_data: dict[str, Any]) -> Job:
+    """Reconstruct a Job dataclass object from a job_data dict if memory was cleared."""
+    settings = get_settings()
+    theme_name = job_data.get("theme_name", "Clipart")
+    date_folder = job_data.get("date_folder") or datetime.now(UTC).strftime("%Y-%m-%d")
+    job = Job(
+        job_id=job_data["job_id"],
+        theme=theme_name,
+        date_folder=date_folder,
+        prompts=job_data.get(
+            "prompts",
+            {"MAIN_CHARACTER": [f"Digital watercolor clipart of {theme_name}"]},
+        ),
+        output_dir=str(
+            Path(settings.output_root) / date_folder / theme_name.replace(" ", "_")
+        ),
+        metadata=job_data.get("metadata", {}),
+    )
+    if job_data.get("pdf_drive_link"):
+        job.pdf_drive_link = job_data["pdf_drive_link"]
+    if job_data.get("pdf_local_path"):
+        job.pdf_path = job_data["pdf_local_path"]
+    if job_data.get("mockups"):
+        job.mockups = job_data["mockups"]
+    if job_data.get("hero_image_url"):
+        job.hero_image_url = job_data["hero_image_url"]
+    return job
+
+
 class PipelineRunnerService:
     """Orchestrates 6 pipeline stage execution using real etsy_pipeline worker modules."""
 
@@ -470,9 +499,13 @@ class PipelineRunnerService:
     ) -> None:
         """Run execution of a single stage with real-time ETA and progress tracking."""
         job_data = _PIPELINE_JOBS_STORE.get(job_id)
-        job = _ACTIVE_JOB_OBJECTS.get(job_id)
-        if not job_data or not job:
+        if not job_data:
             return
+
+        job = _ACTIVE_JOB_OBJECTS.get(job_id)
+        if not job:
+            job = _reconstruct_job_object(job_data)
+            _ACTIVE_JOB_OBJECTS[job_id] = job
 
         stage_dict = next(
             (s for s in job_data["stages"] if s["stage_name"] == stage_name), None
@@ -614,9 +647,13 @@ class PipelineRunnerService:
     ) -> None:
         """Run all 6 pipeline stages sequentially with 100% module checkpoint skipping."""
         job_data = _PIPELINE_JOBS_STORE.get(job_id)
-        job = _ACTIVE_JOB_OBJECTS.get(job_id)
-        if not job_data or not job:
+        if not job_data:
             return
+
+        job = _ACTIVE_JOB_OBJECTS.get(job_id)
+        if not job:
+            job = _reconstruct_job_object(job_data)
+            _ACTIVE_JOB_OBJECTS[job_id] = job
 
         for stage in job_data["stages"]:
             s_name = stage["stage_name"]
