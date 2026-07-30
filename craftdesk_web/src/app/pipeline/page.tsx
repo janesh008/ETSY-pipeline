@@ -41,6 +41,7 @@ interface Stage {
   estimated_time_remaining_sec?: number | null;
   error_message?: string | null;
   stderr_log?: string | null;
+  live_log?: string | null;
   started_at?: string | null;
   completed_at?: string | null;
 }
@@ -312,23 +313,30 @@ export default function PipelinePage() {
     setJobStatus("failed");
   };
 
-  const handleRetryStage = (stageName: string) => {
+  const handleRetryStage = async (stageName: string) => {
+    if (!jobId) return;
     setStages((prev) =>
       prev.map((s) =>
         s.stage_name === stageName
-          ? { ...s, status: "running", progress_percent: 25, error_message: null, stderr_log: null }
+          ? { ...s, status: "running", progress_percent: 5, error_message: null, stderr_log: null }
           : s
       )
     );
-    setTimeout(() => {
-      setStages((prev) =>
-        prev.map((s) =>
-          s.stage_name === stageName ? { ...s, status: "completed", progress_percent: 100 } : s
-        )
+    try {
+      const token = localStorage.getItem("craftdesk_access_token");
+      const res = await fetch(
+        `${getApiBaseUrl()}/pipeline/jobs/${jobId}/stages/${stageName}/retry`,
+        {
+          method: "POST",
+          headers: { Authorization: token ? `Bearer ${token}` : "" },
+        }
       );
-      setJobStatus("running");
-      simulatePipelineProgress(jobId || "demo-job-1");
-    }, 1500);
+      if (res.ok) {
+        pollJobProgress(jobId);
+      }
+    } catch {
+      alert("Failed to retry stage.");
+    }
   };
 
   const resetPipeline = () => {
