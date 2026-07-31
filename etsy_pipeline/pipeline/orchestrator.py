@@ -24,9 +24,9 @@ from etsy_pipeline.models.job import Job, JobStatus
 from etsy_pipeline.utils.exceptions import PipelineError
 from etsy_pipeline.utils.logging import get_logger, setup_logging
 from etsy_pipeline.workers.bg_removal_worker import BackgroundRemovalWorker
-from etsy_pipeline.workers.csv_worker import CSVWorker
 from etsy_pipeline.workers.etsy_worker import EtsyWorker
 from etsy_pipeline.workers.image_worker import ImageWorker
+from etsy_pipeline.workers.listing_record_worker import ListingRecordWorker
 from etsy_pipeline.workers.metadata_worker import MetadataWorker
 from etsy_pipeline.workers.mockup_worker import MockupWorker
 from etsy_pipeline.workers.prompt_worker import PromptWorker
@@ -90,7 +90,7 @@ class Pipeline:
         self._upscale_worker = UpscaleWorker(settings=self._settings)
         self._mockup_worker = MockupWorker(settings=self._settings)
         self._metadata_worker = MetadataWorker(settings=self._settings)
-        self._csv_worker = CSVWorker(settings=self._settings)
+        self._listing_record_worker = ListingRecordWorker(settings=self._settings)
         self._etsy_worker = EtsyWorker(settings=self._settings)
 
         logger.info("Pipeline initialized")
@@ -124,7 +124,7 @@ class Pipeline:
             ("upscaling", self._upscale_worker),
             ("mockups", self._mockup_worker),
             ("metadata_generation", self._metadata_worker),
-            ("csv_generation", self._csv_worker),
+            ("listing_record", self._listing_record_worker),
             ("etsy_upload", self._etsy_worker),
         ]
 
@@ -190,7 +190,7 @@ class Pipeline:
             "upscaling": self._upscale_worker,
             "mockups": self._mockup_worker,
             "metadata_generation": self._metadata_worker,
-            "csv_generation": self._csv_worker,
+            "listing_record": self._listing_record_worker,
             "etsy_upload": self._etsy_worker,
         }
 

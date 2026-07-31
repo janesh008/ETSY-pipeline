@@ -491,10 +491,13 @@ class PipelineRunnerService:
             return worker.run(job)
 
         elif stage_name == "metadata_generation":
+            from etsy_pipeline.workers.listing_record_worker import ListingRecordWorker
             from etsy_pipeline.workers.metadata_worker import MetadataWorker
 
             worker = MetadataWorker(settings=settings)
-            return worker.run(job)
+            job = worker.run(job)
+            record_worker = ListingRecordWorker(settings=settings)
+            return record_worker.run(job)
 
         else:
             raise ValueError(f"Unknown stage name: {stage_name}")

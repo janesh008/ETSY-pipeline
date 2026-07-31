@@ -1,4 +1,4 @@
-"""CLI entry point for the Metadata Generation & CSV Consolidation worker.
+"""CLI entry point for the Metadata Generation & Listing Record worker.
 
 Usage:
     # Process all PENDING metadata jobs in a loop (daemon mode):
@@ -17,6 +17,7 @@ import argparse
 import sys
 import time
 from pathlib import Path
+from typing import Any
 
 # Add project root to path for direct script execution
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -26,7 +27,9 @@ if str(_PROJECT_ROOT) not in sys.path:
 from etsy_pipeline.config.settings import get_settings  # noqa: E402
 from etsy_pipeline.models.job import Job  # noqa: E402
 from etsy_pipeline.utils.logging import get_logger, setup_logging  # noqa: E402
-from etsy_pipeline.workers.csv_worker import CSVWorker  # noqa: E402
+from etsy_pipeline.workers.listing_record_worker import (  # noqa: E402
+    ListingRecordWorker,
+)
 from etsy_pipeline.workers.metadata_worker import MetadataWorker  # noqa: E402
 
 logger = get_logger(__name__)
@@ -38,7 +41,7 @@ _FAILED_COOLDOWN_SECONDS: float = 300.0  # 5 minutes cooldown for failed jobs
 def parse_args() -> argparse.Namespace:
     """Parse command-line arguments."""
     parser = argparse.ArgumentParser(
-        description="Metadata & CSV Worker — processes metadata generation jobs from MongoDB.",
+        description="Metadata & Listing Record Worker — processes metadata generation jobs from MongoDB.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument(
@@ -63,7 +66,10 @@ def parse_args() -> argparse.Namespace:
 
 
 def process_single_job(
-    job_id: str, store: Any, metadata_worker: MetadataWorker, csv_worker: CSVWorker
+    job_id: str,
+    store: Any,
+    metadata_worker: MetadataWorker,
+    listing_record_worker: ListingRecordWorker,
 ) -> None:
     """Process a single specific MongoDB job ID."""
     doc = store.get_job_doc(job_id)
@@ -79,15 +85,15 @@ def process_single_job(
     try:
         job = metadata_worker.run(job)
         store.update_stage_status(job_id, "metadata_generation", "COMPLETED")
-        job = csv_worker.run(job)
-        store.update_stage_status(job_id, "csv_generation", "COMPLETED")
+        job = listing_record_worker.run(job)
+        store.update_stage_status(job_id, "listing_record", "COMPLETED")
         store.upsert_job(job)
         logger.info(
-            f"[run_metadata_worker] ✅ Metadata & CSV complete for job {job_id}"
+            f"[run_metadata_worker] ✅ Metadata & listing record complete for job {job_id}"
         )
     except Exception as exc:
         logger.error(
-            f"[run_metadata_worker] ❌ Job {job_id} metadata/csv failed: {exc}"
+            f"[run_metadata_worker] ❌ Job {job_id} metadata/listing record failed: {exc}"
         )
         store.update_stage_status(
             job_id, "metadata_generation", "FAILED", error_message=str(exc)
@@ -106,7 +112,7 @@ def run_daemon_mode(settings: object, retry_failed: bool = False) -> None:
         sys.exit(1)
 
     metadata_worker = MetadataWorker(settings=settings, mongo_store=store)  # type: ignore[arg-type]
-    csv_worker = CSVWorker(settings=settings)  # type: ignore[arg-type]
+    listing_record_worker = ListingRecordWorker(settings=settings)  # type: ignore[arg-type]
 
     failed_cooldown: dict[str, float] = {}
     target_statuses = ["PENDING", "FAILED"] if retry_failed else ["PENDING"]
@@ -157,20 +163,20 @@ def run_daemon_mode(settings: object, retry_failed: bool = False) -> None:
                         job_id, "metadata_generation", "COMPLETED"
                     )
 
-                    # Run CSVWorker
-                    job = csv_worker.run(job)
-                    store.update_stage_status(job_id, "csv_generation", "COMPLETED")
+                    # Run ListingRecordWorker
+                    job = listing_record_worker.run(job)
+                    store.update_stage_status(job_id, "listing_record", "COMPLETED")
 
                     store.upsert_job(job)
                     if job_id in failed_cooldown:
                         del failed_cooldown[job_id]
                     logger.info(
-                        f"[run_metadata_worker] ✅ Metadata & CSV complete for job {job_id}"
+                        f"[run_metadata_worker] ✅ Metadata & listing record complete for job {job_id}"
                     )
                 except Exception as exc:
                     failed_cooldown[job_id] = time.time()
                     logger.error(
-                        f"[run_metadata_worker] ❌ Job {job_id} metadata/csv failed: {exc}"
+                        f"[run_metadata_worker] ❌ Job {job_id} metadata/listing record failed: {exc}"
                     )
                     store.update_stage_status(
                         job_id, "metadata_generation", "FAILED", error_message=str(exc)
@@ -197,8 +203,8 @@ def main() -> None:
     if args.job_id:
         store = MongoJobStore(settings=settings)
         metadata_worker = MetadataWorker(settings=settings, mongo_store=store)
-        csv_worker = CSVWorker(settings=settings)
-        process_single_job(args.job_id, store, metadata_worker, csv_worker)
+        listing_record_worker = ListingRecordWorker(settings=settings)
+        process_single_job(args.job_id, store, metadata_worker, listing_record_worker)
     else:
         run_daemon_mode(settings, retry_failed=args.retry_failed)
 

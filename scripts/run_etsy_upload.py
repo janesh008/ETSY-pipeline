@@ -1,6 +1,6 @@
 """CLI entry point for triggering Etsy Open API v3 listing uploads (Shot 2).
 
-Manual, human-triggered step executed after human review of consolidated CSV.
+Manual, human-triggered step executed after human review of listing records.
 
 Usage:
     # Upload by MongoDB job ID:
@@ -24,7 +24,6 @@ if str(_PROJECT_ROOT) not in sys.path:
 from etsy_pipeline.config.settings import get_settings  # noqa: E402
 from etsy_pipeline.models.job import Job  # noqa: E402
 from etsy_pipeline.utils.logging import get_logger, setup_logging  # noqa: E402
-from etsy_pipeline.workers.csv_worker import CSVWorker  # noqa: E402
 from etsy_pipeline.workers.etsy_worker import EtsyWorker  # noqa: E402
 
 logger = get_logger(__name__)
@@ -88,16 +87,13 @@ def main() -> None:
     logger.info(f"[run_etsy_upload] Found job {job_id} ({job.theme})")
 
     etsy_worker = EtsyWorker(settings=settings)
-    csv_worker = CSVWorker(settings=settings)
 
     try:
         # Run Etsy upload worker
+        # EtsyWorker._update_listing_record() writes listing_id/url back into listing.json
         job = etsy_worker.run(job)
         store.update_stage_status(job_id, "etsy_upload", "COMPLETED")
-
-        # Update consolidated CSV with listing ID and URL
-        job = csv_worker.run(job)
-        store.update_stage_status(job_id, "csv_generation", "COMPLETED")
+        store.update_stage_status(job_id, "listing_record", "COMPLETED")
 
         store.upsert_job(job)
         logger.info("[run_etsy_upload] 🎉 Listing published successfully!")

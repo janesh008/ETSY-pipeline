@@ -62,3 +62,23 @@ This subpackage contains:
 3.  **Enhancement & Tiling:** Runs `RealESRGANer` with dynamic tile sizing fallback (`512` → `256` → `128` on CUDA OOM).
 4.  **Standardization:** Resizes the upscaled image to exactly 4096px on its longest side at 300 DPI.
 5.  **Direct GDrive Delivery & Fail-Safe Cleanup:** Delivers all upscaled PNGs directly to Google Drive under `Clipart/main_data/<date>/<theme_slug>/`. Requires successful Drive upload before purging local upscaled directory (if Drive is missing or upload fails, local files are retained to prevent data loss).
+
+### `MetadataWorker` Class Flow
+1.  **Entry (`run(job)`):** Downloads mockup PNGs from GCS/Drive (up to 10), calls `_call_gemini_vision()`.
+2.  **Gemini Vision (`_call_gemini_vision()`):** Instantiates `google.genai.Client(vertexai=True)`, reads `Deepseek_etsy_listing_generator_prompt.txt` as system instruction, sends image parts.
+3.  **Parsing & Validation (`_parse_and_validate_response()`):** Strips vague/template text, enforces 140-char title, 13 tags ≤ 20 chars each.
+4.  **Output:** Saves `raw_response.txt` to `<theme_slug>/metadata/` locally + GCS + Drive. Sets `job.etsy_title`, `job.etsy_description`, `job.etsy_tags`.
+
+### `ListingRecordWorker` Class Flow *(Replaces CSVWorker)*
+1.  **Entry (`run(job)`):** Builds a `listing.json` dict from all Etsy fields in native Python types (list for tags, bool for is_digital, float for price — no encoding hacks).
+2.  **Local Write:** Writes to `output/<date>/<theme_slug>/metadata/listing.json`.
+3.  **GCS Upload:** Uploads to `Clipart/<date>/<theme_slug>/metadata/listing.json` — per-theme, no shared date file.
+4.  **Drive Upload:** Uploads to `Clipart/raw_data/<date>/<theme_slug>/metadata/listing.json`.
+5.  **Output:** Sets `job.listing_record_path`. Stage key: `listing_record`.
+
+> **Why listing.json instead of all_listings.csv?**
+> The old shared CSV had write-race risk (two concurrent jobs mutating the same file), required `\\n` escaping for descriptions, and was at the wrong granularity for the GCS folder browser in the Etsy Shop Connector. Per-theme JSON solves all three.
+
+### `EtsyWorker` — `_update_listing_record()` Write-Back
+After a successful `_publish_listing()`, `EtsyWorker` reads the existing `listing.json`, updates `etsy_listing_id` and `etsy_listing_url` in place, writes it back, and re-uploads to GCS. This is **non-fatal** — a missing or unwritable `listing.json` logs a warning only.
+

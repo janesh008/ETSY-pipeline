@@ -144,7 +144,10 @@ class EtsyWorker:
         job.etsy_listing_id = str(listing_id)
         job.etsy_listing_url = listing_url
 
-        # 7. Post-pipeline cleanup: Delete local VM theme output directory
+        # 7. Write listing_id and listing_url back into listing.json (non-fatal)
+        self._update_listing_record(job)
+
+        # 8. Post-pipeline cleanup: Delete local VM theme output directory
         self._purge_local_theme_folder(job)
 
         stage.mark_completed()
@@ -152,6 +155,46 @@ class EtsyWorker:
             f"[etsy_upload] ✅ Published Etsy listing for '{job.theme}': {listing_url}"
         )
         return job
+
+    def _update_listing_record(self, job: Job) -> None:
+        """Write etsy_listing_id and etsy_listing_url back into listing.json.
+
+        Non-fatal: a failure logs a warning but does not raise.
+        Called after a successful Etsy listing publish.
+        """
+        import json
+
+        local_path = (
+            Path(self._settings.output_root)
+            / job.date_folder
+            / job.theme_slug
+            / "metadata"
+            / "listing.json"
+        )
+        if not local_path.exists():
+            logger.warning(
+                f"[etsy_upload] listing.json not found at {local_path} — skipping write-back."
+            )
+            return
+        try:
+            record = json.loads(local_path.read_text(encoding="utf-8"))
+            record["etsy_listing_id"] = job.etsy_listing_id or ""
+            record["etsy_listing_url"] = job.etsy_listing_url or ""
+            local_path.write_text(
+                json.dumps(record, indent=2, ensure_ascii=False), encoding="utf-8"
+            )
+            logger.info(
+                f"[etsy_upload] listing.json write-back complete for '{job.theme}'"
+            )
+            # Re-upload the updated JSON to GCS
+            gcs = self._get_gcs()
+            if gcs:
+                gcs_key = (
+                    f"Clipart/{job.date_folder}/{job.theme_slug}/metadata/listing.json"
+                )
+                gcs.upload_file(local_path, gcs_key)
+        except Exception as exc:
+            logger.warning(f"[etsy_upload] Failed to write-back listing.json: {exc}")
 
     def _refresh_oauth_token(self) -> str:
         """Refresh Etsy OAuth access token using refresh_token."""

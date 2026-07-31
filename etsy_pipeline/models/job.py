@@ -259,10 +259,10 @@ class Job(BaseModel):
         description="Public Etsy listing URL after live upload",
     )
 
-    # CSV Generation
-    csv_path: str | None = Field(
+    # Listing Record (JSON)
+    listing_record_path: str | None = Field(
         default=None,
-        description="Path to the generated CSV file for Etsy upload",
+        description="Path to the generated per-theme listing.json record file",
     )
 
     # --- Execution State ---
@@ -275,7 +275,7 @@ class Job(BaseModel):
             "upscaling": StageResult(),
             "mockups": StageResult(),
             "metadata_generation": StageResult(),
-            "csv_generation": StageResult(),
+            "listing_record": StageResult(),
             "etsy_upload": StageResult(),
         }
     )

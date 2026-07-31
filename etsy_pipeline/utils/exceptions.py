@@ -91,6 +91,13 @@ class CSVGenerationError(PipelineError):
         super().__init__(message, stage="csv_generation", job_id=job_id)
 
 
+class ListingRecordError(PipelineError):
+    """Raised when per-theme listing.json record generation fails."""
+
+    def __init__(self, message: str, job_id: str | None = None):
+        super().__init__(message, stage="listing_record", job_id=job_id)
+
+
 class EtsyUploadError(PipelineError):
     """Raised when Etsy listing upload fails."""
 
