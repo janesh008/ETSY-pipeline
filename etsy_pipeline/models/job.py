@@ -212,6 +212,10 @@ class Job(BaseModel):
         default_factory=list,
         description="Paths to generated mockup images",
     )
+    hero_image_url: str | None = Field(
+        default=None,
+        description="Path or URL to hero/main mockup image",
+    )
     pdf_path: str | None = Field(
         default=None,
         description="Local path to the generated clickable PDF wrapper",

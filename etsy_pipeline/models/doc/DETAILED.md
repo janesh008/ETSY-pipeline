@@ -23,7 +23,7 @@ Stores results of a specific stage:
 The primary state object. Exposes:
 *   `job_id`: Generated 12-char hex string.
 *   `theme`, `event_type` (default `"Normal"`), `style_hint`: Inputs.
-*   `prompts`, `generated_images`, `upscaled_images`, `mockups`, `metadata`, `csv_path`: Outputs.
+*   `prompts`, `generated_images`, `upscaled_images`, `mockups`, `hero_image_url`, `pdf_path`, `pdf_drive_link`, `metadata`, `csv_path`: Outputs.
 *   `stages`: Dictionary mapping all 8 stages to their `StageResult`.
 *   `add_log(msg)`: Appends a timestamped log entry.
 *   `add_error(err)`: Records a pipeline error.

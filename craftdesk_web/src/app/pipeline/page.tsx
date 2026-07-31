@@ -138,10 +138,13 @@ export default function PipelinePage() {
       if (res && res.ok) {
         const data = await res.json();
         setPromptFiles(data.files || []);
+        setFilesError(null);
       } else {
+        // Only set error — do NOT clear existing promptFiles so loaded data is preserved
         setFilesError("Could not load prompt files from server.");
       }
     } catch {
+      // Only set error — do NOT clear existing promptFiles so loaded data is preserved
       setFilesError("Backend unreachable. Save a prompt file first.");
     } finally {
       setIsLoadingFiles(false);
@@ -450,12 +453,12 @@ export default function PipelinePage() {
 
             {/* File list */}
             <div className="flex-1 overflow-y-auto px-3 pb-4 space-y-2">
-              {isLoadingFiles ? (
+              {isLoadingFiles && promptFiles.length === 0 ? (
                 <div className="flex items-center justify-center h-32 gap-2 text-[#5A6561]">
                   <Loader2 className="w-4 h-4 animate-spin" />
                   <span className="text-xs">Loading files…</span>
                 </div>
-              ) : filesError ? (
+              ) : filesError && promptFiles.length === 0 ? (
                 <div className="mt-3 p-4 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 space-y-2">
                   <div className="flex items-center gap-1.5 font-semibold">
                     <CloudOff className="w-3.5 h-3.5" />

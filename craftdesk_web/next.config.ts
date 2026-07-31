@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  reactStrictMode: false, // Prevents React 18 dev double-mount from firing useEffect twice (no effect in production)
   allowedDevOrigins: [
     "localhost:3000",
     "127.0.0.1:3000",

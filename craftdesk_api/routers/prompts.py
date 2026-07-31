@@ -319,59 +319,62 @@ async def list_prompt_files(
 
     files: list[dict] = []
 
-    # 1. Scan GCS bucket FIRST (primary source of truth)
+    # 1. Scan GCS bucket FIRST (primary source of truth) if running on GCP VM or credentials present
     gcs_keys: set[str] = set()
     try:
-        from google.cloud import storage as gcs_storage
+        from etsy_pipeline.services.gcs_store import is_gcp_available
 
-        bucket_name = (
-            settings.gcs_bucket
-            or os.getenv("GCP_BUCKET_NAME")
-            or "etsy-pixelbar-clipart"
-        )
-        client = gcs_storage.Client()
-        for blob in client.list_blobs(bucket_name, prefix="Clipart/"):
-            if not blob.name.endswith(".txt"):
-                continue
-            gcs_uri = f"gs://{bucket_name}/{blob.name}"
-            parts = blob.name.split("/")
-            # Expected: Clipart/<date>/<theme>/<filename>.txt  → >=4 parts
-            if len(parts) < 4:
-                continue
-            try:
-                date_str = parts[1]
-                theme_str = parts[2]
-                file_name = Path(blob.name).stem
+        if is_gcp_available():
+            from google.cloud import storage as gcs_storage
 
-                content = blob.download_as_text(encoding="utf-8")
-                preview_lines = [ln for ln in content.splitlines() if ln.strip()][:4]
-                preview = "\n".join(preview_lines)
-                prompt_lines = [
-                    ln.strip()
-                    for ln in content.splitlines()
-                    if ln.strip() and not ln.startswith("#")
-                ]
+            bucket_name = (
+                settings.gcs_bucket
+                or os.getenv("GCP_BUCKET_NAME")
+                or "etsy-pixelbar-clipart"
+            )
+            client = gcs_storage.Client()
+            for blob in client.list_blobs(bucket_name, prefix="Clipart/"):
+                if not blob.name.endswith(".txt"):
+                    continue
+                gcs_uri = f"gs://{bucket_name}/{blob.name}"
+                parts = blob.name.split("/")
+                # Expected: Clipart/<date>/<theme>/<filename>.txt  → >=4 parts
+                if len(parts) < 4:
+                    continue
+                try:
+                    date_str = parts[1]
+                    theme_str = parts[2]
+                    file_name = Path(blob.name).stem
 
-                # Check if file also exists on local disk
-                local_check = clipart_root / date_str / theme_str / Path(blob.name).name
-                local_path_val = str(local_check) if local_check.exists() else None
+                    content = blob.download_as_text(encoding="utf-8")
+                    preview_lines = [ln for ln in content.splitlines() if ln.strip()][:4]
+                    preview = "\n".join(preview_lines)
+                    prompt_lines = [
+                        ln.strip()
+                        for ln in content.splitlines()
+                        if ln.strip() and not ln.startswith("#")
+                    ]
 
-                gcs_keys.add(f"{date_str}/{theme_str}/{file_name}")
-                files.append(
-                    {
-                        "name": file_name,
-                        "date": date_str,
-                        "theme": theme_str,
-                        "local_path": local_path_val,
-                        "gcs_path": gcs_uri,
-                        "is_gcs": True,
-                        "preview": preview,
-                        "prompt_count": len(prompt_lines),
-                        "raw_text": content,
-                    }
-                )
-            except Exception:
-                continue
+                    # Check if file also exists on local disk
+                    local_check = clipart_root / date_str / theme_str / Path(blob.name).name
+                    local_path_val = str(local_check) if local_check.exists() else None
+
+                    gcs_keys.add(f"{date_str}/{theme_str}/{file_name}")
+                    files.append(
+                        {
+                            "name": file_name,
+                            "date": date_str,
+                            "theme": theme_str,
+                            "local_path": local_path_val,
+                            "gcs_path": gcs_uri,
+                            "is_gcs": True,
+                            "preview": preview,
+                            "prompt_count": len(prompt_lines),
+                            "raw_text": content,
+                        }
+                    )
+                except Exception:
+                    continue
     except Exception as exc:
         logger.warning(f"[prompts] GCS bucket prompt list failed: {exc}")
 

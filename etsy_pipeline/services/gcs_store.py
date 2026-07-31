@@ -9,6 +9,7 @@ Responsibility: All GCS read/write/delete operations for pipeline artifacts.
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -18,6 +19,29 @@ if TYPE_CHECKING:
     from etsy_pipeline.config.settings import Settings
 
 logger = get_logger(__name__)
+
+
+def is_gcp_available() -> bool:
+    """Return True if running in GCP VM environment or explicit GCP credentials exist locally.
+
+    Prevents local non-GCP Windows/macOS/Linux machines from hanging on 169.254.169.254 metadata server.
+    """
+    cred_file = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+    if cred_file and Path(cred_file).exists():
+        return True
+
+    # Check standard gcloud CLI ADC path on Windows or Linux/Mac
+    user_home = Path.home()
+    gcloud_adc_win = user_home / "AppData" / "Roaming" / "gcloud" / "application_default_credentials.json"
+    gcloud_adc_unix = user_home / ".config" / "gcloud" / "application_default_credentials.json"
+    if gcloud_adc_win.exists() or gcloud_adc_unix.exists():
+        return True
+
+    # Check explicit GCP environment indicators (e.g. running on GCP VM or Cloud Run)
+    if os.getenv("GCP_VM") or os.getenv("IS_GCP_VM") or os.getenv("K_SERVICE") or os.getenv("GCP_PROJECT_ID"):
+        return True
+
+    return False
 
 
 class GCSStore:
