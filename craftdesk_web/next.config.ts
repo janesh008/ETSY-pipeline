@@ -9,8 +9,8 @@ const nextConfig: NextConfig = {
     "192.168.56.1",
     "0.0.0.0:3000",
     "0.0.0.0",
-    "34.23.176.27",
-    "34.23.176.27:3000",
+    "35.196.196.138",
+    "35.196.196.138:3000",
   ],
 
   // Proxy all /api/* requests through Next.js server → FastAPI on port 8000.
