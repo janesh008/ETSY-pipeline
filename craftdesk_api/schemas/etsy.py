@@ -35,5 +35,93 @@ class EtsyShopResponse(BaseModel):
     id: str
     shop_id: str
     shop_name: str
+    slug: str = Field(default="", description="URL-safe shop slug")
     is_active: bool
     created_at: datetime
+
+
+
+class EtsyShopUpdateRequest(BaseModel):
+    """Payload for updating shop details (e.g. shop_name)."""
+
+    shop_name: str = Field(..., min_length=1, max_length=255, description="Updated shop display name")
+
+
+class EtsyShopCreateRequest(BaseModel):
+    """Payload for manually adding a shop."""
+
+    shop_name: str = Field(..., min_length=1, max_length=255, description="Shop display name")
+    shop_id: str | None = Field(default=None, description="Optional custom shop ID")
+
+
+class EtsyShopStatsResponse(BaseModel):
+    """Live shop metrics and connection verification details fetched from Etsy API v3."""
+
+    is_connected: bool = Field(default=True)
+    shop_id: str
+    shop_name: str
+    active_listings_count: int = Field(default=0)
+    digital_listings_count: int = Field(default=0)
+    review_count: int = Field(default=0)
+    review_average: float = Field(default=5.0)
+    currency_code: str = Field(default="USD")
+    etsy_url: str = Field(default="")
+    message: str = Field(default="Verified live via Etsy API v3")
+
+
+
+
+# ── Listing Upload & Publish Schemas ─────────────────────────────────────
+
+
+class GcsFolderItem(BaseModel):
+    """Represents a clipart theme folder found in GCS bucket."""
+
+    gcs_prefix: str = Field(..., description="GCS prefix, e.g. 'Clipart/2026-07-22/Wonder_Woman/'")
+    date_folder: str = Field(..., description="Folder date, e.g. '2026-07-22'")
+    theme_slug: str = Field(..., description="Theme slug identifier")
+    display_name: str = Field(..., description="Human-readable theme display name")
+    has_mockups: bool = Field(default=False)
+    has_pdf: bool = Field(default=False)
+    has_metadata: bool = Field(default=False, description="True if metadata/listing.json exists")
+
+
+class GcsFolderListResponse(BaseModel):
+    """List of GCS clipart folders available for listing upload."""
+
+    folders: list[GcsFolderItem]
+    gcs_available: bool = Field(
+        default=True, description="False if running locally without GCP credentials"
+    )
+
+
+class GcsListingRequest(BaseModel):
+    """Request payload for publishing an Etsy listing from a GCS folder."""
+
+    gcs_prefix: str = Field(..., description="Target GCS folder prefix")
+    title: str | None = Field(default=None, description="Title override (max 140 chars)")
+    description: str | None = Field(default=None, description="Description override")
+    tags: list[str] = Field(default_factory=list, description="Tags override (max 13 tags, 20 chars max each)")
+    price: float = Field(default=5.99, ge=0.20, description="Listing price USD")
+    quantity: int = Field(default=999, ge=1, description="Stock quantity")
+
+
+class GenerateMetadataResponse(BaseModel):
+    """Response returned after generating metadata from uploaded mockup images."""
+
+    title: str
+    description: str
+    tags: list[str]
+
+
+class ListingPublishResponse(BaseModel):
+    """Result of publishing a listing to Etsy."""
+
+    listing_id: str
+    etsy_listing_url: str
+    status: str = Field(default="active", description="'active' or 'draft'")
+    shop_name: str
+    images_uploaded: int
+    pdf_uploaded: bool
+    message: str
+

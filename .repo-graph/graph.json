@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-07-30T17:23:54.405554+00:00",
+  "generated_at": "2026-08-01T12:12:06.230813+00:00",
   "generator": "scripts/build_graph.py",
   "static_only": true,
   "scan_roots": [
@@ -8,8 +8,8 @@
     "scripts",
     "tests"
   ],
-  "node_count": 320,
-  "edge_count": 1734,
+  "node_count": 327,
+  "edge_count": 1773,
   "nodes": [
     {
       "id": "etsy_pipeline",
@@ -386,6 +386,7 @@
       "path": "etsy_pipeline/services/gcs_store.py",
       "docstring_summary": "GCS Store — upload, download, and delete files in Google Cloud Storage.",
       "children": [
+        "etsy_pipeline.services.gcs_store.is_gcp_available",
         "etsy_pipeline.services.gcs_store.GCSStore"
       ]
     },
@@ -529,6 +530,15 @@
       "is_public": true,
       "is_async": false,
       "class": "GCSStore"
+    },
+    {
+      "id": "etsy_pipeline.services.gcs_store.is_gcp_available",
+      "kind": "function",
+      "module": "etsy_pipeline.services.gcs_store",
+      "docstring_summary": "Return True if running in GCP VM environment or explicit GCP credentials exist locally.",
+      "signature": "()",
+      "is_public": true,
+      "is_async": false
     },
     {
       "id": "etsy_pipeline.services.google_drive",
@@ -885,6 +895,7 @@
         "etsy_pipeline.utils.exceptions.MockupGenerationError",
         "etsy_pipeline.utils.exceptions.MetadataGenerationError",
         "etsy_pipeline.utils.exceptions.CSVGenerationError",
+        "etsy_pipeline.utils.exceptions.ListingRecordError",
         "etsy_pipeline.utils.exceptions.EtsyUploadError",
         "etsy_pipeline.utils.exceptions.ConfigurationError",
         "etsy_pipeline.utils.exceptions.SkillFileError"
@@ -989,6 +1000,26 @@
       "is_public": false,
       "is_async": false,
       "class": "ImageGenerationError"
+    },
+    {
+      "id": "etsy_pipeline.utils.exceptions.ListingRecordError",
+      "kind": "class",
+      "module": "etsy_pipeline.utils.exceptions",
+      "docstring_summary": "Raised when per-theme listing.json record generation fails.",
+      "methods": [
+        "__init__"
+      ],
+      "public_methods": []
+    },
+    {
+      "id": "etsy_pipeline.utils.exceptions.ListingRecordError.__init__",
+      "kind": "function",
+      "module": "etsy_pipeline.utils.exceptions",
+      "docstring_summary": "",
+      "signature": "(self, message, job_id)",
+      "is_public": false,
+      "is_async": false,
+      "class": "ListingRecordError"
     },
     {
       "id": "etsy_pipeline.utils.exceptions.MetadataGenerationError",
@@ -1454,6 +1485,7 @@
       "methods": [
         "__init__",
         "run",
+        "_update_listing_record",
         "_refresh_oauth_token",
         "_update_env_tokens",
         "_get_clip_art_taxonomy_id",
@@ -1565,6 +1597,16 @@
       "module": "etsy_pipeline.workers.etsy_worker",
       "docstring_summary": "Update .env file with new OAuth tokens.",
       "signature": "(self, access_token, refresh_token)",
+      "is_public": false,
+      "is_async": false,
+      "class": "EtsyWorker"
+    },
+    {
+      "id": "etsy_pipeline.workers.etsy_worker.EtsyWorker._update_listing_record",
+      "kind": "function",
+      "module": "etsy_pipeline.workers.etsy_worker",
+      "docstring_summary": "Write etsy_listing_id and etsy_listing_url back into listing.json.",
+      "signature": "(self, job)",
       "is_public": false,
       "is_async": false,
       "class": "EtsyWorker"
@@ -1712,6 +1754,81 @@
       "path": "etsy_pipeline/workers/image_worker_config.py",
       "docstring_summary": "Image Worker Configuration — constants for the ComfyUI image generation stage.",
       "children": []
+    },
+    {
+      "id": "etsy_pipeline.workers.listing_record_worker",
+      "kind": "module",
+      "path": "etsy_pipeline/workers/listing_record_worker.py",
+      "docstring_summary": "Listing Record Worker — phase 8b of the Etsy pipeline.",
+      "children": [
+        "etsy_pipeline.workers.listing_record_worker.ListingRecordWorker"
+      ]
+    },
+    {
+      "id": "etsy_pipeline.workers.listing_record_worker.ListingRecordWorker",
+      "kind": "class",
+      "module": "etsy_pipeline.workers.listing_record_worker",
+      "docstring_summary": "Worker for writing per-theme listing.json records after metadata generation.",
+      "methods": [
+        "__init__",
+        "run",
+        "_build_record",
+        "_get_gcs",
+        "_get_drive"
+      ],
+      "public_methods": [
+        "run"
+      ]
+    },
+    {
+      "id": "etsy_pipeline.workers.listing_record_worker.ListingRecordWorker.__init__",
+      "kind": "function",
+      "module": "etsy_pipeline.workers.listing_record_worker",
+      "docstring_summary": "Initialise ListingRecordWorker.",
+      "signature": "(self, settings, gcs_store, drive_service)",
+      "is_public": false,
+      "is_async": false,
+      "class": "ListingRecordWorker"
+    },
+    {
+      "id": "etsy_pipeline.workers.listing_record_worker.ListingRecordWorker._build_record",
+      "kind": "function",
+      "module": "etsy_pipeline.workers.listing_record_worker",
+      "docstring_summary": "Convert Job state into a per-theme listing record dict.",
+      "signature": "(self, job)",
+      "is_public": false,
+      "is_async": false,
+      "class": "ListingRecordWorker"
+    },
+    {
+      "id": "etsy_pipeline.workers.listing_record_worker.ListingRecordWorker._get_drive",
+      "kind": "function",
+      "module": "etsy_pipeline.workers.listing_record_worker",
+      "docstring_summary": "Lazy load GoogleDriveService.",
+      "signature": "(self)",
+      "is_public": false,
+      "is_async": false,
+      "class": "ListingRecordWorker"
+    },
+    {
+      "id": "etsy_pipeline.workers.listing_record_worker.ListingRecordWorker._get_gcs",
+      "kind": "function",
+      "module": "etsy_pipeline.workers.listing_record_worker",
+      "docstring_summary": "Lazy load GCSStore.",
+      "signature": "(self)",
+      "is_public": false,
+      "is_async": false,
+      "class": "ListingRecordWorker"
+    },
+    {
+      "id": "etsy_pipeline.workers.listing_record_worker.ListingRecordWorker.run",
+      "kind": "function",
+      "module": "etsy_pipeline.workers.listing_record_worker",
+      "docstring_summary": "Write per-theme listing.json for the completed job.",
+      "signature": "(self, job)",
+      "is_public": true,
+      "is_async": false,
+      "class": "ListingRecordWorker"
     },
     {
       "id": "etsy_pipeline.workers.metadata_worker",
@@ -2611,7 +2728,7 @@
       "id": "scripts.run_metadata_worker",
       "kind": "module",
       "path": "scripts/run_metadata_worker.py",
-      "docstring_summary": "CLI entry point for the Metadata Generation & CSV Consolidation worker.",
+      "docstring_summary": "CLI entry point for the Metadata Generation & Listing Record worker.",
       "children": [
         "scripts.run_metadata_worker.parse_args",
         "scripts.run_metadata_worker.process_single_job",
@@ -2642,7 +2759,7 @@
       "kind": "function",
       "module": "scripts.run_metadata_worker",
       "docstring_summary": "Process a single specific MongoDB job ID.",
-      "signature": "(job_id, store, metadata_worker, csv_worker)",
+      "signature": "(job_id, store, metadata_worker, listing_record_worker)",
       "is_public": true,
       "is_async": false
     },
@@ -2821,44 +2938,6 @@
       "path": "tests/__init__.py",
       "docstring_summary": "Tests package.",
       "children": []
-    },
-    {
-      "id": "tests.test_csv_worker",
-      "kind": "module",
-      "path": "tests/test_csv_worker.py",
-      "docstring_summary": "Unit tests for CSVWorker and Etsy image sorting.",
-      "children": [
-        "tests.test_csv_worker.test_csv_row_schema_headers",
-        "tests.test_csv_worker.test_build_row_dict",
-        "tests.test_csv_worker.test_sort_mockup_images_hero_first"
-      ]
-    },
-    {
-      "id": "tests.test_csv_worker.test_build_row_dict",
-      "kind": "function",
-      "module": "tests.test_csv_worker",
-      "docstring_summary": "Test building CSV row dict from Job state.",
-      "signature": "()",
-      "is_public": true,
-      "is_async": false
-    },
-    {
-      "id": "tests.test_csv_worker.test_csv_row_schema_headers",
-      "kind": "function",
-      "module": "tests.test_csv_worker",
-      "docstring_summary": "Test CSV headers match required Etsy bulk schema.",
-      "signature": "()",
-      "is_public": true,
-      "is_async": false
-    },
-    {
-      "id": "tests.test_csv_worker.test_sort_mockup_images_hero_first",
-      "kind": "function",
-      "module": "tests.test_csv_worker",
-      "docstring_summary": "Test sort_mockup_images places Hero.png cover image first.",
-      "signature": "()",
-      "is_public": true,
-      "is_async": false
     },
     {
       "id": "tests.test_etsy_worker",
@@ -3738,12 +3817,6 @@
     },
     {
       "from": "etsy_pipeline.pipeline.orchestrator",
-      "to": "etsy_pipeline.workers.csv_worker.CSVWorker",
-      "kind": "import",
-      "static_only": true
-    },
-    {
-      "from": "etsy_pipeline.pipeline.orchestrator",
       "to": "etsy_pipeline.workers.etsy_worker.EtsyWorker",
       "kind": "import",
       "static_only": true
@@ -3751,6 +3824,12 @@
     {
       "from": "etsy_pipeline.pipeline.orchestrator",
       "to": "etsy_pipeline.workers.image_worker.ImageWorker",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.pipeline.orchestrator",
+      "to": "etsy_pipeline.workers.listing_record_worker.ListingRecordWorker",
       "kind": "import",
       "static_only": true
     },
@@ -3793,13 +3872,6 @@
     },
     {
       "from": "etsy_pipeline.pipeline.orchestrator.Pipeline.__init__",
-      "to": "CSVWorker",
-      "kind": "call",
-      "static_only": true,
-      "note": "name-only; may not resolve to correct module without runtime context"
-    },
-    {
-      "from": "etsy_pipeline.pipeline.orchestrator.Pipeline.__init__",
       "to": "EtsyWorker",
       "kind": "call",
       "static_only": true,
@@ -3808,6 +3880,13 @@
     {
       "from": "etsy_pipeline.pipeline.orchestrator.Pipeline.__init__",
       "to": "ImageWorker",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.pipeline.orchestrator.Pipeline.__init__",
+      "to": "ListingRecordWorker",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
@@ -3985,6 +4064,12 @@
     {
       "from": "etsy_pipeline.services.gcs_store",
       "to": "etsy_pipeline.utils.logging.get_logger",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.services.gcs_store",
+      "to": "os",
       "kind": "import",
       "static_only": true
     },
@@ -4346,6 +4431,34 @@
     {
       "from": "etsy_pipeline.services.gcs_store.GCSStore.upload_folder",
       "to": "upload_file",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.gcs_store.is_gcp_available",
+      "to": "Path",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.gcs_store.is_gcp_available",
+      "to": "exists",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.gcs_store.is_gcp_available",
+      "to": "getenv",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.gcs_store.is_gcp_available",
+      "to": "home",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
@@ -6019,6 +6132,20 @@
       "note": "name-only; may not resolve to correct module without runtime context"
     },
     {
+      "from": "etsy_pipeline.utils.exceptions.ListingRecordError.__init__",
+      "to": "__init__",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.utils.exceptions.ListingRecordError.__init__",
+      "to": "super",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
       "from": "etsy_pipeline.utils.exceptions.MetadataGenerationError.__init__",
       "to": "__init__",
       "kind": "call",
@@ -7560,6 +7687,76 @@
       "note": "name-only; may not resolve to correct module without runtime context"
     },
     {
+      "from": "etsy_pipeline.workers.etsy_worker.EtsyWorker._update_listing_record",
+      "to": "Path",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.etsy_worker.EtsyWorker._update_listing_record",
+      "to": "_get_gcs",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.etsy_worker.EtsyWorker._update_listing_record",
+      "to": "dumps",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.etsy_worker.EtsyWorker._update_listing_record",
+      "to": "exists",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.etsy_worker.EtsyWorker._update_listing_record",
+      "to": "info",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.etsy_worker.EtsyWorker._update_listing_record",
+      "to": "loads",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.etsy_worker.EtsyWorker._update_listing_record",
+      "to": "read_text",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.etsy_worker.EtsyWorker._update_listing_record",
+      "to": "upload_file",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.etsy_worker.EtsyWorker._update_listing_record",
+      "to": "warning",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.etsy_worker.EtsyWorker._update_listing_record",
+      "to": "write_text",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
       "from": "etsy_pipeline.workers.etsy_worker.EtsyWorker._upload_listing_images",
       "to": "enumerate",
       "kind": "call",
@@ -7646,6 +7843,13 @@
     {
       "from": "etsy_pipeline.workers.etsy_worker.EtsyWorker.run",
       "to": "_refresh_oauth_token",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.etsy_worker.EtsyWorker.run",
+      "to": "_update_listing_record",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
@@ -8326,6 +8530,263 @@
       "to": "__future__.annotations",
       "kind": "import",
       "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.workers.listing_record_worker",
+      "to": "__future__.annotations",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.workers.listing_record_worker",
+      "to": "datetime.UTC",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.workers.listing_record_worker",
+      "to": "datetime.datetime",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.workers.listing_record_worker",
+      "to": "etsy_pipeline.utils.exceptions.ListingRecordError",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.workers.listing_record_worker",
+      "to": "etsy_pipeline.utils.logging.get_logger",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.workers.listing_record_worker",
+      "to": "json",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.workers.listing_record_worker",
+      "to": "pathlib.Path",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.workers.listing_record_worker",
+      "to": "typing.Any",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.workers.listing_record_worker",
+      "to": "typing.TYPE_CHECKING",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.workers.listing_record_worker.ListingRecordWorker._build_record",
+      "to": "float",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.listing_record_worker.ListingRecordWorker._build_record",
+      "to": "int",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.listing_record_worker.ListingRecordWorker._build_record",
+      "to": "isoformat",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.listing_record_worker.ListingRecordWorker._build_record",
+      "to": "list",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.listing_record_worker.ListingRecordWorker._build_record",
+      "to": "now",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.listing_record_worker.ListingRecordWorker._get_drive",
+      "to": "GoogleDriveService",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.listing_record_worker.ListingRecordWorker._get_drive",
+      "to": "warning",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.listing_record_worker.ListingRecordWorker._get_gcs",
+      "to": "GCSStore",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.listing_record_worker.ListingRecordWorker._get_gcs",
+      "to": "warning",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.listing_record_worker.ListingRecordWorker.run",
+      "to": "ListingRecordError",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.listing_record_worker.ListingRecordWorker.run",
+      "to": "Path",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.listing_record_worker.ListingRecordWorker.run",
+      "to": "_build_record",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.listing_record_worker.ListingRecordWorker.run",
+      "to": "_get_drive",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.listing_record_worker.ListingRecordWorker.run",
+      "to": "_get_gcs",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.listing_record_worker.ListingRecordWorker.run",
+      "to": "_get_or_create_folder_by_path",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.listing_record_worker.ListingRecordWorker.run",
+      "to": "_upload_file_direct",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.listing_record_worker.ListingRecordWorker.run",
+      "to": "add_error",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.listing_record_worker.ListingRecordWorker.run",
+      "to": "dumps",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.listing_record_worker.ListingRecordWorker.run",
+      "to": "error",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.listing_record_worker.ListingRecordWorker.run",
+      "to": "info",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.listing_record_worker.ListingRecordWorker.run",
+      "to": "join",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.listing_record_worker.ListingRecordWorker.run",
+      "to": "mark_completed",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.listing_record_worker.ListingRecordWorker.run",
+      "to": "mark_failed",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.listing_record_worker.ListingRecordWorker.run",
+      "to": "mark_running",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.listing_record_worker.ListingRecordWorker.run",
+      "to": "mkdir",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.listing_record_worker.ListingRecordWorker.run",
+      "to": "str",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.listing_record_worker.ListingRecordWorker.run",
+      "to": "upload_file",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.listing_record_worker.ListingRecordWorker.run",
+      "to": "warning",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.listing_record_worker.ListingRecordWorker.run",
+      "to": "write_text",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
     },
     {
       "from": "etsy_pipeline.workers.metadata_worker",
@@ -12334,12 +12795,6 @@
     },
     {
       "from": "scripts.run_etsy_upload",
-      "to": "etsy_pipeline.workers.csv_worker.CSVWorker",
-      "kind": "import",
-      "static_only": true
-    },
-    {
-      "from": "scripts.run_etsy_upload",
       "to": "etsy_pipeline.workers.etsy_worker.EtsyWorker",
       "kind": "import",
       "static_only": true
@@ -12355,13 +12810,6 @@
       "to": "sys",
       "kind": "import",
       "static_only": true
-    },
-    {
-      "from": "scripts.run_etsy_upload.main",
-      "to": "CSVWorker",
-      "kind": "call",
-      "static_only": true,
-      "note": "name-only; may not resolve to correct module without runtime context"
     },
     {
       "from": "scripts.run_etsy_upload.main",
@@ -13020,7 +13468,7 @@
     },
     {
       "from": "scripts.run_metadata_worker",
-      "to": "etsy_pipeline.workers.csv_worker.CSVWorker",
+      "to": "etsy_pipeline.workers.listing_record_worker.ListingRecordWorker",
       "kind": "import",
       "static_only": true
     },
@@ -13049,8 +13497,14 @@
       "static_only": true
     },
     {
+      "from": "scripts.run_metadata_worker",
+      "to": "typing.Any",
+      "kind": "import",
+      "static_only": true
+    },
+    {
       "from": "scripts.run_metadata_worker.main",
-      "to": "CSVWorker",
+      "to": "ListingRecordWorker",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
@@ -13204,7 +13658,7 @@
     },
     {
       "from": "scripts.run_metadata_worker.run_daemon_mode",
-      "to": "CSVWorker",
+      "to": "ListingRecordWorker",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
@@ -14391,111 +14845,6 @@
     {
       "from": "scripts.test_gcs_upload.main",
       "to": "write_text",
-      "kind": "call",
-      "static_only": true,
-      "note": "name-only; may not resolve to correct module without runtime context"
-    },
-    {
-      "from": "tests.test_csv_worker",
-      "to": "__future__.annotations",
-      "kind": "import",
-      "static_only": true
-    },
-    {
-      "from": "tests.test_csv_worker",
-      "to": "etsy_pipeline.config.settings.Settings",
-      "kind": "import",
-      "static_only": true
-    },
-    {
-      "from": "tests.test_csv_worker",
-      "to": "etsy_pipeline.models.job.Job",
-      "kind": "import",
-      "static_only": true
-    },
-    {
-      "from": "tests.test_csv_worker",
-      "to": "etsy_pipeline.workers.csv_worker.CSVWorker",
-      "kind": "import",
-      "static_only": true
-    },
-    {
-      "from": "tests.test_csv_worker",
-      "to": "etsy_pipeline.workers.csv_worker.CSV_HEADERS",
-      "kind": "import",
-      "static_only": true
-    },
-    {
-      "from": "tests.test_csv_worker",
-      "to": "etsy_pipeline.workers.etsy_worker.sort_mockup_images",
-      "kind": "import",
-      "static_only": true
-    },
-    {
-      "from": "tests.test_csv_worker",
-      "to": "pathlib.Path",
-      "kind": "import",
-      "static_only": true
-    },
-    {
-      "from": "tests.test_csv_worker.test_build_row_dict",
-      "to": "CSVWorker",
-      "kind": "call",
-      "static_only": true,
-      "note": "name-only; may not resolve to correct module without runtime context"
-    },
-    {
-      "from": "tests.test_csv_worker.test_build_row_dict",
-      "to": "Job",
-      "kind": "call",
-      "static_only": true,
-      "note": "name-only; may not resolve to correct module without runtime context"
-    },
-    {
-      "from": "tests.test_csv_worker.test_build_row_dict",
-      "to": "Settings",
-      "kind": "call",
-      "static_only": true,
-      "note": "name-only; may not resolve to correct module without runtime context"
-    },
-    {
-      "from": "tests.test_csv_worker.test_build_row_dict",
-      "to": "_build_row_dict",
-      "kind": "call",
-      "static_only": true,
-      "note": "name-only; may not resolve to correct module without runtime context"
-    },
-    {
-      "from": "tests.test_csv_worker.test_csv_row_schema_headers",
-      "to": "len",
-      "kind": "call",
-      "static_only": true,
-      "note": "name-only; may not resolve to correct module without runtime context"
-    },
-    {
-      "from": "tests.test_csv_worker.test_sort_mockup_images_hero_first",
-      "to": "Path",
-      "kind": "call",
-      "static_only": true,
-      "note": "name-only; may not resolve to correct module without runtime context"
-    },
-    {
-      "from": "tests.test_csv_worker.test_sort_mockup_images_hero_first",
-      "to": "lower",
-      "kind": "call",
-      "static_only": true,
-      "note": "name-only; may not resolve to correct module without runtime context"
-    },
-    {
-      "from": "tests.test_csv_worker.test_sort_mockup_images_hero_first",
-      "to": "sort_mockup_images",
-      "kind": "call",
-      "static_only": true,
-      "note": "name-only; may not resolve to correct module without runtime context"
-    },
-    {
-      "from": "tests.test_csv_worker.test_sort_mockup_images_hero_first",
-      "to": "startswith",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"

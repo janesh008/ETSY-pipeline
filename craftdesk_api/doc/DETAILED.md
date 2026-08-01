@@ -67,7 +67,7 @@ This document provides an exhaustive breakdown of every module in `craftdesk_api
   1. `generate_pkce_pair()`: Generates 64-char random `code_verifier` and SHA256 base64url digest `code_challenge`.
   2. `get_auth_url()`: Builds Etsy OAuth consent URL with `listings_r listings_w shops_r` scopes and PKCE parameters (`code_challenge_method=S256`).
   3. `exchange_code_for_tokens()`: POSTs `code` + `code_verifier` to `https://api.etsy.com/v3/public/oauth/token`.
-  4. `get_shop_details()`: Calls `https://openapi.etsy.com/v3/application/users/me` and `/shops` to retrieve shop ID and shop name.
+  4. `get_shop_details()`: Calls `https://openapi.etsy.com/v3/application/users/me` and `/shops` to retrieve shop ID and shop name. Raises `RuntimeError` on non-200 responses or HTTP errors.
 
 ### `services/pipeline_runner.py` — 6-Stage Real Assembly Line & Retry Engine
 - **Business Goal:** Manages real 6-stage pipeline execution using `etsy_pipeline` worker modules, GCS prompt file injection, live item progress, ETA calculations, date folder retention, module-level checkpoint recovery, and stop/cancellation controls. (See detailed guide in [`doc/PIPELINE_ARCHITECTURE.md`](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/doc/PIPELINE_ARCHITECTURE.md)).
@@ -87,16 +87,14 @@ This document provides an exhaustive breakdown of every module in `craftdesk_api
   10. `run_stage_execution(job_id, stage_name)`: Resets target stage status to `pending`, clears error log, and re-executes only that specific stage.
 
 ### `services/etsy_publisher.py` — Etsy API v3 Draft Listing Publisher
-- **Business Goal:** Automatically creates draft digital clipart listings on Etsy.
+### `services/etsy_publisher.py` & `services/etsy_listing_service.py` — Etsy Listing Publishing Engine
+- **Business Goal:** Direct publish of digital clipart listings (text, mockup images, and PDF downloadable assets) to Etsy Open API v3.
 - **Business Logic Algorithm:**
-  1. Truncates listing title to max 140 chars (Etsy API limit).
-  2. Cleans and truncates tags to max 13 items, max 20 chars per tag.
-  3. POSTs payload to `https://openapi.etsy.com/v3/application/shops/{shop_id}/listings` with:
-     - `taxonomy_id`: `10985` (Digital Craft / Clipart)
-     - `is_digital`: `true`
-     - `type`: `download`
-     - `state`: `draft`
-  4. Returns `listing_id` and Etsy seller dashboard URL (`https://www.etsy.com/your/shops/me/listings/{id}`).
+  1. `list_gcs_folders()`: Scans GCS bucket for `Clipart/<date>/<theme_slug>/` theme folders and checks for `metadata/listing.json`.
+  2. `load_gcs_listing_record()`: Downloads pre-validated `listing.json` directly without raw text parsing.
+  3. `publish_from_gcs()`: Creates Etsy draft listing, downloads mockup PNGs (Hero first) & PDF asset from GCS, uploads them to Etsy via `/listings/{id}/images` and `/listings/{id}/files`, sets listing active, and writes back `etsy_listing_id` to GCS `listing.json`.
+  4. `publish_from_upload()`: Accepts custom uploaded mockup files & PDF asset, publishes to Etsy, and saves files + `listing.json` under `EtsyShops/{shop_name}/{date}/{slug}/` in GCS.
+  5. `generate_metadata_from_mockups()`: Uses Gemini 2.5 Flash Vision + `MASTER_PROMPT_PATH` to generate 140-char title, description, and 13 tags matching `listing.json` schema.
 
 ---
 
@@ -125,6 +123,10 @@ This document provides an exhaustive breakdown of every module in `craftdesk_api
 - `POST /api/v1/etsy/auth/callback`: Exchanges authorization code for tokens, encrypts tokens via AES-256 Fernet, and saves connected shop.
 - `GET /api/v1/etsy/shops`: Lists user's connected Etsy stores.
 - `DELETE /api/v1/etsy/shops/{shop_db_id}`: Deactivates shop connection.
+- `GET /api/v1/etsy/gcs-folders`: Lists available GCS clipart theme folders for publishing.
+- `POST /api/v1/etsy/shops/{shop_db_id}/gcs-listing`: Publishes an Etsy listing directly from a GCS folder.
+- `POST /api/v1/etsy/shops/{shop_db_id}/upload-listing`: Accepts custom uploaded mockup images & PDF asset and publishes directly to Etsy.
+- `POST /api/v1/etsy/shops/{shop_db_id}/generate-metadata`: Generates title, description, and 13 tags from uploaded mockup images via Gemini 2.5 Flash Vision.
 
 ### `routers/prompts.py`
 - `GET /api/v1/prompts`: Scans GCS bucket (`gs://<bucket>/Clipart/`) **first** and local disk second. Returns list of available prompt files with `gcs_path`, `is_gcs`, `preview`, and prompt counts.

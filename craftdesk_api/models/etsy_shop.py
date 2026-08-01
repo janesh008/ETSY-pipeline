@@ -32,6 +32,8 @@ class EtsyShop(Base):
     # Etsy shop identifiers
     shop_id: Mapped[str] = mapped_column(String(64), nullable=False)
     shop_name: Mapped[str] = mapped_column(String(255), nullable=False, default="")
+    slug: Mapped[str] = mapped_column(String(255), nullable=False, index=True, default="")
+
 
     # AES-256 Fernet encrypted tokens
     encrypted_access_token: Mapped[str] = mapped_column(Text, nullable=False)

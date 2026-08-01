@@ -26,8 +26,10 @@ class EtsyPublisherService:
     ) -> dict[str, Any]:
         """Create a new DRAFT listing on Etsy for digital clipart products."""
         url = f"https://openapi.etsy.com/v3/application/shops/{shop_id}/listings"
+        shared_secret = os.getenv("ETSY_SHARED_SECRET")
+        api_key_header = f"{ETSY_KEYSTRING}:{shared_secret}" if shared_secret else ETSY_KEYSTRING
         headers = {
-            "x-api-key": ETSY_KEYSTRING,
+            "x-api-key": api_key_header,
             "Authorization": f"Bearer {access_token}",
             "Content-Type": "application/x-www-form-urlencoded",
         }

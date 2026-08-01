@@ -2,7 +2,7 @@
 
 **Date:** 2026-07-31
 **Status:** approved
-**Related:** `plans/2026-07-31-replace-csv-with-per-theme-json.md` (listing.json fast-path integration)
+**Scope:** craftdesk_api + craftdesk_web (Etsy multi-shop publish dashboard)
 
 ---
 
@@ -16,18 +16,19 @@ The current `/shops` page is a flat list with no shop interaction. We need:
 
 ---
 
-## Confirmed Decisions
+## Architecture Decisions
 
-| Question | Answer |
-|----------|--------|
-| GCS metadata auto-load + clean | Yes — auto-load listing.json (fast path) or raw_response.txt (slow path, cleaned via MetadataWorker._parse_and_validate_response()) |
-| Image + PDF upload to Etsy | Yes — reuse EtsyWorker._upload_listing_images() and _create_draft_listing() patterns |
-| Gemini method for Option 3 | Same Vertex AI google.genai + MASTER_PROMPT_PATH system prompt as MetadataWorker._call_gemini_vision() |
-| Connect Shop button | Real PKCE OAuth redirect (window.location.href = auth_url) — replace setTimeout simulation |
+| Component | Specification |
+|-----------|---------------|
+| **Shop Credentials Storage** | Stored securely in database (`EtsyShop` model with Fernet AES-256 encrypted access & refresh tokens) per user. |
+| **GCS Metadata Format** | Option 1 reads pre-validated `metadata/listing.json` directly (generated in Stage 6). Raw text parsing for `.txt` is completely removed. |
+| **Multi-Shop GCS Pathing** | Non-pipeline uploads (Option 2 & 3) store assets in scalable per-shop GCS prefixes: `EtsyShops/{shop_name}/{date_folder}/{theme_slug}/` (separate from `Clipart/`). |
+| **Image + PDF Upload to Etsy** | Reuses `EtsyWorker._upload_listing_images()` and `EtsyWorker._create_draft_listing()`, plus PDF digital file upload via Etsy `/listings/{id}/files` endpoint. |
+| **AI Generation (Option 3)** | Uses Vertex AI `google.genai` + `MASTER_PROMPT_PATH` to output standard `listing.json` format directly. |
 
 ---
 
-## Architecture
+## Architecture Overview
 
 ### Frontend Pages
 ```
@@ -51,56 +52,23 @@ POST /api/v1/etsy/shops/{shop_db_id}/generate-metadata
 | Action | File |
 |--------|------|
 | MODIFY | `craftdesk_api/schemas/etsy.py` — 5 new Pydantic models |
-| NEW | `craftdesk_api/services/etsy_listing_service.py` |
+| NEW | `craftdesk_api/services/etsy_listing_service.py` — orchestration service |
 | MODIFY | `craftdesk_api/routers/etsy.py` — 4 new endpoints |
 | MODIFY | `craftdesk_web/src/app/shops/page.tsx` — clickable cards + real OAuth redirect |
-| NEW | `craftdesk_web/src/app/shops/callback/page.tsx` |
-| NEW | `craftdesk_web/src/app/shops/[shop_id]/publish/page.tsx` |
+| NEW | `craftdesk_web/src/app/shops/callback/page.tsx` — OAuth callback handler |
+| NEW | `craftdesk_web/src/app/shops/[shop_id]/publish/page.tsx` — 3-mode publish dashboard |
 | MODIFY | `craftdesk_api/doc/DETAILED.md` |
 | MODIFY | `doc/MASTER_MAP.md` |
 
 ---
 
-## Key Design Points
+## Implementation Order
 
-### EtsyListingService methods
-- `list_gcs_folders()` — calls is_gcp_available(); enumerates Clipart/<date>/<slug>/ prefixes
-- `load_and_clean_gcs_metadata()` — fast path: listing.json; fallback: raw_response.txt + _parse_and_validate_response()
-- `publish_from_gcs()` — load metadata, create listing, upload mockups (Hero first), upload PDF, activate
-- `publish_from_upload()` — take multipart bytes, create listing, upload images, upload PDF, activate
-- `generate_metadata_from_mockups()` — Vertex AI Gemini Vision + MetadataWorker parser
-- `_create_etsy_listing()` — mirrors EtsyWorker._create_draft_listing()
-- `_upload_mockup_images()` — mirrors EtsyWorker._upload_listing_images()
-- `_upload_digital_file()` — POST /shops/{id}/listings/{lid}/files (new, non-fatal)
-
-### OAuth Connect Shop (real flow)
-1. GET /etsy/auth/url -> { auth_url, code_verifier }
-2. sessionStorage.setItem("etsy_code_verifier", code_verifier)
-3. window.location.href = auth_url
-4. Etsy redirects to /shops/callback?code=...&state=...
-5. callback/page.tsx: POST /etsy/auth/callback -> success -> router.push('/shops')
-
----
-
-## Implementation Steps
-
-1. Schemas — craftdesk_api/schemas/etsy.py
-2. EtsyListingService — craftdesk_api/services/etsy_listing_service.py
-3. Router — craftdesk_api/routers/etsy.py (4 new endpoints)
-4. Frontend: shops/page.tsx (real OAuth + clickable cards)
-5. Frontend: shops/callback/page.tsx
-6. Frontend: shops/[shop_id]/publish/page.tsx
-7. Docs — DETAILED.md, MASTER_MAP.md
-8. pytest craftdesk_api/tests/test_etsy.py -v
-9. ruff check . --fix && ruff format .
-
----
-
-## Verification Plan
-
-1. /shops — Connect button -> browser redirects to Etsy OAuth (real, not setTimeout)
-2. Etsy returns to /shops/callback -> spinner -> success -> /shops with new shop
-3. Click shop card -> /shops/<id>/publish
-4. Option 1: GCS available -> folder list; unavailable -> graceful notice
-5. Option 2: upload mockups + PDF + fill form -> Publish -> Etsy link
-6. Option 3: upload mockups -> Generate -> metadata fills -> Publish -> Etsy link
+1. Schemas — `craftdesk_api/schemas/etsy.py`
+2. EtsyListingService — `craftdesk_api/services/etsy_listing_service.py`
+3. Router — `craftdesk_api/routers/etsy.py` (4 new endpoints)
+4. Frontend: `shops/page.tsx` (real OAuth + clickable cards)
+5. Frontend: `shops/callback/page.tsx`
+6. Frontend: `shops/[shop_id]/publish/page.tsx`
+7. Docs — `DETAILED.md`, `MASTER_MAP.md`
+8. Verification & Lint — `pytest`, `ruff check . --fix`

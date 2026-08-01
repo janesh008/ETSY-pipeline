@@ -111,6 +111,12 @@ Guidelines to eliminate common LLM coding mistakes and enforce senior engineerin
 - Transform tasks into verifiable goals (`1. [Step] → verify: [check]`).
 - Write tests or verification checks before declaring completion.
 
+### 5. Logging and Error Transparency
+- **Add explicit loggers and never swallow errors with dummy data.**
+- When creating any functionality or function, add detailed logging (`logger.info`, `logger.error`, `logger.warning`) to make root cause identification straightforward.
+- If a function fails or encounters an exception, **do not return dummy, fallback, or empty data**. Always propagate or return the explicit exception, error response, or log detail so failures are transparent.
+
+
 ---
 
 ## Mandatory Documentation Updates on Code Changes

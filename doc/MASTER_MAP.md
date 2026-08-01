@@ -41,13 +41,14 @@ Use these links to jump directly to any directory or file in the codebase:
         *   [📄 etsy_scraper.py](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/services/etsy_scraper.py) — Etsy listing URL scraper.
         *   [📄 prompt_engine.py](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/services/prompt_engine.py) — Gemini 2.5 Flash prompt synthesis.
         *   [📄 etsy_oauth.py](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/services/etsy_oauth.py) — Etsy OAuth 2.0 PKCE helper.
+        *   [📄 etsy_listing_service.py](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/services/etsy_listing_service.py) — GCS discovery, listing publish & AI metadata generation service.
         *   [📄 pipeline_runner.py](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/services/pipeline_runner.py) — 6-stage pipeline orchestrator.
         *   [📄 etsy_publisher.py](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/services/etsy_publisher.py) — Etsy API v3 draft listing publisher.
     *   [**📁 routers/**](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/routers) — FastAPI route endpoints.
         *   [📄 auth.py](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/routers/auth.py) — /register, /login, /refresh, /logout.
         *   [📄 gcp.py](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/routers/gcp.py) — /gcp/config, /gcp/vm/start, /gcp/vm/stop, /gcp/vm/status.
         *   [📄 prompts.py](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/routers/prompts.py) — /prompts/scrape-etsy, /prompts/generate, .txt export.
-        *   [📄 etsy.py](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/routers/etsy.py) — /etsy/auth/url, /etsy/auth/callback, /etsy/shops.
+        *   [📄 etsy.py](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/routers/etsy.py) — /etsy/auth/url, /etsy/auth/callback, /etsy/shops, /etsy/gcs-folders, publish & metadata generation endpoints.
         *   [📄 pipeline.py](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/routers/pipeline.py) — /pipeline/jobs, single-stage retry, WS stream.
         *   [📄 review.py](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/routers/review.py) — /review/{id}, metadata patch, push-to-etsy.
         *   [📄 settings.py](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/routers/settings.py) — /settings/profile, /settings/api-keys.
@@ -56,7 +57,7 @@ Use these links to jump directly to any directory or file in the codebase:
         *   [📄 test_auth.py](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/tests/test_auth.py) — Auth unit tests.
         *   [📄 test_gcp.py](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/tests/test_gcp.py) — GCP router tests.
         *   [📄 test_prompts.py](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/tests/test_prompts.py) — Prompt Studio tests.
-        *   [📄 test_etsy.py](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/tests/test_etsy.py) — Etsy OAuth tests.
+        *   [📄 test_etsy.py](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/tests/test_etsy.py) — Etsy OAuth & listing publishing tests.
         *   [📄 test_pipeline.py](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/tests/test_pipeline.py) — Pipeline runner tests.
         *   [📄 test_review.py](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/tests/test_review.py) — Review & publishing tests.
         *   [📄 test_settings.py](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/tests/test_settings.py) — Settings tests.
@@ -76,6 +77,8 @@ Use these links to jump directly to any directory or file in the codebase:
         *   [📄 dashboard/page.tsx](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_web/src/app/dashboard/page.tsx) — Studio dashboard & GPU VM widget.
         *   [📄 prompt-studio/page.tsx](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_web/src/app/prompt-studio/page.tsx) — AI Prompt Studio & .txt Exporter.
         *   [📄 shops/page.tsx](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_web/src/app/shops/page.tsx) — Etsy OAuth PKCE Shop Connector.
+        *   [📄 shops/callback/page.tsx](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_web/src/app/shops/callback/page.tsx) — Etsy OAuth 2.0 PKCE Code Exchange Callback Handler.
+        *   [📄 shops/[shop_id]/publish/page.tsx](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_web/src/app/shops/%5Bshop_id%5D/publish/page.tsx) — 3-Mode Etsy Shop Upload & Direct Publishing Dashboard.
         *   [📄 pipeline/page.tsx](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_web/src/app/pipeline/page.tsx) — 6-Stage Pipeline & Failure Retry Card.
         *   [📄 review/[job_id]/page.tsx](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_web/src/app/review/%5Bjob_id%5D/page.tsx) — Mockup review, Lightbox modal & Etsy Publisher.
         *   [📄 settings/page.tsx](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_web/src/app/settings/page.tsx) — Studio settings & key store.
