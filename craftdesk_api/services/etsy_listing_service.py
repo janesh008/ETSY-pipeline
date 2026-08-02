@@ -52,27 +52,39 @@ class EtsyListingService:
         """Browse GCS bucket for Clipart theme folders."""
         global _GCS_FOLDERS_CACHE_STORE
         now = time.time()
-        if _GCS_FOLDERS_CACHE_STORE and (now - _GCS_FOLDERS_CACHE_STORE[0]) < 300:
+        # Only use cache if it was successful and less than 60s old
+        if (
+            _GCS_FOLDERS_CACHE_STORE
+            and _GCS_FOLDERS_CACHE_STORE[1].gcs_available
+            and (now - _GCS_FOLDERS_CACHE_STORE[0]) < 60
+        ):
             return _GCS_FOLDERS_CACHE_STORE[1]
 
         app_settings = settings or get_settings()
 
-        if not is_gcp_available():
+        if not is_gcp_available() and not app_settings.gcs_bucket:
             return GcsFolderListResponse(folders=[], gcs_available=False)
 
         try:
             gcs = GCSStore(settings=app_settings)
             objects = gcs.list_objects("Clipart/")
 
-            # Group prefixes: Clipart/<date>/<theme_slug>/
+            # Group prefixes: Clipart/<date>/<theme_slug>/ or Clipart/<theme_slug>/
             folder_map: dict[str, dict[str, Any]] = {}
 
             for obj in objects:
                 parts = obj.split("/")
-                if len(parts) >= 3 and parts[0] == "Clipart":
-                    date_folder = parts[1]
-                    theme_slug = parts[2]
-                    prefix = f"Clipart/{date_folder}/{theme_slug}/"
+                if len(parts) >= 2 and parts[0] == "Clipart":
+                    if len(parts) >= 3:
+                        date_folder = parts[1]
+                        theme_slug = parts[2]
+                        prefix = f"Clipart/{date_folder}/{theme_slug}/"
+                        sub_path = "/".join(parts[3:])
+                    else:
+                        date_folder = ""
+                        theme_slug = parts[1].replace(".txt", "")
+                        prefix = f"Clipart/{theme_slug}/"
+                        sub_path = parts[1]
 
                     if prefix not in folder_map:
                         display_name = theme_slug.replace("_", " ")
@@ -86,12 +98,11 @@ class EtsyListingService:
                             "has_metadata": False,
                         }
 
-                    sub_path = "/".join(parts[3:])
-                    if sub_path.startswith("mockups/"):
+                    if sub_path.startswith("mockups/") or "mockup" in sub_path.lower():
                         folder_map[prefix]["has_mockups"] = True
-                    elif sub_path.startswith("pdf/") or obj.endswith(".pdf"):
+                    if sub_path.startswith("pdf/") or obj.endswith(".pdf"):
                         folder_map[prefix]["has_pdf"] = True
-                    elif "metadata/listing.json" in obj:
+                    if "metadata/listing.json" in obj or "listing.json" in obj:
                         folder_map[prefix]["has_metadata"] = True
 
             folder_items = [

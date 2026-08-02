@@ -37,11 +37,36 @@ def is_gcp_available() -> bool:
     if gcloud_adc_win.exists() or gcloud_adc_unix.exists():
         return True
 
-    # Check explicit GCP environment indicators (e.g. running on GCP VM or Cloud Run)
-    if os.getenv("GCP_VM") or os.getenv("IS_GCP_VM") or os.getenv("K_SERVICE") or os.getenv("GCP_PROJECT_ID"):
+    # Check explicit GCP environment indicators
+    if (
+        os.getenv("GCP_VM")
+        or os.getenv("IS_GCP_VM")
+        or os.getenv("K_SERVICE")
+        or os.getenv("GCP_PROJECT_ID")
+        or os.getenv("GCS_BUCKET")
+    ):
         return True
 
+    # Check Linux DMI vendor / product name for Google Cloud VM
+    dmi_vendor = Path("/sys/class/dmi/id/sys_vendor")
+    dmi_product = Path("/sys/class/dmi/id/product_name")
+    if dmi_vendor.exists() and "Google" in dmi_vendor.read_text(errors="ignore"):
+        return True
+    if dmi_product.exists() and "Google" in dmi_product.read_text(errors="ignore"):
+        return True
+
+    # Check settings fallback
+    try:
+        from etsy_pipeline.config.settings import get_settings
+
+        settings = get_settings()
+        if settings.gcs_bucket or settings.gcp_project_id:
+            return True
+    except Exception:
+        pass
+
     return False
+
 
 
 class GCSStore:
