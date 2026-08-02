@@ -36,6 +36,7 @@ interface EnterpriseGcsThemeSelectorProps {
   onSelectionChange: (selectedPrefixes: string[]) => void;
   isLoading?: boolean;
   onBatchPublish?: (selectedFolders: GcsFolderItem[]) => void;
+  onBatchRunPipeline?: (selectedFolders: GcsFolderItem[]) => void;
 }
 
 export function EnterpriseGcsThemeSelector({
@@ -44,6 +45,7 @@ export function EnterpriseGcsThemeSelector({
   onSelectionChange,
   isLoading = false,
   onBatchPublish,
+  onBatchRunPipeline,
 }: EnterpriseGcsThemeSelectorProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDateFilter, setSelectedDateFilter] = useState<string>("ALL");
@@ -530,13 +532,24 @@ export function EnterpriseGcsThemeSelector({
             </span>
           </div>
 
-          <button
-            type="button"
-            onClick={() => onBatchPublish && onBatchPublish(selectedFolderObjects)}
-            className="px-3.5 py-1.5 bg-[#C85A32] hover:bg-[#B24D28] text-white font-bold text-xs rounded-lg transition shadow-xs cursor-pointer flex items-center gap-1"
-          >
-            <span>Batch Publish {selectedPrefixes.length} Theme</span>
-          </button>
+          {onBatchRunPipeline ? (
+            <button
+              type="button"
+              onClick={() => onBatchRunPipeline(selectedFolderObjects)}
+              className="px-3.5 py-1.5 bg-[#0D5C46] hover:bg-[#094534] text-white font-bold text-xs rounded-lg transition shadow-xs cursor-pointer flex items-center gap-1.5"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Run Pipeline ({selectedPrefixes.length} Theme{selectedPrefixes.length > 1 ? "s" : ""})</span>
+            </button>
+          ) : onBatchPublish ? (
+            <button
+              type="button"
+              onClick={() => onBatchPublish(selectedFolderObjects)}
+              className="px-3.5 py-1.5 bg-[#C85A32] hover:bg-[#B24D28] text-white font-bold text-xs rounded-lg transition shadow-xs cursor-pointer flex items-center gap-1"
+            >
+              <span>Batch Publish {selectedPrefixes.length} Theme</span>
+            </button>
+          ) : null}
         </div>
       )}
     </div>

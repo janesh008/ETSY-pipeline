@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Outfit, Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "../context/AuthContext";
+import { PipelineProvider } from "../context/PipelineContext";
+import { FloatingPipelineWidget } from "../components/pipeline/FloatingPipelineWidget";
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -37,7 +39,12 @@ export default function RootLayout({
       className={`${outfit.variable} ${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-[#F7F6F0] text-[#1C2421]">
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <PipelineProvider>
+            {children}
+            <FloatingPipelineWidget />
+          </PipelineProvider>
+        </AuthProvider>
       </body>
     </html>
   );
