@@ -56,4 +56,7 @@ output/
 !.pre-commit-config.yaml
 !etsy_pipeline/resources/image_z_image_turbo1.json
 !etsy mockup creator/templates/*.json
+!craftdesk_web/package.json
+!craftdesk_web/tsconfig.json
+
 

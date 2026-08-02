@@ -652,11 +652,10 @@ export default function PromptStudioPage() {
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
-                className={`border-2 border-dashed rounded-xl p-5 text-center cursor-pointer transition ${
-                  isDragging
-                    ? "border-[#C85A32] bg-[#F4EFE6]"
-                    : "border-[#DCD8CF] bg-[#F9F8F3] hover:border-[#C85A32]/60 hover:bg-[#F4EFE6]/50"
-                }`}
+                className={`border-2 border-dashed rounded-xl p-5 text-center cursor-pointer transition ${isDragging
+                  ? "border-[#C85A32] bg-[#F4EFE6]"
+                  : "border-[#DCD8CF] bg-[#F9F8F3] hover:border-[#C85A32]/60 hover:bg-[#F4EFE6]/50"
+                  }`}
               >
                 <Upload className="w-6 h-6 text-[#C85A32] mx-auto mb-1.5" />
                 <p className="text-xs font-semibold text-[#1C2421]">
@@ -772,11 +771,10 @@ export default function PromptStudioPage() {
               onDragOver={(e) => { e.preventDefault(); setIsDraggingPromptFile(true); }}
               onDragLeave={(e) => { e.preventDefault(); setIsDraggingPromptFile(false); }}
               onDrop={handlePromptFileDrop}
-              className={`border-2 border-dashed rounded-xl p-5 text-center cursor-pointer transition ${
-                isDraggingPromptFile
-                  ? "border-[#0D5C46] bg-[#E6F2EE]"
-                  : "border-[#DCD8CF] bg-[#F9F8F3] hover:border-[#0D5C46]/60 hover:bg-[#E6F2EE]/30"
-              }`}
+              className={`border-2 border-dashed rounded-xl p-5 text-center cursor-pointer transition ${isDraggingPromptFile
+                ? "border-[#0D5C46] bg-[#E6F2EE]"
+                : "border-[#DCD8CF] bg-[#F9F8F3] hover:border-[#0D5C46]/60 hover:bg-[#E6F2EE]/30"
+                }`}
             >
               <FileText className="w-6 h-6 text-[#0D5C46] mx-auto mb-1.5" />
               <p className="text-xs font-semibold text-[#1C2421]">
@@ -846,8 +844,8 @@ export default function PromptStudioPage() {
                   {generatedPrompts.length > 0
                     ? `${generatedPrompts.length} prompts formatted under locked section headings (## MAIN_CHARACTER, ## SCENE, etc.)`
                     : rawPromptText
-                    ? "Showing uploaded prompt file — ready to save to GCP Bucket"
-                    : "No prompt set generated yet"}
+                      ? "Showing uploaded prompt file — ready to save to GCP Bucket"
+                      : "No prompt set generated yet"}
                 </p>
               </div>
 

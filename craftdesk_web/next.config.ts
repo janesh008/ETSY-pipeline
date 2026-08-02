@@ -13,6 +13,12 @@ const nextConfig: NextConfig = {
     "34.24.199.227:3000",
   ],
 
+  // Keep HTTP connections alive to FastAPI — prevents premature socket close
+  // that causes ECONNRESET on long LLM generation calls (60–120 s).
+  httpAgentOptions: {
+    keepAlive: true,
+  },
+
   // Proxy all /api/* requests through Next.js server → FastAPI on port 8000.
   // This means the browser only ever talks to port 3000 — port 8000 never
   // needs to be publicly exposed (works identically on local & GCP VM).
