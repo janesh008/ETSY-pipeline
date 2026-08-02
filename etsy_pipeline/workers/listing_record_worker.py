@@ -156,10 +156,18 @@ class ListingRecordWorker:
             "listing_quantity": int(job.listing_quantity),
             "who_made": "i_did",
             "when_made": "made_to_order",
-            "taxonomy_id": 110,
+            "taxonomy_id": 6844,  # Craft Supplies & Tools > Clip Art & Image Files
             "type": "download",
             "is_digital": True,
+            "is_ai_created": True,
+            "renewal_option": "automatic",
+            "craft_type": [
+                "Card making & stationery",
+                "Collage",
+                "Kids' crafts"
+            ],
             "materials": ["PNG", "Digital Download", "Transparent Background"],
+
             "mockup_gcs_prefix": (
                 f"Clipart/{job.date_folder}/{job.theme_slug}/mockups/"
             ),
@@ -167,6 +175,7 @@ class ListingRecordWorker:
             "etsy_listing_id": job.etsy_listing_id or "",
             "etsy_listing_url": job.etsy_listing_url or "",
         }
+
 
     def _get_gcs(self) -> GCSStore | None:
         """Lazy load GCSStore."""

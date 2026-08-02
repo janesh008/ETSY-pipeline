@@ -118,6 +118,7 @@ class MetadataWorker:
         )
 
         # 4. Parse & Validate
+        self._current_theme = job.theme
         title, description, tags = self._parse_and_validate_response(raw_response)
 
         # 5. Populate Job fields
@@ -253,7 +254,7 @@ class MetadataWorker:
             r"^\s*\d+\.\s*([^(#\n]+?)(?:\s*\*|\s*$)", raw_tags_block, re.MULTILINE
         )
 
-        tags = self._validate_tags(raw_tag_lines)
+        tags = self._validate_tags(raw_tag_lines, theme_hint=getattr(self, "_current_theme", None))
 
         return title, description, tags
 
@@ -273,14 +274,23 @@ class MetadataWorker:
         return clean_title or "Digital Clipart PNG Bundle Set"
 
     def _validate_description(self, description: str) -> str:
-        """Clean description HTML tags and validate length."""
-        clean_desc = re.sub(r"<[^>]*>", "", description).strip()
+        """Clean description HTML tags, strip markdown bold markers, and validate length."""
+        # Remove **bold** markers (e.g. **Product Type:** → Product Type:)
+        clean_desc = re.sub(r"\*\*([^*]+)\*\*", r"\1", description)
+        # Remove any remaining lone asterisks used as bullet-point markers
+        clean_desc = re.sub(r"(?<![\w*])\*(?![\w*])", "", clean_desc)
+        # Strip HTML tags
+        clean_desc = re.sub(r"<[^>]*>", "", clean_desc).strip()
         if len(clean_desc) > DESCRIPTION_MAX_CHARS:
             clean_desc = clean_desc[:DESCRIPTION_MAX_CHARS]
         return clean_desc
 
-    def _validate_tags(self, raw_tags: list[str]) -> list[str]:
-        """Validate tag list to ensure exactly 13 tags, each <= 20 chars."""
+    def _validate_tags(self, raw_tags: list[str], theme_hint: str | None = None) -> list[str]:
+        """Validate tag list to ensure exactly 13 tags, each <= 20 chars.
+
+        Theme-derived tags are injected as high-priority fallbacks so tags stay
+        relevant to the clipart subject when the model returns too few.
+        """
         cleaned_tags: list[str] = []
         seen: set[str] = set()
 
@@ -294,21 +304,42 @@ class MetadataWorker:
                 seen.add(lower_tag)
                 cleaned_tags.append(clean_tag)
 
-        # Fallback tags if fewer than 13
-        fallback_pool = [
+        # Build theme-specific fallback tags first, then generic fallbacks
+        theme_fallbacks: list[str] = []
+        if theme_hint:
+            theme_words = re.sub(r"[^\w\s]", "", theme_hint).strip().split()
+            if theme_words:
+                full_name = " ".join(theme_words)
+                first_word = theme_words[0]
+
+                def _theme_tag(name: str, suffix: str) -> str:
+                    """Build '<name> <suffix>' trimmed cleanly to TAG_MAX_CHARS."""
+                    budget = TAG_MAX_CHARS - len(suffix) - 1  # 1 for the space
+                    name_part = name[:budget].rstrip()
+                    return f"{name_part} {suffix}"
+
+                theme_fallbacks = [
+                    _theme_tag(full_name, "clipart"),
+                    _theme_tag(full_name, "png"),
+                    _theme_tag(full_name, "bundle"),
+                    _theme_tag(first_word, "sticker"),
+                    _theme_tag(first_word, "digital"),
+                ]
+
+
+        # Generic fallback pool
+        fallback_pool = theme_fallbacks + [
             "clipart bundle",
             "watercolor clipart",
             "digital download",
             "commercial png",
             "sublimation png",
             "party invitation",
-            "nursery art png",
             "printable graphics",
             "craft asset pack",
             "instant download",
             "digital paper set",
             "diy craft supply",
-            "pod design element",
         ]
         for fallback in fallback_pool:
             if len(cleaned_tags) >= TAG_COUNT:

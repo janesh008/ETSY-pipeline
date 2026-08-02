@@ -89,10 +89,32 @@ class GcsFolderItem(BaseModel):
 class GcsFolderListResponse(BaseModel):
     """List of GCS clipart folders available for listing upload."""
 
-    folders: list[GcsFolderItem]
-    gcs_available: bool = Field(
-        default=True, description="False if running locally without GCP credentials"
+    folders: list[GcsFolderItem] = Field(default_factory=list)
+    gcs_available: bool = Field(default=True)
+
+
+class GcsFolderDetailsResponse(BaseModel):
+    """Full details, metadata, and mockup file list for a specific GCS clipart theme folder."""
+
+    gcs_prefix: str
+    theme_slug: str
+    display_name: str
+    date_folder: str
+    title: str = Field(default="")
+    description: str = Field(default="")
+    tags: list[str] = Field(default_factory=list)
+    price: float = Field(default=5.99)
+    quantity: int = Field(default=999)
+    who_made: str = Field(default="i_did")
+    is_ai_created: bool = Field(default=True)
+    renewal_option: str = Field(default="automatic")
+    taxonomy_id: int = Field(default=6844)
+    craft_type: list[str] = Field(
+        default_factory=lambda: ["Card making & stationery", "Collage", "Kids' crafts"]
     )
+    mockups: list[str] = Field(default_factory=list, description="List of mockup image filenames or relative keys")
+
+
 
 
 class GcsListingRequest(BaseModel):

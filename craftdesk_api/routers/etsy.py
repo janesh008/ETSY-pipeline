@@ -5,8 +5,11 @@ from __future__ import annotations
 import secrets
 from datetime import UTC, datetime, timedelta
 
+from etsy_pipeline.config.settings import get_settings
+from etsy_pipeline.services.gcs_store import GCSStore, is_gcp_available
 from etsy_pipeline.utils.logging import get_logger
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Response, UploadFile, status
+
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -21,7 +24,9 @@ from craftdesk_api.schemas.etsy import (
     EtsyShopResponse,
     EtsyShopStatsResponse,
     EtsyShopUpdateRequest,
+    GcsFolderDetailsResponse,
     GcsFolderListResponse,
+
     GcsListingRequest,
     GenerateMetadataResponse,
     ListingPublishResponse,
@@ -373,6 +378,67 @@ async def list_gcs_folders(
 ) -> GcsFolderListResponse:
     """Browse GCS bucket for available Clipart theme folders."""
     return EtsyListingService.list_gcs_folders()
+
+
+@router.get(
+    "/gcs-folder-details",
+    response_model=GcsFolderDetailsResponse,
+    summary="Get metadata and mockup images for a specific GCS clipart theme folder",
+)
+async def get_gcs_folder_details(
+    gcs_prefix: str,
+    user_id: str = Depends(get_current_user_id),
+) -> GcsFolderDetailsResponse:
+    """Fetch listing.json metadata and mockup image object keys for a given GCS folder prefix."""
+    return EtsyListingService.get_gcs_folder_details(gcs_prefix)
+
+
+# Server-side in-memory cache for media bytes (object_key -> (bytes, media_type))
+_MEDIA_BYTES_CACHE: dict[str, tuple[bytes, str]] = {}
+
+
+@router.get(
+    "/gcs-media",
+    summary="Proxy stream or fetch GCS image binary for browser display",
+)
+async def get_gcs_media(
+    object_key: str,
+) -> Response:
+    """Stream raw image bytes from GCS bucket for browser thumbnail/lightbox rendering."""
+    headers = {
+        "Cache-Control": "public, max-age=31536000, immutable",
+        "ETag": f'"{abs(hash(object_key))}"',
+    }
+
+    if object_key in _MEDIA_BYTES_CACHE:
+        data, media_type = _MEDIA_BYTES_CACHE[object_key]
+        return Response(content=data, media_type=media_type, headers=headers)
+
+    if not is_gcp_available():
+        raise HTTPException(status_code=404, detail="GCP credentials not available")
+
+    try:
+        app_settings = get_settings()
+        gcs = GCSStore(settings=app_settings)
+        data = gcs.download_bytes(object_key)
+        media_type = "image/png" if object_key.lower().endswith(".png") else "image/jpeg"
+
+        # Cache in memory (cap at 300 images)
+        if len(_MEDIA_BYTES_CACHE) > 300:
+            _MEDIA_BYTES_CACHE.clear()
+        _MEDIA_BYTES_CACHE[object_key] = (data, media_type)
+
+        return Response(
+            content=data,
+            media_type=media_type,
+            headers=headers,
+        )
+    except Exception as exc:
+        logger.warning(f"[etsy_router] GCS media proxy failed for '{object_key}': {exc}")
+        raise HTTPException(status_code=404, detail=f"Image object '{object_key}' not found")
+
+
+
 
 
 @router.post(

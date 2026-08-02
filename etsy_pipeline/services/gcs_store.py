@@ -193,6 +193,47 @@ class GCSStore:
         )
         return local
 
+    def download_bytes(self, gcs_object_path: str) -> bytes:
+        """Download a GCS object and return its contents as raw bytes.
+
+        Args:
+            gcs_object_path: Object path inside the bucket.
+
+        Returns:
+            Raw file bytes.
+        """
+        blob = self._bucket.blob(gcs_object_path)
+        try:
+            return blob.download_as_bytes()
+        except Exception as exc:
+            raise RuntimeError(
+                f"[gcs] Download-as-bytes failed for gs://{self._bucket_name}/{gcs_object_path}: {exc}"
+            ) from exc
+
+    def upload_bytes(
+        self, data: bytes, gcs_object_path: str, content_type: str = "application/octet-stream"
+    ) -> str:
+        """Upload raw bytes directly to a GCS object path.
+
+        Args:
+            data: Raw bytes to upload.
+            gcs_object_path: Destination object path inside bucket.
+            content_type: MIME content type string.
+
+        Returns:
+            The full GCS URI of the uploaded object (gs://bucket/path).
+        """
+        blob = self._bucket.blob(gcs_object_path)
+        try:
+            blob.upload_from_string(data, content_type=content_type)
+        except Exception as exc:
+            raise RuntimeError(
+                f"[gcs] Upload-bytes failed for gs://{self._bucket_name}/{gcs_object_path}: {exc}"
+            ) from exc
+        gcs_uri = f"gs://{self._bucket_name}/{gcs_object_path}"
+        logger.info(f"[gcs] Uploaded bytes → {gcs_uri}")
+        return gcs_uri
+
     def download_as_text(self, gcs_object_path: str, encoding: str = "utf-8") -> str:
         """Download a GCS object and return its contents as a string.
 
@@ -215,6 +256,7 @@ class GCSStore:
             raise RuntimeError(
                 f"[gcs] Download-as-text failed for gs://{self._bucket_name}/{gcs_object_path}: {exc}"
             ) from exc
+
 
     # ------------------------------------------------------------------
     # Delete

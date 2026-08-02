@@ -15,9 +15,7 @@ import {
   ChevronDown,
   ShieldCheck,
   CheckCircle2,
-  RefreshCw,
-  BarChart3,
-  ListFilter,
+  Layers,
 } from "lucide-react";
 import { slugifyShopName } from "@/lib/slug";
 
@@ -44,11 +42,9 @@ export default function ShopWorkspaceLayout({
   const [shops, setShops] = useState<EtsyShop[]>([]);
   const [currentShop, setCurrentShop] = useState<EtsyShop | null>(null);
   const [isStoreDropdownOpen, setIsStoreDropdownOpen] = useState(false);
-  const [isLoadingShops, setIsLoadingShops] = useState(true);
 
   useEffect(() => {
     const fetchShops = async () => {
-      setIsLoadingShops(true);
       const token = localStorage.getItem("craftdesk_access_token");
       try {
         const res = await fetch("http://localhost:8000/api/v1/etsy/shops", {
@@ -86,8 +82,6 @@ export default function ShopWorkspaceLayout({
           slug: currentSlug,
           is_active: true,
         });
-      } finally {
-        setIsLoadingShops(false);
       }
     };
 
@@ -95,6 +89,7 @@ export default function ShopWorkspaceLayout({
   }, [currentSlug]);
 
   const shopSlug = currentShop?.slug || currentSlug;
+
   const navItems = [
     {
       name: "Overview",
@@ -129,93 +124,23 @@ export default function ShopWorkspaceLayout({
   ];
 
   return (
-    <div className="min-h-screen bg-[#F4F1EA] text-[#1C2421] font-sans antialiased flex flex-col">
-      {/* ── Top Global Workspace Header ───────────────────────────────────── */}
-      <header className="bg-[#1C2421] text-white border-b border-[#2C3632] sticky top-0 z-40 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
-          {/* Left: Breadcrumbs & Store Switcher */}
-          <div className="flex items-center gap-3">
+    <div className="min-h-screen bg-[#F4F1EA] text-[#1C2421] font-sans antialiased flex flex-col md:flex-row">
+      {/* ── UNIFIED LEFT SIDEBAR NAVIGATION RAIL ───────────────────────────────── */}
+      <aside className="w-full md:w-64 bg-[#1C2421] text-white flex flex-col shrink-0 border-r border-[#2C3632] shadow-md z-30">
+        {/* Top Store Header Card */}
+        <div className="p-4 border-b border-[#2C3632] space-y-3 bg-[#161D1A]">
+          {/* Breadcrumb Back Button & Store Switcher */}
+          <div className="flex items-center justify-between gap-2">
             <Link
               href="/shops"
-              className="p-1.5 rounded-lg bg-[#2C3632] hover:bg-[#3C4843] text-[#A3B8B0] hover:text-white transition flex items-center gap-1.5 text-xs font-bold"
-              title="Back to All Shops Directory"
+              className="px-2 py-1 rounded-lg bg-[#2C3632] hover:bg-[#3C4843] text-[#A3B8B0] hover:text-white transition text-[11px] font-bold inline-flex items-center gap-1 shrink-0"
+              title="Back to All Stores Directory"
             >
-              <ArrowLeft className="w-4 h-4" />
-              <span className="hidden sm:inline">All Stores</span>
+              <ArrowLeft className="w-3 h-3" />
+              <span>Stores</span>
             </Link>
 
-            <span className="text-[#3C4843] font-bold">/</span>
-
-            {/* Store Dropdown */}
-            <div className="relative">
-              <button
-                onClick={() => setIsStoreDropdownOpen(!isStoreDropdownOpen)}
-                className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-[#2C3632] hover:bg-[#3C4843] transition border border-[#3C4843] cursor-pointer"
-              >
-                <div className="w-6 h-6 rounded-lg bg-[#C85A32] text-white flex items-center justify-center font-bold text-xs font-display">
-                  {currentShop?.shop_name.charAt(0).toUpperCase() || "S"}
-                </div>
-                <span className="font-bold text-sm font-display tracking-tight text-white">
-                  {currentShop?.shop_name || "Loading store..."}
-                </span>
-                <ChevronDown className="w-3.5 h-3.5 text-[#A3B8B0]" />
-              </button>
-
-              {/* Dropdown Menu */}
-              {isStoreDropdownOpen && (
-                <div
-                  className="absolute left-0 mt-2 w-64 bg-[#1C2421] border border-[#3C4843] rounded-xl shadow-xl py-2 z-50 animate-in fade-in zoom-in-95 duration-150"
-                  onMouseLeave={() => setIsStoreDropdownOpen(false)}
-                >
-                  <div className="px-3 py-1.5 text-[10px] font-bold text-[#A3B8B0] uppercase tracking-wider">
-                    Switch Connected Store
-                  </div>
-                  {shops.map((s) => {
-                    const sSlug = s.slug || slugifyShopName(s.shop_name);
-                    const isSelected = s.id === currentShop?.id || sSlug === currentSlug;
-                    return (
-                      <button
-                        key={s.id}
-                        onClick={() => {
-                          setIsStoreDropdownOpen(false);
-                          router.push(`/shops/${sSlug}`);
-                        }}
-                        className={`w-full px-3 py-2 text-left flex items-center justify-between text-xs font-bold transition ${
-                          isSelected
-                            ? "bg-[#C85A32] text-white"
-                            : "text-[#DCD8CF] hover:bg-[#2C3632]"
-                        }`}
-                      >
-                        <div className="flex items-center gap-2 truncate">
-                          <Store className="w-3.5 h-3.5" />
-                          <span className="truncate">{s.shop_name}</span>
-                        </div>
-                        {isSelected && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
-                      </button>
-                    );
-                  })}
-                  <div className="border-t border-[#2C3632] mt-1 pt-1 px-2">
-                    <Link
-                      href="/shops"
-                      onClick={() => setIsStoreDropdownOpen(false)}
-                      className="w-full px-2 py-1.5 text-xs text-[#C85A32] hover:bg-[#2C3632] rounded-lg transition font-bold flex items-center gap-1.5"
-                    >
-                      <span>+ Connect Another Store</span>
-                    </Link>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* AES-256 Connected Badge */}
-            <span className="hidden md:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#0D5C46]/40 text-[#4ADE80] border border-[#0D5C46]">
-              <CheckCircle2 className="w-3 h-3 text-[#4ADE80]" />
-              AES-256 Active
-            </span>
-          </div>
-
-          {/* Right: Quick External Etsy Link */}
-          <div className="flex items-center gap-3">
+            {/* External Etsy Link Icon */}
             {currentShop?.shop_name && (
               <a
                 href={
@@ -225,19 +150,80 @@ export default function ShopWorkspaceLayout({
                 }
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-3 py-1.5 rounded-xl bg-[#2C3632] hover:bg-[#3C4843] text-[#DCD8CF] hover:text-white transition text-xs font-bold flex items-center gap-1.5 border border-[#3C4843]"
+                className="p-1.5 rounded-lg bg-[#2C3632] hover:bg-[#3C4843] text-[#A3B8B0] hover:text-white transition"
+                title="View Shop on Etsy.com"
               >
-                <span>View on Etsy.com</span>
-                <ExternalLink className="w-3.5 h-3.5 text-[#A3B8B0]" />
+                <ExternalLink className="w-3.5 h-3.5" />
               </a>
             )}
           </div>
-        </div>
-      </header>
 
-      {/* ── Sub-Module Navigation Bar (Stripe/Vercel Workspace Tabs) ─────── */}
-      <nav className="bg-[#EFECE6] border-b border-[#DCD8CF] sticky top-16 z-30 shadow-xs">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center gap-1 overflow-x-auto scrollbar-none">
+          {/* Store Switcher Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setIsStoreDropdownOpen(!isStoreDropdownOpen)}
+              className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-[#2C3632] hover:bg-[#3C4843] transition border border-[#3C4843] cursor-pointer"
+            >
+              <div className="flex items-center gap-2 truncate">
+                <div className="w-6 h-6 rounded-lg bg-[#C85A32] text-white flex items-center justify-center font-bold text-xs font-display shrink-0">
+                  {currentShop?.shop_name.charAt(0).toUpperCase() || "S"}
+                </div>
+                <span className="font-bold text-xs font-display tracking-tight text-white truncate">
+                  {currentShop?.shop_name || "Loading store..."}
+                </span>
+              </div>
+              <ChevronDown className="w-3.5 h-3.5 text-[#A3B8B0] shrink-0" />
+            </button>
+
+            {/* Dropdown Menu */}
+            {isStoreDropdownOpen && (
+              <div
+                className="absolute left-0 right-0 mt-2 bg-[#1C2421] border border-[#3C4843] rounded-xl shadow-2xl py-2 z-50 animate-in fade-in zoom-in-95 duration-150"
+                onMouseLeave={() => setIsStoreDropdownOpen(false)}
+              >
+                <div className="px-3 py-1 text-[10px] font-bold text-[#A3B8B0] uppercase tracking-wider">
+                  Switch Connected Store
+                </div>
+                {shops.map((s) => {
+                  const sSlug = s.slug || slugifyShopName(s.shop_name);
+                  const isSelected = s.id === currentShop?.id || sSlug === currentSlug;
+                  return (
+                    <button
+                      key={s.id}
+                      onClick={() => {
+                        setIsStoreDropdownOpen(false);
+                        router.push(`/shops/${sSlug}`);
+                      }}
+                      className={`w-full px-3 py-2 text-left flex items-center justify-between text-xs font-bold transition ${
+                        isSelected
+                          ? "bg-[#C85A32] text-white"
+                          : "text-[#DCD8CF] hover:bg-[#2C3632]"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 truncate">
+                        <Store className="w-3.5 h-3.5" />
+                        <span className="truncate">{s.shop_name}</span>
+                      </div>
+                      {isSelected && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* AES-256 Security Status */}
+          <div className="flex items-center justify-between pt-1">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#0D5C46]/40 text-[#4ADE80] border border-[#0D5C46]">
+              <CheckCircle2 className="w-3 h-3 text-[#4ADE80]" />
+              <span>AES-256 Active</span>
+            </span>
+            <span className="text-[10px] text-[#A3B8B0] font-mono">OAuth 2.0 PKCE</span>
+          </div>
+        </div>
+
+        {/* Vertical Navigation Links */}
+        <nav className="p-3 space-y-1 flex-1">
           {navItems.map((item) => {
             const isActive = item.exact
               ? pathname === item.href
@@ -248,29 +234,30 @@ export default function ShopWorkspaceLayout({
               <Link
                 key={item.href}
                 href={item.href}
-                className={`px-4 py-3 text-xs font-bold border-b-2 flex items-center gap-2 transition shrink-0 cursor-pointer ${
+                className={`w-full px-3 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2.5 transition duration-150 cursor-pointer ${
                   isActive
-                    ? "border-[#C85A32] text-[#C85A32] bg-white/60"
-                    : "border-transparent text-[#5A6561] hover:text-[#1C2421] hover:border-[#DCD8CF]"
+                    ? "bg-[#C85A32] text-white shadow-sm font-semibold translate-x-0.5"
+                    : "text-[#A3B8B0] hover:text-white hover:bg-[#2C3632]"
                 }`}
               >
-                <Icon className={`w-4 h-4 ${isActive ? "text-[#C85A32]" : "text-[#5A6561]"}`} />
+                <Icon className={`w-4 h-4 ${isActive ? "text-white" : "text-[#A3B8B0]"}`} />
                 <span>{item.name}</span>
               </Link>
             );
           })}
-        </div>
-      </nav>
+        </nav>
 
-      {/* ── Dynamic Child Workspace Module Content ──────────────────────── */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-8">
+        {/* Sidebar Footer */}
+        <div className="p-3 border-t border-[#2C3632] text-[10px] text-[#A3B8B0] flex items-center gap-2">
+          <Layers className="w-3.5 h-3.5 text-[#0D5C46]" />
+          <span>GCS Cloud Pipeline Connected</span>
+        </div>
+      </aside>
+
+      {/* ── MAIN WORKSPACE VIEWPORT ────────────────────────────────────────────── */}
+      <main className="flex-1 min-w-0 p-4 sm:p-6 overflow-y-auto">
         {children}
       </main>
-
-      {/* Footer */}
-      <footer className="border-t border-[#DCD8CF] bg-[#EFECE6] py-4 text-center text-xs text-[#5A6561]">
-        CraftDesk SaaS Etsy Seller Platform • Multi-Tenant OAuth 2.0 PKCE • AES-256 Fernet Protection
-      </footer>
     </div>
   );
 }
