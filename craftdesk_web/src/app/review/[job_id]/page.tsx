@@ -63,7 +63,7 @@ export default function ReviewPage({ params }: { params: Promise<{ job_id: strin
       const token = localStorage.getItem("craftdesk_access_token");
       
       // Fetch shops
-      const shopsRes = await fetch("http://localhost:8000/api/v1/etsy/shops", {
+      const shopsRes = await fetch("/api/v1/etsy/shops", {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (shopsRes.ok) {
@@ -73,7 +73,7 @@ export default function ReviewPage({ params }: { params: Promise<{ job_id: strin
       }
 
       // Fetch review data
-      const revRes = await fetch(`http://localhost:8000/api/v1/review/${jobId}`, {
+      const revRes = await fetch(`/api/v1/review/${jobId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (revRes.ok) {
@@ -148,7 +148,7 @@ export default function ReviewPage({ params }: { params: Promise<{ job_id: strin
     setIsSaving(true);
     try {
       const token = localStorage.getItem("craftdesk_access_token");
-      await fetch(`http://localhost:8000/api/v1/review/${jobId}/metadata`, {
+      await fetch(`/api/v1/review/${jobId}/metadata`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -168,7 +168,7 @@ export default function ReviewPage({ params }: { params: Promise<{ job_id: strin
     setPublishSuccess(null);
     try {
       const token = localStorage.getItem("craftdesk_access_token");
-      const res = await fetch(`http://localhost:8000/api/v1/review/${jobId}/push-to-etsy`, {
+      const res = await fetch(`/api/v1/review/${jobId}/push-to-etsy`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

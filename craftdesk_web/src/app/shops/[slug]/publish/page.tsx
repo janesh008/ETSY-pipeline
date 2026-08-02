@@ -147,7 +147,7 @@ export default function ShopPublishPage({
       setIsLoadingGcs(true);
       const token = localStorage.getItem("craftdesk_access_token");
       try {
-        const res = await fetch("http://localhost:8000/api/v1/etsy/gcs-folders", {
+        const res = await fetch("/api/v1/etsy/gcs-folders", {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.ok) {
@@ -192,7 +192,7 @@ export default function ShopPublishPage({
     unfetched.forEach(async (prefix) => {
       try {
         const res = await fetch(
-          `http://localhost:8000/api/v1/etsy/gcs-folder-details?gcs_prefix=${encodeURIComponent(prefix)}`,
+          `/api/v1/etsy/gcs-folder-details?gcs_prefix=${encodeURIComponent(prefix)}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         if (res.ok) {
@@ -275,7 +275,7 @@ export default function ShopPublishPage({
       if (themeHint) formData.append("theme_hint", themeHint);
 
       const res = await fetch(
-        `http://localhost:8000/api/v1/etsy/shops/${shopSlug}/generate-metadata`,
+        `/api/v1/etsy/shops/${shopSlug}/generate-metadata`,
         {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },
@@ -313,7 +313,7 @@ export default function ShopPublishPage({
     try {
       const token = localStorage.getItem("craftdesk_access_token");
       const res = await fetch(
-        `http://localhost:8000/api/v1/etsy/shops/${shopSlug}/gcs-listing`,
+        `/api/v1/etsy/shops/${shopSlug}/gcs-listing`,
         {
           method: "POST",
           headers: {
@@ -367,7 +367,7 @@ export default function ShopPublishPage({
       formData.append("quantity", quantity || "999");
 
       const res = await fetch(
-        `http://localhost:8000/api/v1/etsy/shops/${shopSlug}/upload-listing`,
+        `/api/v1/etsy/shops/${shopSlug}/upload-listing`,
         {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },

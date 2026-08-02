@@ -123,18 +123,9 @@ export default function PipelinePage() {
     try {
       const token = localStorage.getItem("craftdesk_access_token");
       const apiBase = getApiBaseUrl();
-      let res: Response | null = null;
-      try {
-        res = await fetch(`${apiBase}/prompts/files`, {
-          headers: { Authorization: token ? `Bearer ${token}` : "" },
-        });
-      } catch {
-        if (apiBase.includes("192.168") || apiBase.includes("34.148")) {
-          res = await fetch("http://localhost:8000/api/v1/prompts/files", {
-            headers: { Authorization: token ? `Bearer ${token}` : "" },
-          });
-        }
-      }
+      const res = await fetch(`${apiBase}/prompts/files`, {
+        headers: { Authorization: token ? `Bearer ${token}` : "" },
+      });
       if (res && res.ok) {
         const data = await res.json();
         setPromptFiles(data.files || []);

@@ -25,7 +25,8 @@ function EtsyCallbackContent() {
 
       try {
         const token = localStorage.getItem("craftdesk_access_token");
-        const res = await fetch("http://localhost:8000/api/v1/etsy/auth/callback", {
+        const redirectUri = typeof window !== "undefined" ? `${window.location.origin}/shops/callback` : "http://localhost:3000/shops/callback";
+        const res = await fetch("/api/v1/etsy/auth/callback", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -34,7 +35,7 @@ function EtsyCallbackContent() {
           body: JSON.stringify({
             code: code,
             code_verifier: codeVerifier || "demo-code-verifier",
-            redirect_uri: "http://localhost:3000/shops/callback",
+            redirect_uri: redirectUri,
           }),
         });
 

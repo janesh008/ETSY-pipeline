@@ -64,25 +64,10 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 
   console.log(`[api.request] Sending ${options.method || "GET"} -> ${targetUrl}`);
 
-  let response: Response;
-  try {
-    response = await fetch(targetUrl, {
-      ...options,
-      headers,
-    });
-  } catch (netErr) {
-    // Retry fallback to localhost if host IP fetch failed due to uvicorn host binding
-    if (apiBase.includes("192.168") || apiBase.includes("34.148")) {
-      const fallbackUrl = `http://localhost:8000/api/v1${endpoint}`;
-      console.warn(`[api.request] Primary fetch failed (${netErr}). Retrying fallback -> ${fallbackUrl}`);
-      response = await fetch(fallbackUrl, {
-        ...options,
-        headers,
-      });
-    } else {
-      throw netErr;
-    }
-  }
+  const response = await fetch(targetUrl, {
+    ...options,
+    headers,
+  });
 
   if (!response.ok) {
     let errorMessage = "An unexpected error occurred.";

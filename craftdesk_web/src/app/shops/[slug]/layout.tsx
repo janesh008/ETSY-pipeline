@@ -47,7 +47,7 @@ export default function ShopWorkspaceLayout({
     const fetchShops = async () => {
       const token = localStorage.getItem("craftdesk_access_token");
       try {
-        const res = await fetch("http://localhost:8000/api/v1/etsy/shops", {
+        const res = await fetch("/api/v1/etsy/shops", {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.ok) {

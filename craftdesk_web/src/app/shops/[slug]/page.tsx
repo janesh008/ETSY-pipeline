@@ -46,7 +46,7 @@ export default function ShopOverviewPage({
     setIsLoading(true);
     const token = localStorage.getItem("craftdesk_access_token");
     try {
-      const res = await fetch(`http://localhost:8000/api/v1/etsy/shops/${slug}/stats`, {
+      const res = await fetch(`/api/v1/etsy/shops/${slug}/stats`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {

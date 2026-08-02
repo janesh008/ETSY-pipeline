@@ -41,7 +41,7 @@ export default function ShopSettingsPage({
     const fetchShop = async () => {
       const token = localStorage.getItem("craftdesk_access_token");
       try {
-        const res = await fetch("http://localhost:8000/api/v1/etsy/shops", {
+        const res = await fetch("/api/v1/etsy/shops", {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.ok) {
@@ -67,7 +67,7 @@ export default function ShopSettingsPage({
 
     const token = localStorage.getItem("craftdesk_access_token");
     try {
-      const res = await fetch(`http://localhost:8000/api/v1/etsy/shops/${shop.id}`, {
+      const res = await fetch(`/api/v1/etsy/shops/${shop.id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -97,7 +97,7 @@ export default function ShopSettingsPage({
 
     const token = localStorage.getItem("craftdesk_access_token");
     try {
-      await fetch(`http://localhost:8000/api/v1/etsy/shops/${shop.id}`, {
+      await fetch(`/api/v1/etsy/shops/${shop.id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });

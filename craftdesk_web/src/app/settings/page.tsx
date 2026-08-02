@@ -49,7 +49,7 @@ export default function SettingsPage() {
 
     try {
       const token = localStorage.getItem("craftdesk_access_token");
-      await fetch("http://localhost:8000/api/v1/settings/profile", {
+      await fetch("/api/v1/settings/profile", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -73,7 +73,7 @@ export default function SettingsPage() {
 
     try {
       const token = localStorage.getItem("craftdesk_access_token");
-      await fetch("http://localhost:8000/api/v1/gcp/config", {
+      await fetch("/api/v1/gcp/config", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -104,7 +104,7 @@ export default function SettingsPage() {
     try {
       const token = localStorage.getItem("craftdesk_access_token");
       if (geminiKey) {
-        await fetch("http://localhost:8000/api/v1/settings/api-keys", {
+        await fetch("/api/v1/settings/api-keys", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -114,7 +114,7 @@ export default function SettingsPage() {
         });
       }
       if (replicateKey) {
-        await fetch("http://localhost:8000/api/v1/settings/api-keys", {
+        await fetch("/api/v1/settings/api-keys", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

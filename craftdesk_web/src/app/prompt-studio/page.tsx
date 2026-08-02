@@ -170,28 +170,17 @@ export default function PromptStudioPage() {
       const apiBase = getApiBaseUrl();
 
       // Step 1: Register the raw prompt text with backend to get a real job_id
-      let regRes: Response | null = null;
       const regPayload = JSON.stringify({
         raw_prompt_text: rawPromptText,
         theme: customFileName || themeText || "Uploaded_Prompt_File",
         custom_name: customFileName || null,
       });
 
-      try {
-        regRes = await fetch(`${apiBase}/prompts/upload`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: token ? `Bearer ${token}` : "" },
-          body: regPayload,
-        });
-      } catch {
-        if (apiBase.includes("192.168") || apiBase.includes("34.148")) {
-          regRes = await fetch("http://localhost:8000/api/v1/prompts/upload", {
-            method: "POST",
-            headers: { "Content-Type": "application/json", Authorization: token ? `Bearer ${token}` : "" },
-            body: regPayload,
-          });
-        }
-      }
+      const regRes = await fetch(`${apiBase}/prompts/upload`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: token ? `Bearer ${token}` : "" },
+        body: regPayload,
+      });
 
       if (!regRes || !regRes.ok) {
         alert("Could not register prompt file with backend.");
@@ -203,23 +192,12 @@ export default function PromptStudioPage() {
       setJobId(uploadJobId);
 
       // Step 2: Save to GCP using the real job_id
-      let saveRes: Response | null = null;
       const savePayload = JSON.stringify({ custom_name: customFileName || null });
-      try {
-        saveRes = await fetch(`${apiBase}/prompts/jobs/${uploadJobId}/save-to-gcp`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: token ? `Bearer ${token}` : "" },
-          body: savePayload,
-        });
-      } catch {
-        if (apiBase.includes("192.168") || apiBase.includes("34.148")) {
-          saveRes = await fetch(`http://localhost:8000/api/v1/prompts/jobs/${uploadJobId}/save-to-gcp`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json", Authorization: token ? `Bearer ${token}` : "" },
-            body: savePayload,
-          });
-        }
-      }
+      const saveRes = await fetch(`${apiBase}/prompts/jobs/${uploadJobId}/save-to-gcp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: token ? `Bearer ${token}` : "" },
+        body: savePayload,
+      });
 
       if (saveRes && saveRes.ok) {
         const sd = await saveRes.json();
@@ -241,29 +219,14 @@ export default function PromptStudioPage() {
     try {
       const token = localStorage.getItem("craftdesk_access_token");
       const apiBase = getApiBaseUrl();
-      let res: Response | null = null;
-
-      try {
-        res = await fetch(`${apiBase}/prompts/scrape-etsy`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: token ? `Bearer ${token}` : "",
-          },
-          body: JSON.stringify({ url: etsyUrl }),
-        });
-      } catch {
-        if (apiBase.includes("192.168") || apiBase.includes("34.148")) {
-          res = await fetch("http://localhost:8000/api/v1/prompts/scrape-etsy", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: token ? `Bearer ${token}` : "",
-            },
-            body: JSON.stringify({ url: etsyUrl }),
-          });
-        }
-      }
+      const res = await fetch(`${apiBase}/prompts/scrape-etsy`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token ? `Bearer ${token}` : "",
+        },
+        body: JSON.stringify({ url: etsyUrl }),
+      });
 
       if (res && res.ok) {
         const data = await res.json();
@@ -309,29 +272,14 @@ export default function PromptStudioPage() {
         prompt_count: promptCount,
       });
 
-      let res: Response | null = null;
-      try {
-        res = await fetch(`${apiBase}/prompts/generate`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: token ? `Bearer ${token}` : "",
-          },
-          body: payload,
-        });
-      } catch {
-        // Fallback retry to localhost if network host IP fetch was refused
-        if (apiBase.includes("192.168") || apiBase.includes("34.148")) {
-          res = await fetch("http://localhost:8000/api/v1/prompts/generate", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: token ? `Bearer ${token}` : "",
-            },
-            body: payload,
-          });
-        }
-      }
+      const res = await fetch(`${apiBase}/prompts/generate`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token ? `Bearer ${token}` : "",
+        },
+        body: payload,
+      });
 
       if (res && res.ok) {
         const data = await res.json();
@@ -400,27 +348,14 @@ export default function PromptStudioPage() {
         ? JSON.stringify({ custom_name: customFileName })
         : undefined;
 
-      try {
-        res = await fetch(`${apiBase}/prompts/jobs/${jobId}/save-to-gcp`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: token ? `Bearer ${token}` : "",
-          },
-          body: saveBody,
-        });
-      } catch {
-        if (apiBase.includes("192.168") || apiBase.includes("34.148")) {
-          res = await fetch(`http://localhost:8000/api/v1/prompts/jobs/${jobId}/save-to-gcp`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: token ? `Bearer ${token}` : "",
-            },
-            body: saveBody,
-          });
-        }
-      }
+      res = await fetch(`${apiBase}/prompts/jobs/${jobId}/save-to-gcp`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token ? `Bearer ${token}` : "",
+        },
+        body: saveBody,
+      });
 
       if (res && res.ok) {
         const data = await res.json();
