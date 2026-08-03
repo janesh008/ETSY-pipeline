@@ -186,11 +186,23 @@ class PipelineRunnerService:
                     client = storage.Client()
                     bucket = client.bucket(b_name)
                     blob = bucket.blob(blob_path)
-                    if blob.exists():
+                    if blob.exists() and not blob.name.endswith("/"):
                         raw_text = blob.download_as_text(encoding="utf-8")
                         logger.info(
                             f"[pipeline_runner] Downloaded prompt text from GCS: {gcs_uri}"
                         )
+                    else:
+                        # Directory prefix search fallback (e.g. Clipart/2026-08-03/pooh_birthday/)
+                        prefix = blob_path.rstrip("/") + "/"
+                        txt_blobs = [
+                            b for b in bucket.list_blobs(prefix=prefix)
+                            if b.name.endswith(".txt")
+                        ]
+                        if txt_blobs:
+                            raw_text = txt_blobs[0].download_as_text(encoding="utf-8")
+                            logger.info(
+                                f"[pipeline_runner] Downloaded prompt text from GCS folder blob: {txt_blobs[0].name}"
+                            )
                 except Exception as exc:
                     logger.warning(
                         f"[pipeline_runner] Could not download GCS prompt file '{gcs_uri}': {exc}"
@@ -204,16 +216,29 @@ class PipelineRunnerService:
                     if alt_path.exists():
                         p_file = alt_path
 
-                if p_file.exists() and p_file.is_file():
-                    try:
-                        raw_text = p_file.read_text(encoding="utf-8")
-                        logger.info(
-                            f"[pipeline_runner] Read prompt text from local disk: {p_file}"
-                        )
-                    except Exception as exc:
-                        logger.warning(
-                            f"[pipeline_runner] Could not read local prompt file '{prompt_file_path}': {exc}"
-                        )
+                if p_file.exists():
+                    if p_file.is_file():
+                        try:
+                            raw_text = p_file.read_text(encoding="utf-8")
+                            logger.info(
+                                f"[pipeline_runner] Read prompt text from local disk file: {p_file}"
+                            )
+                        except Exception as exc:
+                            logger.warning(
+                                f"[pipeline_runner] Could not read local prompt file '{prompt_file_path}': {exc}"
+                            )
+                    elif p_file.is_dir():
+                        txt_files = list(p_file.glob("*.txt")) or list(p_file.rglob("*.txt"))
+                        if txt_files:
+                            try:
+                                raw_text = txt_files[0].read_text(encoding="utf-8")
+                                logger.info(
+                                    f"[pipeline_runner] Read prompt text from local disk folder: {txt_files[0]}"
+                                )
+                            except Exception as exc:
+                                logger.warning(
+                                    f"[pipeline_runner] Could not read local prompt folder txt '{txt_files[0]}': {exc}"
+                                )
 
             if raw_text:
                 try:
@@ -235,6 +260,8 @@ class PipelineRunnerService:
                     ]
                     if lines:
                         job.prompts = {"main_category": lines}
+            elif prompts:
+                job.prompts = {"MAIN_CHARACTER": prompts}
             else:
                 raise ValueError(
                     f"[pipeline_runner] Failed to locate/read prompt file from GCS or disk: {prompt_file_path}"

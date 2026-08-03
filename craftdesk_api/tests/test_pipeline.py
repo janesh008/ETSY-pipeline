@@ -133,3 +133,19 @@ class TestPipelineEndpoints:
         assert resp.status_code == 400
         assert "detail" in resp.json()
 
+    def test_start_pipeline_job_with_folder_path(self, client, auth_headers, tmp_path) -> None:
+        folder = tmp_path / "pooh_birthday"
+        folder.mkdir(parents=True, exist_ok=True)
+        txt = folder / "pooh_birthday.txt"
+        txt.write_text("Digital watercolor clipart of Pooh\nDigital watercolor clipart of Piglet", encoding="utf-8")
+
+        payload = {
+            "theme_name": "Pooh Birthday Theme",
+            "prompt_file_path": str(folder),
+        }
+        resp = client.post("/api/v1/pipeline/jobs", json=payload, headers=auth_headers)
+        assert resp.status_code == 201
+        data = resp.json()
+        assert data["theme_name"] == "Pooh Birthday Theme"
+
+
