@@ -298,6 +298,13 @@ class PipelineRunnerService:
         return _PIPELINE_JOBS_STORE.get(job_id)
 
     @classmethod
+    def list_jobs(cls, user_id: str) -> list[dict[str, Any]]:
+        """Return list of all stored pipeline jobs for user_id sorted by created_at descending."""
+        jobs = [j for j in _PIPELINE_JOBS_STORE.values() if j.get("user_id") == user_id]
+        return sorted(jobs, key=lambda x: str(x.get("created_at", "")), reverse=True)
+
+
+    @classmethod
     def _is_stage_100pct_complete(cls, job: Job, stage_name: str) -> bool:
         """Check if 100% of output files for a stage exist on local disk or GCS/Drive."""
         settings = get_settings()

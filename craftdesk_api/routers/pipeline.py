@@ -16,9 +16,7 @@ from fastapi import (
     status,
 )
 from fastapi.responses import FileResponse
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from craftdesk_api.db.base import get_db
 from craftdesk_api.routers.gcp import get_current_user_id
 from craftdesk_api.schemas.pipeline import (
     PipelineJobResponse,
@@ -61,6 +59,19 @@ def _build_job_response(job: dict[str, Any]) -> PipelineJobResponse:
     )
 
 
+@router.get(
+    "/jobs",
+    response_model=list[PipelineJobResponse],
+    summary="List all 6-stage CraftDesk pipeline execution jobs for authenticated user",
+)
+async def list_pipeline_jobs(
+    user_id: str = Depends(get_current_user_id),
+) -> list[PipelineJobResponse]:
+    """Fetch all active and completed pipeline execution jobs for the user."""
+    jobs = PipelineRunnerService.list_jobs(user_id)
+    return [_build_job_response(job) for job in jobs]
+
+
 @router.post(
     "/jobs",
     response_model=PipelineJobResponse,
@@ -71,21 +82,27 @@ async def start_pipeline_job(
     body: PipelineStartRequest,
     background_tasks: BackgroundTasks,
     user_id: str = Depends(get_current_user_id),
-    db: AsyncSession = Depends(get_db),
 ) -> PipelineJobResponse:
     """Start 6-stage asset generation pipeline (Image Gen, BG Removal, Upscale, Mockups, PDF, Metadata)."""
-    job_data = PipelineRunnerService.create_job(
-        user_id=user_id,
-        theme_name=body.theme_name,
-        prompts=body.prompts,
-        prompt_file_path=body.prompt_file_path,
-    )
+    try:
+        job_data = PipelineRunnerService.create_job(
+            user_id=user_id,
+            theme_name=body.theme_name,
+            prompts=body.prompts,
+            prompt_file_path=body.prompt_file_path,
+        )
+    except (ValueError, FileNotFoundError) as err:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(err),
+        ) from err
 
     job_id = job_data["job_id"]
     # Trigger background pipeline runner
     background_tasks.add_task(PipelineRunnerService.run_full_pipeline_async, job_id)
 
     return _build_job_response(job_data)
+
 
 
 @router.get(

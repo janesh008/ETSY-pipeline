@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-08-01T12:12:06.230813+00:00",
+  "generated_at": "2026-08-03T18:48:44.869775+00:00",
   "generator": "scripts/build_graph.py",
   "static_only": true,
   "scan_roots": [
@@ -8,8 +8,8 @@
     "scripts",
     "tests"
   ],
-  "node_count": 327,
-  "edge_count": 1773,
+  "node_count": 335,
+  "edge_count": 1825,
   "nodes": [
     {
       "id": "etsy_pipeline",
@@ -400,6 +400,8 @@
         "upload_file",
         "upload_folder",
         "download_file",
+        "download_bytes",
+        "upload_bytes",
         "download_as_text",
         "delete_prefix",
         "delete_file",
@@ -412,6 +414,8 @@
         "upload_file",
         "upload_folder",
         "download_file",
+        "download_bytes",
+        "upload_bytes",
         "download_as_text",
         "delete_prefix",
         "delete_file",
@@ -462,6 +466,16 @@
       "class": "GCSStore"
     },
     {
+      "id": "etsy_pipeline.services.gcs_store.GCSStore.download_bytes",
+      "kind": "function",
+      "module": "etsy_pipeline.services.gcs_store",
+      "docstring_summary": "Download a GCS object and return its contents as raw bytes.",
+      "signature": "(self, gcs_object_path)",
+      "is_public": true,
+      "is_async": false,
+      "class": "GCSStore"
+    },
+    {
       "id": "etsy_pipeline.services.gcs_store.GCSStore.download_file",
       "kind": "function",
       "module": "etsy_pipeline.services.gcs_store",
@@ -507,6 +521,16 @@
       "module": "etsy_pipeline.services.gcs_store",
       "docstring_summary": "Build the canonical GCS path for a prompt text file.",
       "signature": "(date_folder, theme_slug)",
+      "is_public": true,
+      "is_async": false,
+      "class": "GCSStore"
+    },
+    {
+      "id": "etsy_pipeline.services.gcs_store.GCSStore.upload_bytes",
+      "kind": "function",
+      "module": "etsy_pipeline.services.gcs_store",
+      "docstring_summary": "Upload raw bytes directly to a GCS object path.",
+      "signature": "(self, data, gcs_object_path, content_type)",
       "is_public": true,
       "is_async": false,
       "class": "GCSStore"
@@ -1944,7 +1968,7 @@
       "id": "etsy_pipeline.workers.metadata_worker.MetadataWorker._validate_description",
       "kind": "function",
       "module": "etsy_pipeline.workers.metadata_worker",
-      "docstring_summary": "Clean description HTML tags and validate length.",
+      "docstring_summary": "Clean description HTML tags, strip markdown bold markers, and validate length.",
       "signature": "(self, description)",
       "is_public": false,
       "is_async": false,
@@ -1955,7 +1979,7 @@
       "kind": "function",
       "module": "etsy_pipeline.workers.metadata_worker",
       "docstring_summary": "Validate tag list to ensure exactly 13 tags, each <= 20 chars.",
-      "signature": "(self, raw_tags)",
+      "signature": "(self, raw_tags, theme_hint)",
       "is_public": false,
       "is_async": false,
       "class": "MetadataWorker"
@@ -2599,6 +2623,60 @@
       "signature": "(access_token, refresh_token)",
       "is_public": true,
       "is_async": false
+    },
+    {
+      "id": "scripts.inspect_etsy_shops",
+      "kind": "module",
+      "path": "scripts/inspect_etsy_shops.py",
+      "docstring_summary": "CraftDesk API — Diagnostic script to inspect users and etsy_shops tables.",
+      "children": [
+        "scripts.inspect_etsy_shops.inspect_db"
+      ]
+    },
+    {
+      "id": "scripts.inspect_etsy_shops.inspect_db",
+      "kind": "function",
+      "module": "scripts.inspect_etsy_shops",
+      "docstring_summary": "",
+      "signature": "()",
+      "is_public": true,
+      "is_async": true
+    },
+    {
+      "id": "scripts.migrate_etsy_shops_slug",
+      "kind": "module",
+      "path": "scripts/migrate_etsy_shops_slug.py",
+      "docstring_summary": "CraftDesk API — Migration script to add 'slug' column to 'etsy_shops' table.",
+      "children": [
+        "scripts.migrate_etsy_shops_slug.migrate_slug_column"
+      ]
+    },
+    {
+      "id": "scripts.migrate_etsy_shops_slug.migrate_slug_column",
+      "kind": "function",
+      "module": "scripts.migrate_etsy_shops_slug",
+      "docstring_summary": "",
+      "signature": "()",
+      "is_public": true,
+      "is_async": true
+    },
+    {
+      "id": "scripts.reassign_shops_to_current_user",
+      "kind": "module",
+      "path": "scripts/reassign_shops_to_current_user.py",
+      "docstring_summary": "CraftDesk API — Utility script to associate existing connected Etsy shops to current user.",
+      "children": [
+        "scripts.reassign_shops_to_current_user.reassign_shops"
+      ]
+    },
+    {
+      "id": "scripts.reassign_shops_to_current_user.reassign_shops",
+      "kind": "function",
+      "module": "scripts.reassign_shops_to_current_user",
+      "docstring_summary": "",
+      "signature": "()",
+      "is_public": true,
+      "is_async": true
     },
     {
       "id": "scripts.run_bg_removal_worker",
@@ -4212,6 +4290,27 @@
       "note": "name-only; may not resolve to correct module without runtime context"
     },
     {
+      "from": "etsy_pipeline.services.gcs_store.GCSStore.download_bytes",
+      "to": "RuntimeError",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.gcs_store.GCSStore.download_bytes",
+      "to": "blob",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.gcs_store.GCSStore.download_bytes",
+      "to": "download_as_bytes",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
       "from": "etsy_pipeline.services.gcs_store.GCSStore.download_file",
       "to": "Path",
       "kind": "call",
@@ -4284,6 +4383,34 @@
     {
       "from": "etsy_pipeline.services.gcs_store.GCSStore.list_objects",
       "to": "list_blobs",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.gcs_store.GCSStore.upload_bytes",
+      "to": "RuntimeError",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.gcs_store.GCSStore.upload_bytes",
+      "to": "blob",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.gcs_store.GCSStore.upload_bytes",
+      "to": "info",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.gcs_store.GCSStore.upload_bytes",
+      "to": "upload_from_string",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
@@ -4451,6 +4578,13 @@
     },
     {
       "from": "etsy_pipeline.services.gcs_store.is_gcp_available",
+      "to": "get_settings",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.gcs_store.is_gcp_available",
       "to": "getenv",
       "kind": "call",
       "static_only": true,
@@ -4459,6 +4593,13 @@
     {
       "from": "etsy_pipeline.services.gcs_store.is_gcp_available",
       "to": "home",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.services.gcs_store.is_gcp_available",
+      "to": "read_text",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
@@ -9108,6 +9249,13 @@
     },
     {
       "from": "etsy_pipeline.workers.metadata_worker.MetadataWorker._parse_and_validate_response",
+      "to": "getattr",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.metadata_worker.MetadataWorker._parse_and_validate_response",
       "to": "group",
       "kind": "call",
       "static_only": true,
@@ -9150,6 +9298,13 @@
     },
     {
       "from": "etsy_pipeline.workers.metadata_worker.MetadataWorker._validate_tags",
+      "to": "_theme_tag",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.metadata_worker.MetadataWorker._validate_tags",
       "to": "add",
       "kind": "call",
       "static_only": true,
@@ -9158,6 +9313,13 @@
     {
       "from": "etsy_pipeline.workers.metadata_worker.MetadataWorker._validate_tags",
       "to": "append",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.metadata_worker.MetadataWorker._validate_tags",
+      "to": "join",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
@@ -9178,7 +9340,21 @@
     },
     {
       "from": "etsy_pipeline.workers.metadata_worker.MetadataWorker._validate_tags",
+      "to": "rstrip",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.metadata_worker.MetadataWorker._validate_tags",
       "to": "set",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.workers.metadata_worker.MetadataWorker._validate_tags",
+      "to": "split",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
@@ -12532,6 +12708,254 @@
     {
       "from": "scripts.etsy_oauth.update_env_file",
       "to": "write_text",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.inspect_etsy_shops",
+      "to": "__future__.annotations",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "scripts.inspect_etsy_shops",
+      "to": "asyncio",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "scripts.inspect_etsy_shops",
+      "to": "craftdesk_api.db.base.AsyncSessionLocal",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "scripts.inspect_etsy_shops",
+      "to": "etsy_pipeline.utils.logging.get_logger",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "scripts.inspect_etsy_shops",
+      "to": "sqlalchemy.text",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "scripts.inspect_etsy_shops.inspect_db",
+      "to": "AsyncSessionLocal",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.inspect_etsy_shops.inspect_db",
+      "to": "execute",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.inspect_etsy_shops.inspect_db",
+      "to": "fetchall",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.inspect_etsy_shops.inspect_db",
+      "to": "len",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.inspect_etsy_shops.inspect_db",
+      "to": "print",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.inspect_etsy_shops.inspect_db",
+      "to": "text",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.migrate_etsy_shops_slug",
+      "to": "__future__.annotations",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "scripts.migrate_etsy_shops_slug",
+      "to": "asyncio",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "scripts.migrate_etsy_shops_slug",
+      "to": "craftdesk_api.db.base.AsyncSessionLocal",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "scripts.migrate_etsy_shops_slug",
+      "to": "craftdesk_api.db.base.engine",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "scripts.migrate_etsy_shops_slug",
+      "to": "craftdesk_api.utils.slug.slugify_shop_name",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "scripts.migrate_etsy_shops_slug",
+      "to": "etsy_pipeline.utils.logging.get_logger",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "scripts.migrate_etsy_shops_slug",
+      "to": "sqlalchemy.text",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "scripts.migrate_etsy_shops_slug.migrate_slug_column",
+      "to": "AsyncSessionLocal",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.migrate_etsy_shops_slug.migrate_slug_column",
+      "to": "begin",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.migrate_etsy_shops_slug.migrate_slug_column",
+      "to": "commit",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.migrate_etsy_shops_slug.migrate_slug_column",
+      "to": "execute",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.migrate_etsy_shops_slug.migrate_slug_column",
+      "to": "fetchall",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.migrate_etsy_shops_slug.migrate_slug_column",
+      "to": "info",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.migrate_etsy_shops_slug.migrate_slug_column",
+      "to": "slugify_shop_name",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.migrate_etsy_shops_slug.migrate_slug_column",
+      "to": "text",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.reassign_shops_to_current_user",
+      "to": "__future__.annotations",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "scripts.reassign_shops_to_current_user",
+      "to": "asyncio",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "scripts.reassign_shops_to_current_user",
+      "to": "craftdesk_api.db.base.AsyncSessionLocal",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "scripts.reassign_shops_to_current_user",
+      "to": "craftdesk_api.db.base.engine",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "scripts.reassign_shops_to_current_user",
+      "to": "etsy_pipeline.utils.logging.get_logger",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "scripts.reassign_shops_to_current_user",
+      "to": "sqlalchemy.text",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "scripts.reassign_shops_to_current_user.reassign_shops",
+      "to": "AsyncSessionLocal",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.reassign_shops_to_current_user.reassign_shops",
+      "to": "commit",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.reassign_shops_to_current_user.reassign_shops",
+      "to": "execute",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.reassign_shops_to_current_user.reassign_shops",
+      "to": "fetchone",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.reassign_shops_to_current_user.reassign_shops",
+      "to": "print",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.reassign_shops_to_current_user.reassign_shops",
+      "to": "text",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"

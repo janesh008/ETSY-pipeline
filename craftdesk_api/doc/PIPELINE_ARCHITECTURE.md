@@ -35,7 +35,7 @@ This document explains the technical architecture, data flow, GCS prompt injecti
 
 | File Path | Component | Responsibility |
 |---|---|---|
-| `craftdesk_api/routers/pipeline.py` | FastAPI Router | Exposes REST endpoints (`POST /jobs`, `GET /jobs/{id}`, `POST /jobs/{id}/stages/{stage}/retry`) and WebSocket (`/jobs/{id}/stream`). |
+| `craftdesk_api/routers/pipeline.py` | FastAPI Router | Exposes REST endpoints (`POST /jobs`, `GET /jobs`, `GET /jobs/{id}`, `POST /jobs/{id}/stages/{stage}/retry`) and WebSocket (`/jobs/{id}/stream`). |
 | `craftdesk_api/schemas/pipeline.py` | Pydantic Schemas | Defines API contracts for `PipelineStartRequest`, `StageStatus` (with ETA, elapsed time, item progress counters), and `PipelineJobResponse`. |
 | `craftdesk_api/services/pipeline_runner.py` | Orchestration Service | Loads GCS prompt files into `Job`, manages background thread execution (`asyncio.to_thread`) of `etsy_pipeline` workers, tracks stage progress, and computes ETA. |
 | `etsy_pipeline/models/job.py` | Central State Model | Shared state object passed between all workers. Stores theme metadata, parsed prompts, image paths, stage timestamps, and errors. |

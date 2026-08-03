@@ -108,3 +108,28 @@ class TestPipelineEndpoints:
         assert pdf_resp.status_code == 200
         assert "application/pdf" in pdf_resp.headers["content-type"]
         assert pdf_resp.content == b"%PDF-1.4 mock binary content"
+
+    def test_list_pipeline_jobs(self, client, auth_headers) -> None:
+        # Start a job first
+        client.post(
+            "/api/v1/pipeline/jobs",
+            json={"theme_name": "List Test Theme"},
+            headers=auth_headers,
+        )
+
+        resp = client.get("/api/v1/pipeline/jobs", headers=auth_headers)
+        assert resp.status_code == 200
+        jobs = resp.json()
+        assert isinstance(jobs, list)
+        assert len(jobs) >= 1
+        assert any(j["theme_name"] == "List Test Theme" for j in jobs)
+
+    def test_start_pipeline_job_missing_prompt_file(self, client, auth_headers) -> None:
+        payload = {
+            "theme_name": "Missing Prompt File Theme",
+            "prompt_file_path": "non_existent_path/non_existent_file.txt",
+        }
+        resp = client.post("/api/v1/pipeline/jobs", json=payload, headers=auth_headers)
+        assert resp.status_code == 400
+        assert "detail" in resp.json()
+
