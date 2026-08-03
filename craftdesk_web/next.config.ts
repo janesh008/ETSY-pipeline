@@ -9,10 +9,8 @@ const nextConfig: NextConfig = {
     "192.168.56.1",
     "0.0.0.0:3000",
     "0.0.0.0",
-    "34.24.199.227",
-    "34.24.199.227:3000",
-    "35.229.96.9",
-    "35.229.96.9:3000",
+    "104.196.219.16",
+    "104.196.219.16:3000",
   ],
 
   // Keep HTTP connections alive to FastAPI — prevents premature socket close
