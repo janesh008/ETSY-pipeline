@@ -79,6 +79,13 @@ This subpackage contains:
 > **Why listing.json instead of all_listings.csv?**
 > The old shared CSV had write-race risk (two concurrent jobs mutating the same file), required `\\n` escaping for descriptions, and was at the wrong granularity for the GCS folder browser in the Etsy Shop Connector. Per-theme JSON solves all three.
 
-### `EtsyWorker` — `_update_listing_record()` Write-Back
+### `EtsyWorker` & `EtsyListingService` — GCS Listing Publish & Listing Record Write-Back
 After a successful `_publish_listing()`, `EtsyWorker` reads the existing `listing.json`, updates `etsy_listing_id` and `etsy_listing_url` in place, writes it back, and re-uploads to GCS. This is **non-fatal** — a missing or unwritable `listing.json` logs a warning only.
+
+- **GCS Prefix Sanitization**: `publish_from_gcs()` automatically strips `/mockups` suffix from incoming folder prefixes before querying GCS objects, preventing double-nested prefix lookups (`/mockups/mockups/`) and ensuring mockup images and PDF download wraps are correctly downloaded and uploaded to Etsy.
+- **Etsy Listing Parameters**: `is_ai_created` (`bool`) and `renewal_option` (`"automatic"` | `"manual"`) parameters are preserved from `listing.json` and request overrides during draft creation.
+
+### `ImageLoader` — Mockup PNG Count Isolation
+`ImageLoader.load_theme_images()` automatically redirects to the `no_bg` subfolder if present within a theme folder, and ignores `raw_images`, `raw_data`, `mockups`, `upscaled`, `pdf`, or `metadata` directories. This guarantees `{bundle_count}` on rendered mockups strictly matches the number of transparent PNGs in `no_bg` (preventing double-counting raw + no_bg images).
+
 

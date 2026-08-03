@@ -1,6 +1,7 @@
-import os
 import argparse
+import os
 import urllib.request
+
 from src.generator import Generator
 
 FONT_URLS = {
@@ -14,7 +15,7 @@ def ensure_assets():
     """
     fonts_dir = os.path.join("assets", "fonts")
     os.makedirs(fonts_dir, exist_ok=True)
-    
+
     for font_name, url in FONT_URLS.items():
         font_path = os.path.join(fonts_dir, font_name)
         if not os.path.exists(font_path):
@@ -60,22 +61,22 @@ def main():
         default=None,
         help="Optional theme display name to override folder name inference for text interpolation"
     )
-    
+
     args = parser.parse_args()
-    
+
     # Pre-checks & asset acquisition
     ensure_assets()
-    
+
     if not args.batch_dir and (not args.theme or not args.output):
         parser.error("Either --batch-dir OR both --theme and --output must be provided.")
-        
+
     try:
         if args.batch_dir:
             batch_path = os.path.abspath(args.batch_dir)
             if not os.path.exists(batch_path) or not os.path.isdir(batch_path):
                 print(f"Error: Batch directory does not exist or is not a folder: {batch_path}")
                 return
-                
+
             print(f"Starting batch generation inside main directory: {batch_path}")
             theme_dirs = []
             for entry in os.scandir(batch_path):
@@ -88,22 +89,22 @@ def main():
                             break
                     if has_png:
                         theme_dirs.append(entry)
-                        
+
             if not theme_dirs:
                 print("No valid theme subdirectories found inside the batch folder.")
                 return
-                
+
             print(f"Found {len(theme_dirs)} theme folders to process:")
             for t in theme_dirs:
                 print(f"  - {t.name}")
-                
+
             success_count = 0
             for t in theme_dirs:
                 theme_path = t.path
                 output_path = os.path.join(theme_path, "etsy_mockups")
-                print(f"\n=========================================")
+                print("\n=========================================")
                 print(f"Processing Theme: '{t.name}'")
-                print(f"=========================================")
+                print("=========================================")
                 try:
                     Generator.generate_all(
                         theme_dir=theme_path,
@@ -114,7 +115,7 @@ def main():
                     success_count += 1
                 except Exception as e:
                     print(f"Failed to process theme '{t.name}': {e}")
-                    
+
             print(f"\nBatch processing complete. Successfully processed {success_count}/{len(theme_dirs)} themes.")
         else:
             Generator.generate_all(

@@ -1,5 +1,5 @@
-from PIL import Image, ImageFilter, ImageOps
-import math
+from PIL import Image, ImageFilter
+
 
 class Effects:
     """
@@ -12,12 +12,12 @@ class Effects:
         """
         # Original dimensions
         orig_w, orig_h = image.size
-        
+
         # Calculate ratio
         ratio = min(max_width / orig_w, max_height / orig_h)
         new_w = max(1, int(orig_w * ratio))
         new_h = max(1, int(orig_h * ratio))
-        
+
         return image.resize((new_w, new_h), Image.Resampling.LANCZOS)
 
     @staticmethod
@@ -38,21 +38,21 @@ class Effects:
         """
         if width <= 0:
             return image
-            
+
         # Ensure image has alpha channel
         img = image.convert("RGBA")
         alpha = img.getchannel("A")
-        
+
         # Dilate alpha channel using MaxFilter
         # MaxFilter(size) requires odd integer.
         filter_size = width * 2 + 1
         dilated_alpha = alpha.filter(ImageFilter.MaxFilter(filter_size))
-        
+
         # Create solid color background
         outline_bg = Image.new("RGBA", img.size, color)
         # Apply the dilated alpha mask to the color background
         outline_bg.putalpha(dilated_alpha)
-        
+
         # Composite original image over the outline background
         composite = Image.alpha_composite(outline_bg, img)
         return composite
@@ -78,32 +78,32 @@ class Effects:
 
         # Create target container image
         shadow_canvas = Image.new("RGBA", (padded_w, padded_h), (0, 0, 0, 0))
-        
+
         # Extract alpha channel
         alpha = img.getchannel("A")
-        
+
         # Create shadow mask
         shadow_mask = Image.new("RGBA", (w, h), color)
         shadow_mask.putalpha(alpha)
-        
+
         # Paste shadow with offset
         shadow_x = pad_x + dx
         shadow_y = pad_y + dy
         shadow_canvas.paste(shadow_mask, (shadow_x, shadow_y), shadow_mask)
-        
+
         # Blur the shadow
         if blur_radius > 0:
             shadow_canvas = shadow_canvas.filter(ImageFilter.GaussianBlur(blur_radius))
-            
+
         # Paste original image onto the padded canvas (un-offset)
         original_x = pad_x
         original_y = pad_y
         original_img_padded = Image.new("RGBA", (padded_w, padded_h), (0, 0, 0, 0))
         original_img_padded.paste(img, (original_x, original_y), img)
-        
+
         # Composite them
         result = Image.alpha_composite(shadow_canvas, original_img_padded)
-        
+
         # Crop the transparent borders slightly if they are excessively large,
         # but keep it simple and just return the result.
         return result

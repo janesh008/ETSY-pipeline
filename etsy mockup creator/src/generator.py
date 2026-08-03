@@ -1,8 +1,9 @@
 import os
-from typing import Dict, Any
+
 from src.image_loader import ImageLoader
-from src.template_loader import TemplateLoader
 from src.renderer import Renderer
+from src.template_loader import TemplateLoader
+
 
 class Generator:
     """
@@ -14,15 +15,15 @@ class Generator:
         Runs the mockup generator for all templates against a theme folder.
         """
         # Resolve theme name from folder name if not provided
-        from pathlib import Path
         import re
-        
+        from pathlib import Path
+
         if theme_name and theme_name.strip():
             theme_folder_name = theme_name.strip()
         else:
             path_obj = Path(theme_dir)
             theme_folder_name = path_obj.name
-            
+
             # If the selected folder is a known subfolder, use its parent name instead
             if theme_folder_name.lower() in (
                 "no_bg", "no bg", "no-bg", "nobg",
@@ -30,18 +31,18 @@ class Generator:
                 "misc_category", "scen-pattern"
             ):
                 theme_folder_name = path_obj.parent.name
-            
+
         clean_name = re.sub(r'[\s_\-]*\d+$', '', theme_folder_name)
         theme_name = clean_name.replace("_", " ")
 
         print(f"Starting Etsy Mockup Generation for Theme: '{theme_name}'")
         print(f"Loading images from: {theme_dir}")
         indexed_images = ImageLoader.load_theme_images(theme_dir)
-        
+
         # Display index stats
         for cat, imgs in indexed_images.items():
             print(f"  - Category '{cat}': found {len(imgs)} images")
-            
+
         if not indexed_images:
             raise ValueError(f"No categorized images found in '{theme_dir}'. Make sure images are in subfolders.")
 
@@ -60,7 +61,7 @@ class Generator:
         for template_file in os.listdir(templates_dir):
             if not template_file.lower().endswith(".json"):
                 continue
-                
+
             template_path = os.path.join(templates_dir, template_file)
             try:
                 template = TemplateLoader.load_template(template_path)
@@ -71,7 +72,7 @@ class Generator:
             template_name = template.get("name", "Mockup")
             output_filename = os.path.splitext(template_file)[0].capitalize() + ".png"
             output_path = os.path.join(output_dir, output_filename)
-            
+
             # --- 2. Category Validation with Hero Fallback ---
             elements = template.get("elements", [])
             required_categories = set()
@@ -80,14 +81,14 @@ class Generator:
                     cat = elem.get("source", {}).get("category", "").lower()
                     if cat:
                         required_categories.add(cat)
-            
+
             missing_categories = [cat for cat in required_categories if not indexed_images.get(cat)]
 
             if missing_categories:
                 # Hero template gets special fallback treatment
                 if template_file.lower() == "hero.json":
                     if not indexed_images.get("character"):
-                        print(f"  [Skipped] Hero needs at least character images. Skipping.")
+                        print("  [Skipped] Hero needs at least character images. Skipping.")
                         continue
                     # Renderer.render_template() handles filling missing slots with character images
                 else:
@@ -95,13 +96,13 @@ class Generator:
                     continue
 
             print(f"Generating mockup '{template_name}' -> {output_filename}...")
-            
+
             try:
                 # Render using unique sequential category pointers
                 canvas = Renderer.render_template(
-                    template, 
-                    theme_name, 
-                    indexed_images, 
+                    template,
+                    theme_name,
+                    indexed_images,
                     category_pointers=category_pointers,
                     template_name=template_file
                 )

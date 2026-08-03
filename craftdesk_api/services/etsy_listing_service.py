@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import re
 import tempfile
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import UTC, datetime
 from pathlib import Path
@@ -14,7 +15,6 @@ import requests
 from etsy_pipeline.config.settings import Settings, get_settings
 from etsy_pipeline.services.gcs_store import GCSStore, is_gcp_available
 from etsy_pipeline.utils.logging import get_logger
-
 from etsy_pipeline.workers.etsy_worker import ETSY_API_BASE, sort_mockup_images
 from etsy_pipeline.workers.metadata_worker import MetadataWorker
 from etsy_pipeline.workers.metadata_worker_config import (
@@ -35,8 +35,6 @@ from craftdesk_api.schemas.etsy import (
 
 logger = get_logger(__name__)
 
-
-import time
 
 _GCS_FOLDERS_CACHE_STORE: tuple[float, GcsFolderListResponse] | None = None
 _SHOP_STATS_CACHE_STORE: dict[str, tuple[float, EtsyShopStatsResponse]] = {}
@@ -213,24 +211,45 @@ class EtsyListingService:
         tags_override: list[str] | None = None,
         price_override: float = 5.99,
         quantity_override: int = 999,
+        is_ai_created_override: bool | None = None,
+        renewal_option_override: str | None = None,
         settings: Settings | None = None,
     ) -> ListingPublishResponse:
         """Publish a draft/active listing directly from GCS files."""
         app_settings = settings or get_settings()
         gcs = GCSStore(settings=app_settings)
 
+        # Sanitize gcs_prefix if it already contains /mockups/
+        clean_prefix = gcs_prefix
+        if "/mockups" in clean_prefix:
+            clean_prefix = clean_prefix.split("/mockups")[0]
+        clean_prefix = clean_prefix.rstrip("/")
+
+        mockup_search_prefix = f"{clean_prefix}/mockups/"
+        pdf_search_prefix = f"{clean_prefix}/"
+
         # 1. Load listing.json or fallback
-        record = cls.load_gcs_listing_record(gcs_prefix, app_settings) or {}
+        record = cls.load_gcs_listing_record(clean_prefix, app_settings) or {}
 
         title = title_override or record.get("etsy_title")
         description = description_override or record.get("etsy_description")
         tags = tags_override if tags_override else record.get("etsy_tags", [])
         price = price_override or record.get("listing_price_usd", 5.99)
         quantity = quantity_override or record.get("listing_quantity", 999)
+        is_ai_created = (
+            is_ai_created_override
+            if is_ai_created_override is not None
+            else bool(record.get("is_ai_created", True))
+        )
+        renewal_option = (
+            renewal_option_override
+            if renewal_option_override is not None
+            else str(record.get("renewal_option", "automatic"))
+        )
 
         if not title:
             # Fallback title from prefix theme slug
-            slug = gcs_prefix.strip("/").split("/")[-1].replace("_", " ")
+            slug = clean_prefix.split("/")[-1].replace("_", " ")
             title = f"{slug} Clipart PNG Bundle Transparent Digital Download"
 
         if not description:
@@ -252,6 +271,8 @@ class EtsyListingService:
             quantity=quantity,
             taxonomy_id=taxonomy_id,
             headers=headers,
+            is_ai_created=is_ai_created,
+            renewal_option=renewal_option,
         )
 
         # 2b. Set required Craft type property (Property ID 47626759760)
@@ -268,11 +289,11 @@ class EtsyListingService:
             mockup_dir.mkdir(parents=True, exist_ok=True)
 
             mockup_objects = [
-                obj for obj in gcs.list_objects(f"{gcs_prefix.rstrip('/')}/mockups/")
+                obj for obj in gcs.list_objects(mockup_search_prefix)
                 if Path(obj).name.lower().endswith((".png", ".jpg", ".jpeg", ".webp"))
             ]
             pdf_objects = [
-                obj for obj in gcs.list_objects(gcs_prefix)
+                obj for obj in gcs.list_objects(pdf_search_prefix)
                 if obj.endswith(".pdf") or "pdf/" in obj
             ]
 
@@ -736,6 +757,8 @@ class EtsyListingService:
         quantity: int,
         taxonomy_id: int,
         headers: dict[str, str],
+        is_ai_created: bool = True,
+        renewal_option: str = "automatic",
     ) -> tuple[int, str]:
         """POST /v3/application/shops/{shop_id}/listings"""
         url = f"{ETSY_API_BASE}/shops/{shop_id}/listings"
@@ -754,8 +777,8 @@ class EtsyListingService:
             "when_made": "made_to_order",
             "type": "download",
             "is_digital": True,
-            "is_ai_created": True,
-            "renewal_option": "automatic",
+            "is_ai_created": bool(is_ai_created),
+            "renewal_option": str(renewal_option),
             "craft_type": ["Card making & stationery", "Collage", "Kids' crafts"],
             "materials": ["PNG", "Digital Download", "Transparent Background"],
 

@@ -1,5 +1,5 @@
 import os
-from typing import Dict, List
+
 
 class ImageLoader:
     """
@@ -11,7 +11,7 @@ class ImageLoader:
         image_002.png
     """
     @staticmethod
-    def load_theme_images(theme_dir: str) -> Dict[str, List[str]]:
+    def load_theme_images(theme_dir: str) -> dict[str, list[str]]:
         """
         Scans theme_dir for subdirectories (categories) and returns a dict mapping
         normalized category names to sorted lists of absolute PNG file paths.
@@ -19,7 +19,11 @@ class ImageLoader:
         if not os.path.isdir(theme_dir):
             raise FileNotFoundError(f"Theme directory '{theme_dir}' does not exist.")
 
-        indexed_images: Dict[str, List[str]] = {}
+        # If theme_dir contains a no_bg subfolder, target it directly
+        no_bg_sub = os.path.join(theme_dir, "no_bg")
+        target_dir = no_bg_sub if os.path.isdir(no_bg_sub) else theme_dir
+
+        indexed_images: dict[str, list[str]] = {}
         known_categories = [
             "subcharacter", "character", "combo", "prop", "pattern", "scene",
             "sub_character_1", "sub_character_2", "sub_character_3", "sub_character_4",
@@ -32,26 +36,37 @@ class ImageLoader:
         ]
         # Sort by length descending to match more specific names first (prevent e.g. "combo" matching inside "character_combo_2")
         known_categories = sorted(known_categories, key=len, reverse=True)
-        
-        for root, dirs, files in os.walk(theme_dir):
+
+        ignored_subdirs = {"raw_images", "raw_data", "mockups", "upscaled", "pdf", "metadata"}
+
+        for root, dirs, files in os.walk(target_dir):
+            # Prune ignored subdirectories in-place so os.walk doesn't traverse into them
+            dirs[:] = [d for d in dirs if d.lower() not in ignored_subdirs]
+
             for file in files:
                 if file.lower().endswith(".png"):
                     full_path = os.path.abspath(os.path.join(root, file))
+                    lower_path = full_path.lower().replace("\\", "/")
+
+                    # Double-check path does not contain ignored directories
+                    if any(f"/{ignored}/" in lower_path for ignored in ignored_subdirs):
+                        continue
+
                     lower_name = file.lower()
-                    
+
                     # Try to extract category from filename first
                     matched_category = None
                     for cat in known_categories:
                         if f"_{cat}_" in lower_name:
                             matched_category = cat
                             break
-                    
+
                     # If not matched from filename, use subfolder name
                     if not matched_category:
                         # get parent folder name
                         parent_dir = os.path.basename(root)
                         matched_category = parent_dir.lower()
-                        
+
                     if matched_category not in indexed_images:
                         indexed_images[matched_category] = []
                     indexed_images[matched_category].append(full_path)

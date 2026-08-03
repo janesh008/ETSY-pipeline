@@ -8,8 +8,16 @@ from datetime import UTC, datetime, timedelta
 from etsy_pipeline.config.settings import get_settings
 from etsy_pipeline.services.gcs_store import GCSStore, is_gcp_available
 from etsy_pipeline.utils.logging import get_logger
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Response, UploadFile, status
-
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    Form,
+    HTTPException,
+    Response,
+    UploadFile,
+    status,
+)
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -26,7 +34,6 @@ from craftdesk_api.schemas.etsy import (
     EtsyShopUpdateRequest,
     GcsFolderDetailsResponse,
     GcsFolderListResponse,
-
     GcsListingRequest,
     GenerateMetadataResponse,
     ListingPublishResponse,
@@ -467,6 +474,8 @@ async def publish_from_gcs_folder(
             tags_override=body.tags,
             price_override=body.price,
             quantity_override=body.quantity,
+            is_ai_created_override=body.is_ai_created,
+            renewal_option_override=body.renewal_option,
         )
     except Exception as exc:
         logger.error(

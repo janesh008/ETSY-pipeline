@@ -126,6 +126,8 @@ class GcsListingRequest(BaseModel):
     tags: list[str] = Field(default_factory=list, description="Tags override (max 13 tags, 20 chars max each)")
     price: float = Field(default=5.99, ge=0.20, description="Listing price USD")
     quantity: int = Field(default=999, ge=1, description="Stock quantity")
+    is_ai_created: bool | None = Field(default=None, description="Whether listing is AI created")
+    renewal_option: str | None = Field(default=None, description="Etsy renewal option ('automatic' or 'manual')")
 
 
 class GenerateMetadataResponse(BaseModel):
