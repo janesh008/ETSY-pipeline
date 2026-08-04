@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import {
   Layers,
@@ -11,33 +11,25 @@ import {
   RotateCcw,
   Terminal,
   ArrowLeft,
-  ChevronDown,
-  ChevronUp,
   Cpu,
   ArrowRight,
   Loader2,
-  FileText,
   RefreshCw,
   FolderOpen,
-  Calendar,
-  Hash,
-  CloudOff,
-  Cloud,
-  Eye,
   X,
-  ChevronRight,
   Power,
-  PowerOff,
   Activity,
   Sparkles,
   Trash2,
-  CheckSquare,
   Clock,
   ImageIcon,
+  AlertCircle,
+  SkipForward,
 } from "lucide-react";
 
 import { usePipeline, PipelineJobItem, PipelineStageStatus } from "@/context/PipelineContext";
 import { EnterpriseGcsThemeSelector, GcsFolderItem } from "@/components/gcs/EnterpriseGcsThemeSelector";
+import { PipelineNotificationBell } from "@/components/pipeline/PipelineNotificationBell";
 
 function getApiBaseUrl(): string {
   if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL;
@@ -51,6 +43,62 @@ function formatTimeSec(seconds?: number | null): string {
   const mins = Math.floor(secs / 60);
   const remSecs = secs % 60;
   return `${mins}m ${remSecs}s`;
+}
+
+// ---------------------------------------------------------------------------
+// Resizable Split Pane Hook
+// ---------------------------------------------------------------------------
+function useResizableSplit(defaultRatio = 0.4, storageKey = "craftdesk_pipeline_split") {
+  const [ratio, setRatio] = useState<number>(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem(storageKey);
+      if (stored) {
+        const parsed = parseFloat(stored);
+        if (!isNaN(parsed) && parsed >= 0.2 && parsed <= 0.8) return parsed;
+      }
+    }
+    return defaultRatio;
+  });
+
+  const isDragging = useRef(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    isDragging.current = true;
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+  }, []);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDragging.current || !containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const newRatio = Math.max(0.2, Math.min(0.8, (e.clientX - rect.left) / rect.width));
+      setRatio(newRatio);
+    };
+
+    const handleMouseUp = () => {
+      if (isDragging.current) {
+        isDragging.current = false;
+        document.body.style.cursor = "";
+        document.body.style.userSelect = "";
+        // Persist ratio
+        if (typeof window !== "undefined") {
+          localStorage.setItem(storageKey, ratio.toString());
+        }
+      }
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [ratio, storageKey]);
+
+  return { ratio, containerRef, handleMouseDown };
 }
 
 export default function PipelinePage() {
@@ -72,13 +120,15 @@ export default function PipelinePage() {
     cancelBatch,
     clearBatch,
     retryStage,
+    resumeJob,
   } = usePipeline();
 
-  // GCS Folder Selector Selection State
   const [selectedGcsPrefixes, setSelectedGcsPrefixes] = useState<string[]>([]);
   const [expandedLogStage, setExpandedLogStage] = useState<string | null>(null);
+  const [showHistory, setShowHistory] = useState(false);
 
-  // Load GCS folders from session on mount (only fetches from network if session is empty)
+  const { ratio, containerRef, handleMouseDown } = useResizableSplit();
+
   useEffect(() => {
     fetchGcsFolders(false);
   }, [fetchGcsFolders]);
@@ -92,11 +142,20 @@ export default function PipelinePage() {
   const completedJobsCount = batchQueue.filter((j) => j.status === "completed").length;
   const isJobFinished = activeJob ? activeJob.status === "completed" : false;
 
+  // Separate active vs history jobs
+  const activeQueueJobs = batchQueue.filter(
+    (j) => j.status === "running" || j.status === "queued" || j.status === "paused"
+  );
+  const interruptedJobs = batchQueue.filter((j) => j.status === "interrupted");
+  const historyJobs = batchQueue.filter(
+    (j) => j.status === "completed" || j.status === "failed"
+  );
+
   return (
     <div className="min-h-screen bg-[#F7F6F0] flex flex-col font-sans">
       {/* ── HEADER ───────────────────────────────────────────────────────────── */}
       <header className="bg-[#EFECE6] border-b border-[#DCD8CF] px-6 py-5 sticky top-0 z-30 shadow-xs">
-        <div className="max-w-[1400px] mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="max-w-[1600px] mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <Link
               href="/dashboard"
@@ -173,15 +232,24 @@ export default function PipelinePage() {
                 <span>Clear Queue</span>
               </button>
             )}
+
+            {/* Notification Bell */}
+            <PipelineNotificationBell />
           </div>
         </div>
       </header>
 
-      {/* ── MAIN CONTENT ────────────────────────────────────────────────────── */}
-      <main className="max-w-[1400px] mx-auto px-6 py-8 flex-1 w-full grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* LEFT COLUMN: Enterprise GCS Theme Selector (5 cols) */}
-        <aside className="lg:col-span-5 flex flex-col gap-4">
-          <div className="bg-[#EFECE6] border border-[#DCD8CF] rounded-2xl p-5 shadow-sm space-y-4">
+      {/* ── MAIN CONTENT (Resizable Split Pane) ──────────────────────────────── */}
+      <main
+        ref={containerRef}
+        className="max-w-[1600px] mx-auto px-6 py-8 flex-1 w-full flex gap-0"
+      >
+        {/* LEFT PANEL: GCS Theme Selector */}
+        <aside
+          style={{ flexBasis: `${ratio * 100}%`, minWidth: "280px" }}
+          className="flex flex-col gap-4 pr-0 overflow-hidden"
+        >
+          <div className="bg-[#EFECE6] border border-[#DCD8CF] rounded-2xl p-5 shadow-sm space-y-4 h-full overflow-y-auto">
             <div className="flex items-center justify-between pb-3 border-b border-[#DCD8CF]">
               <div className="flex items-center gap-2">
                 <FolderOpen className="w-4.5 h-4.5 text-[#C85A32]" />
@@ -213,8 +281,47 @@ export default function PipelinePage() {
           </div>
         </aside>
 
-        {/* RIGHT COLUMN: Pipeline Batch Dashboard & Live Progress (7 cols) */}
-        <section className="lg:col-span-7 flex flex-col gap-6">
+        {/* DRAG DIVIDER */}
+        <div
+          onMouseDown={handleMouseDown}
+          className="w-2 flex-shrink-0 cursor-col-resize flex items-center justify-center group mx-1"
+          title="Drag to resize panels"
+        >
+          <div className="w-1 h-16 bg-[#DCD8CF] rounded-full group-hover:bg-[#C85A32] group-active:bg-[#C85A32] transition" />
+        </div>
+
+        {/* RIGHT PANEL: Pipeline Dashboard */}
+        <section
+          style={{ flexBasis: `${(1 - ratio) * 100}%`, minWidth: "380px" }}
+          className="flex flex-col gap-6 pl-0 overflow-hidden"
+        >
+          {/* Interrupted Jobs Banner */}
+          {interruptedJobs.length > 0 && (
+            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm font-bold text-amber-800">
+                  {interruptedJobs.length} job{interruptedJobs.length > 1 ? "s" : ""} interrupted by server restart
+                </p>
+                <p className="text-xs text-amber-700 mt-1">
+                  These jobs were running when the server stopped. Click Resume to continue from the last checkpoint.
+                </p>
+                <div className="flex flex-wrap gap-2 mt-3">
+                  {interruptedJobs.map((ij) => (
+                    <button
+                      key={ij.job_id}
+                      onClick={() => resumeJob(ij.job_id)}
+                      className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-lg flex items-center gap-1.5 transition cursor-pointer"
+                    >
+                      <SkipForward className="w-3 h-3" />
+                      Resume &quot;{ij.display_name}&quot;
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Active Job Progress Hero Card */}
           <div className="bg-[#EFECE6] border border-[#DCD8CF] rounded-2xl p-6 shadow-sm space-y-5">
             <div className="flex items-center justify-between pb-4 border-b border-[#DCD8CF]">
@@ -296,13 +403,14 @@ export default function PipelinePage() {
               </div>
             )}
 
-            {/* 6 Stage Step Cards with Image Counts, ETA, Terminal Logs & Retry */}
+            {/* 6 Stage Step Cards with Retry on ALL stages */}
             {activeJob && (
               <div className="space-y-3 pt-2">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {activeJob.stages.map((stg) => {
                     const isCurrent = stg.status === "running";
                     const isExpanded = expandedLogStage === stg.stage_name;
+                    const isRetryable = ["completed", "failed", "interrupted"].includes(stg.status);
 
                     return (
                       <div
@@ -314,6 +422,8 @@ export default function PipelinePage() {
                             ? "bg-white border-[#C85A32] text-[#1C2421] shadow-md ring-2 ring-[#C85A32]/20"
                             : stg.status === "failed"
                             ? "bg-red-50 border-red-200 text-red-700"
+                            : stg.status === "interrupted"
+                            ? "bg-amber-50 border-amber-200 text-amber-700"
                             : "bg-[#F9F8F3] border-[#DCD8CF] text-[#5A6561]"
                         }`}
                       >
@@ -325,6 +435,8 @@ export default function PipelinePage() {
                             <Loader2 className="w-4 h-4 text-[#C85A32] animate-spin shrink-0" />
                           ) : stg.status === "failed" ? (
                             <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                          ) : stg.status === "interrupted" ? (
+                            <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
                           ) : (
                             <span className="w-2 h-2 rounded-full bg-gray-300 shrink-0" />
                           )}
@@ -338,13 +450,15 @@ export default function PipelinePage() {
                                 ? "bg-[#0D5C46]"
                                 : isCurrent
                                 ? "bg-[#C85A32]"
+                                : stg.status === "interrupted"
+                                ? "bg-amber-500"
                                 : "bg-gray-300"
                             }`}
                             style={{ width: `${stg.progress_percent}%` }}
                           />
                         </div>
 
-                        {/* Metadata row: Images Done / ETA / Terminal Toggle / Retry */}
+                        {/* Metadata row */}
                         <div className="flex items-center justify-between text-[10px] font-mono opacity-90">
                           <div className="flex items-center gap-2">
                             {stg.images_total > 0 && (
@@ -359,13 +473,21 @@ export default function PipelinePage() {
                           </div>
 
                           <div className="flex items-center gap-1.5">
-                            {stg.status === "failed" && (
+                            {/* Retry button on ANY terminal stage */}
+                            {isRetryable && (
                               <button
                                 onClick={() => activeJob && retryStage(activeJob.job_id, stg.stage_name)}
-                                className="px-1.5 py-0.5 bg-red-600 text-white rounded font-bold hover:bg-red-700 transition"
-                                title="Retry Failed Stage"
+                                className={`px-1.5 py-0.5 rounded font-bold transition cursor-pointer text-white ${
+                                  stg.status === "failed"
+                                    ? "bg-red-600 hover:bg-red-700"
+                                    : stg.status === "interrupted"
+                                    ? "bg-amber-600 hover:bg-amber-700"
+                                    : "bg-[#5A6561] hover:bg-[#47514D]"
+                                }`}
+                                title={stg.status === "failed" ? "Retry Failed Stage" : "Re-run Stage"}
                               >
-                                Retry
+                                <RotateCcw className="w-2.5 h-2.5 inline mr-0.5" />
+                                {stg.status === "failed" ? "Retry" : "Re-run"}
                               </button>
                             )}
 
@@ -381,7 +503,7 @@ export default function PipelinePage() {
                           </div>
                         </div>
 
-                        {/* Expandable Live Terminal Output / Stderr */}
+                        {/* Expandable Terminal Output */}
                         {isExpanded && (
                           <div className="mt-2.5 p-2.5 bg-[#1C2421] text-[#EFECE6] rounded-lg font-mono text-[10px] space-y-1.5 overflow-x-auto max-h-40">
                             {stg.stderr_log && (
@@ -403,13 +525,13 @@ export default function PipelinePage() {
           </div>
 
           {/* Batch Job Queue List */}
-          {batchQueue.length > 0 && (
+          {activeQueueJobs.length > 0 && (
             <div className="bg-[#EFECE6] border border-[#DCD8CF] rounded-2xl p-6 shadow-sm space-y-4">
               <div className="flex items-center justify-between pb-3 border-b border-[#DCD8CF]">
                 <div className="flex items-center gap-2">
                   <Layers className="w-4 h-4 text-[#0D5C46]" />
                   <h3 className="text-sm font-bold font-display uppercase tracking-wider text-[#1C2421]">
-                    Batch Queue Items ({batchQueue.length})
+                    Active Queue ({activeQueueJobs.length})
                   </h3>
                 </div>
                 <span className="text-xs font-bold text-[#0D5C46] font-mono bg-[#E6F2EE] px-2.5 py-1 rounded-full border border-[#0D5C46]/30">
@@ -430,6 +552,8 @@ export default function PipelinePage() {
                           ? "bg-white border-[#C85A32] shadow-sm"
                           : jobItem.status === "failed"
                           ? "bg-red-50 border-red-200"
+                          : jobItem.status === "interrupted"
+                          ? "bg-amber-50 border-amber-200"
                           : "bg-[#F9F8F3] border-[#DCD8CF]"
                       }`}
                     >
@@ -456,6 +580,10 @@ export default function PipelinePage() {
                           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-red-600 text-white">
                             Failed
                           </span>
+                        ) : jobItem.status === "interrupted" ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-amber-600 text-white">
+                            Interrupted
+                          </span>
                         ) : (
                           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-gray-200 text-gray-700">
                             Queued
@@ -466,6 +594,58 @@ export default function PipelinePage() {
                   );
                 })}
               </div>
+            </div>
+          )}
+
+          {/* History Section (Collapsible) */}
+          {historyJobs.length > 0 && (
+            <div className="bg-[#EFECE6] border border-[#DCD8CF] rounded-2xl shadow-sm overflow-hidden">
+              <button
+                onClick={() => setShowHistory(!showHistory)}
+                className="w-full flex items-center justify-between px-6 py-4 hover:bg-[#E8E5DF] transition cursor-pointer"
+              >
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-[#5A6561]" />
+                  <h3 className="text-sm font-bold font-display uppercase tracking-wider text-[#1C2421]">
+                    History ({historyJobs.length})
+                  </h3>
+                </div>
+                <span className="text-xs text-[#5A6561]">{showHistory ? "▲ Collapse" : "▼ Expand"}</span>
+              </button>
+              {showHistory && (
+                <div className="px-6 pb-4 space-y-2">
+                  {historyJobs.map((jobItem, idx) => (
+                    <div
+                      key={`hist-${jobItem.job_id}-${idx}`}
+                      className={`p-3 rounded-xl border flex items-center justify-between gap-4 ${
+                        jobItem.status === "completed"
+                          ? "bg-[#E6F2EE] border-[#0D5C46]/30"
+                          : "bg-red-50 border-red-200"
+                      }`}
+                    >
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-[#1C2421] truncate">{jobItem.display_name}</p>
+                        <p className="text-[10px] text-[#5A6561] font-mono">{jobItem.job_id}</p>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        {jobItem.status === "completed" ? (
+                          <>
+                            <span className="text-[10px] font-bold text-[#0D5C46]">✓ Done</span>
+                            <Link
+                              href={`/review/${jobItem.job_id}`}
+                              className="px-2 py-0.5 bg-[#0D5C46] text-white text-[10px] font-bold rounded-md hover:bg-[#094534] transition"
+                            >
+                              Review
+                            </Link>
+                          </>
+                        ) : (
+                          <span className="text-[10px] font-bold text-red-600">✗ Failed</span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </section>

@@ -72,19 +72,13 @@ This document provides an exhaustive breakdown of every module in `craftdesk_api
 ### `services/pipeline_runner.py` — 6-Stage Real Assembly Line & Retry Engine
 - **Business Goal:** Manages real 6-stage pipeline execution using `etsy_pipeline` worker modules, GCS prompt file injection, live item progress, ETA calculations, date folder retention, module-level checkpoint recovery, and stop/cancellation controls. (See detailed guide in [`doc/PIPELINE_ARCHITECTURE.md`](file:///d:/Janesh/ETSY/ETSY-pipeline/craftdesk_api/doc/PIPELINE_ARCHITECTURE.md)).
 - **Business Logic Algorithm:**
-  1. `create_job()`: Loads and parses the selected GCS prompt file (`gs://.../Clipart/<date>/<slug>/<slug>.txt`) or local file into `Job.prompts` using `PromptWorker._parse_response`. Preserves `date_folder` from prompt file path (e.g. `Clipart/2026-07-22/`).
-  2. Initializes 6 stages (`image_gen`, `bg_removal`, `upscaling`, `mockup_creation`, `pdf_generation`, `metadata_generation`) in `pending` state.
-  3. `_is_stage_100pct_complete()`: Checks GCS bucket prefix `Clipart/<date>/<theme>/<stage>/` and local `output/Clipart/<date>/<theme>/<stage>/`. If 100% of expected PNG files exist, marks stage `Completed ✅` immediately and skips worker execution.
-  4. `stop_job(job_id)`: Cancels active `asyncio.Task`, sets job and running stage status to `failed` (`"Pipeline execution stopped by user."`).
-  5. `run_full_pipeline_async()`: Sequentially executes `etsy_pipeline` worker modules (`ImageWorker`, `BackgroundRemovalWorker`, `UpscaleWorker`, `MockupWorker`, `MetadataWorker`) in background threads (`asyncio.create_task(asyncio.to_thread(...))`).
-  6. Tracks live item counters (`images_done`/`images_total`), elapsed seconds, and estimated time remaining (ETA) per stage. Safely accesses `st_res.error_message` on `StageResult` models to prevent `AttributeError` crashes in the stage monitoring loop.
-  7. Updates `job_data["current_stage"]` dynamically at the start of evaluating each stage loop iteration in `run_full_pipeline_async()`, and synchronizes `current_stage` in `_build_job_response()` to the active non-completed stage (`running` or `pending`) when `status == "running"`.
-  8. For `mockup_creation`, dynamically counts generated mockup PNG files in the local `mockups` workspace directory to scale progress smoothly between 10% and 90% during subprocess execution.
-  9. If a stage throws an exception:
-     - Sets stage status to `failed`.
-     - Captures root exception message (`error_message`) and full traceback (`stderr_log`).
-     - Halts execution while preserving completed assets from earlier stages.
-  10. `run_stage_execution(job_id, stage_name)`: Resets target stage status to `pending`, clears error log, and re-executes only that specific stage.
+  1. `_load_jobs_cache()` & `_sanitize_restored_jobs()`: Loads cached jobs from disk on boot. Sanitizes state by marking any orphaned `"running"` or `"queued"` jobs as `"interrupted"` and resetting running stages. Terminal jobs (`"completed"`, `"failed"`) are purged from the cache to prevent disk bloat.
+  2. `create_job()`: Loads and parses the GCS prompt file or local file. Initializes 6 stages in `pending` state.
+  3. `_is_stage_100pct_complete()`: Checks GCS/local paths. If all expected files exist, marks stage `completed` and skips execution.
+  4. `stop_job(job_id)`: Flags job cancellation and marks the active/pending stages as `failed`.
+  5. `resume_job(job_id)`: Resets interrupted/failed stages to `pending` and sets job status back to `running`.
+  6. `run_full_pipeline_async()`: Sequentially executes pipeline workers in background threads. Tracks live progress, ETAs, and updates `current_stage` dynamically.
+  7. If a stage throws an exception: Sets stage status to `failed` and logs root exception + traceback.
 
 ### `services/etsy_publisher.py` — Etsy API v3 Draft Listing Publisher
 ### `services/etsy_publisher.py` & `services/etsy_listing_service.py` — Etsy Listing Publishing Engine
@@ -135,7 +129,8 @@ This document provides an exhaustive breakdown of every module in `craftdesk_api
 - `POST /api/v1/pipeline/jobs`: Starts 6-stage pipeline job in background. Resolves prompt text from GCS bucket first (`gs://...`) with local disk fallback; returns HTTP 400 with detailed error message if prompt file cannot be located or GCS auth fails.
 - `GET /api/v1/pipeline/jobs`: Returns list of all active and past pipeline jobs for the authenticated user, sorted by creation date descending.
 - `GET /api/v1/pipeline/jobs/{job_id}`: Returns job status and stage progress array.
-- `POST /api/v1/pipeline/jobs/{job_id}/stages/{stage_name}/retry`: Re-runs single failed stage.
+- `POST /api/v1/pipeline/jobs/{job_id}/resume`: Resumes an interrupted pipeline job from the last completed stage checkpoint.
+- `POST /api/v1/pipeline/jobs/{job_id}/stages/{stage_name}/retry`: Re-runs a specific stage. Can be triggered on completed, failed, or interrupted stages, cascading a reset to all downstream stages.
 - `WS /api/v1/pipeline/jobs/{job_id}/stream`: WebSocket streaming real-time stage updates.
 
 

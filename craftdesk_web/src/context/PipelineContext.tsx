@@ -21,7 +21,7 @@ function getApiBaseUrl(): string {
 export interface PipelineStageStatus {
   stage_name: string;
   label: string;
-  status: "pending" | "running" | "completed" | "failed";
+  status: "pending" | "running" | "completed" | "failed" | "interrupted";
   progress_percent: number;
   images_done: number;
   images_total: number;
@@ -40,7 +40,7 @@ export interface PipelineJobItem {
   display_name: string;
   date_folder: string;
   gcs_prefix: string;
-  status: "queued" | "running" | "completed" | "failed" | "paused";
+  status: "queued" | "running" | "completed" | "failed" | "paused" | "interrupted";
   current_stage: string | null;
   stages: PipelineStageStatus[];
   total_progress: number;
@@ -80,8 +80,10 @@ interface PipelineContextType {
   cancelBatch: () => void;
   clearBatch: () => void;
   retryStage: (jobId: string, stageName: string) => Promise<void>;
-  showFloatingWidget: boolean;
-  dismissFloatingWidget: () => void;
+  resumeJob: (jobId: string) => Promise<void>;
+
+  // Notification bell (replaces floating widget)
+  hasActiveNotification: boolean;
 }
 
 const INITIAL_STAGES: PipelineStageStatus[] = [
@@ -96,8 +98,46 @@ const INITIAL_STAGES: PipelineStageStatus[] = [
 const PipelineContext = createContext<PipelineContextType | undefined>(undefined);
 const SESSION_CACHE_KEY = "craftdesk_gcs_folders_session_v1";
 
+// ---------------------------------------------------------------------------
+// Helper: Map a backend job response to frontend PipelineJobItem
+// ---------------------------------------------------------------------------
+function mapBackendJob(job: any): PipelineJobItem {
+  const fetchedStages: PipelineStageStatus[] = job.stages || [];
+  const compStages = fetchedStages.filter((s) => s.status === "completed").length;
+  const runStage = fetchedStages.find((s) => s.status === "running");
+  const runPct = runStage ? runStage.progress_percent : 0;
+  const overallPct =
+    fetchedStages.length > 0
+      ? Math.min(100, Math.round(((compStages * 100 + runPct) / (fetchedStages.length * 100)) * 100))
+      : 0;
+
+  const activeStageWithEta = fetchedStages.find(
+    (s) => s.status === "running" && s.estimated_time_remaining_sec != null
+  );
+
+  return {
+    job_id: job.job_id,
+    theme_slug: job.theme_name,
+    display_name: job.theme_name,
+    date_folder: job.created_at ? job.created_at.split("T")[0] : "",
+    gcs_prefix: job.prompt_file_path || "",
+    status: job.status as PipelineJobItem["status"],
+    current_stage: job.current_stage,
+    stages: fetchedStages,
+    total_progress: overallPct,
+    elapsed_seconds: fetchedStages.reduce((sum: number, s: any) => sum + (s.elapsed_seconds || 0), 0),
+    estimated_eta_sec: activeStageWithEta ? activeStageWithEta.estimated_time_remaining_sec : null,
+    hero_image_url: job.hero_image_url,
+    mockups: job.mockups || [],
+    pdf_drive_link: job.pdf_drive_link,
+    pdf_local_path: job.pdf_local_path,
+    error_msg: fetchedStages.find((s) => s.error_message)?.error_message || null,
+  };
+}
+
 export function PipelineProvider({ children }: { children: React.ReactNode }) {
   const { logout } = useAuth();
+
   // GCS Folder Cache State
   const [gcsFolders, setGcsFolders] = useState<GcsFolderItem[]>([]);
   const [isLoadingGcs, setIsLoadingGcs] = useState(false);
@@ -112,14 +152,16 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
   const [activeJobIndex, setActiveJobIndex] = useState<number>(-1);
   const [isBatchRunning, setIsBatchRunning] = useState(false);
   const [isBatchPaused, setIsBatchPaused] = useState(false);
-  const [showFloatingWidget, setShowFloatingWidget] = useState(false);
 
+  // Refs for stable access inside async callbacks
   const activeJobIndexRef = useRef(activeJobIndex);
   const isBatchRunningRef = useRef(isBatchRunning);
   const isBatchPausedRef = useRef(isBatchPaused);
   const batchQueueRef = useRef(batchQueue);
   const gcsFoldersRef = useRef(gcsFolders);
-  const clearedQueueTimeRef = useRef<number>(0);
+
+  // Sync suppression — prevents ghost re-fetches after cancel/clear
+  const suppressSyncUntilRef = useRef<number>(0);
 
   activeJobIndexRef.current = activeJobIndex;
   isBatchRunningRef.current = isBatchRunning;
@@ -127,7 +169,9 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
   batchQueueRef.current = batchQueue;
   gcsFoldersRef.current = gcsFolders;
 
-  // Restore GCS Folders from sessionStorage on mount
+  // ── GCS Folders ──────────────────────────────────────────────────────────
+
+  // Restore from sessionStorage on mount
   useEffect(() => {
     if (typeof window !== "undefined") {
       try {
@@ -139,18 +183,13 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
           }
         }
       } catch {
-        // Ignore JSON parse errors
+        // Ignore
       }
     }
   }, []);
 
-  // Fetch GCS Folders with Session Cache support
   const fetchGcsFolders = useCallback(async (force = false) => {
-    // If not forced and we already have folders in memory or session, skip network request!
-    if (!force && gcsFoldersRef.current.length > 0) {
-      return;
-    }
-
+    if (!force && gcsFoldersRef.current.length > 0) return;
     setIsLoadingGcs(true);
     try {
       const token = typeof window !== "undefined" ? localStorage.getItem("craftdesk_access_token") : null;
@@ -166,13 +205,14 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
         }
       }
     } catch {
-      // Keep existing memory folders if network call fails
+      // Keep existing
     } finally {
       setIsLoadingGcs(false);
     }
   }, []);
 
-  // ComfyUI Status Check
+  // ── ComfyUI ──────────────────────────────────────────────────────────────
+
   const checkComfyStatus = useCallback(async () => {
     try {
       const token = typeof window !== "undefined" ? localStorage.getItem("craftdesk_access_token") : null;
@@ -215,7 +255,14 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
     checkComfyStatus();
   }, [checkComfyStatus]);
 
+  // ── Backend Job Sync ─────────────────────────────────────────────────────
+
   const syncJobsFromBackend = useCallback(async () => {
+    // Suppress sync for 10 seconds after cancel/clear to prevent ghost re-fetch
+    if (Date.now() < suppressSyncUntilRef.current) {
+      return;
+    }
+
     const token = typeof window !== "undefined" ? localStorage.getItem("craftdesk_access_token") : null;
     if (!token) return;
 
@@ -225,122 +272,86 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (res.status === 401) {
-        console.warn("[PipelineContext] Token expired or invalid during job sync. Logging out...");
+        console.warn("[PipelineContext] Token expired during job sync. Logging out.");
         logout();
         return;
       }
 
-      if (res.ok) {
-        const data = await res.json();
-        if (!Array.isArray(data)) return;
+      if (!res.ok) return;
 
-        const mappedJobs: PipelineJobItem[] = data.map((job: any) => {
-          const fetchedStages: PipelineStageStatus[] = job.stages || [];
-          const compStages = fetchedStages.filter((s) => s.status === "completed").length;
-          const runStage = fetchedStages.find((s) => s.status === "running");
-          const runPct = runStage ? runStage.progress_percent : 0;
-          const overallPct = fetchedStages.length > 0 ? Math.min(
-            100,
-            Math.round(((compStages * 100 + runPct) / (fetchedStages.length * 100)) * 100)
-          ) : 0;
+      const data = await res.json();
+      if (!Array.isArray(data)) return;
 
-          const activeStageWithEta = fetchedStages.find(
-            (s) => s.status === "running" && s.estimated_time_remaining_sec != null
+      const mappedJobs: PipelineJobItem[] = data.map(mapBackendJob);
+
+      setBatchQueue((prev) => {
+        // If local queue is empty, restore from backend
+        if (prev.length === 0) {
+          // Only restore genuinely active jobs (running/queued/interrupted)
+          // Do NOT restore completed/failed — they are purged from cache
+          const activeJobs = mappedJobs.filter(
+            (rj) => rj.status === "running" || rj.status === "queued" || rj.status === "interrupted"
           );
-          const currentEta = activeStageWithEta ? activeStageWithEta.estimated_time_remaining_sec : null;
 
-          return {
-            job_id: job.job_id,
-            theme_slug: job.theme_name,
-            display_name: job.theme_name,
-            date_folder: job.created_at ? job.created_at.split("T")[0] : "",
-            gcs_prefix: job.prompt_file_path || "",
-            status: job.status,
-            current_stage: job.current_stage,
-            stages: fetchedStages,
-            total_progress: overallPct,
-            elapsed_seconds: fetchedStages.reduce((sum: number, s: any) => sum + (s.elapsed_seconds || 0), 0),
-            estimated_eta_sec: currentEta,
-            hero_image_url: job.hero_image_url,
-            mockups: job.mockups || [],
-            pdf_drive_link: job.pdf_drive_link,
-            pdf_local_path: job.pdf_local_path,
-            error_msg: fetchedStages.find((s) => s.error_message)?.error_message || null,
-          };
-        });
-
-        // Auto-show widget if there's an active running/paused job in the mapped list
-        const hasActiveJob = mappedJobs.some((j) => j.status === "running" || j.status === "paused");
-        if (hasActiveJob) {
-          setShowFloatingWidget(true);
+          const runningIdx = activeJobs.findIndex((j) => j.status === "running");
+          if (runningIdx !== -1) {
+            setActiveJobIndex(runningIdx);
+          } else if (activeJobs.length > 0 && activeJobIndexRef.current === -1) {
+            setActiveJobIndex(0);
+          }
+          return activeJobs;
         }
 
-        setBatchQueue((prev) => {
-          if (prev.length === 0) {
-            // Restore only active jobs or jobs completed within the last 15 minutes
-            const fifteenMinsAgo = Date.now() - 15 * 60 * 1000;
-            const activeOrRecent = mappedJobs.filter((rj) => {
-              const isActive = rj.status === "running" || rj.status === "paused" || rj.status === "queued";
-              const lastStage = rj.stages[rj.stages.length - 1];
-              const completedTime = lastStage && lastStage.completed_at ? new Date(lastStage.completed_at).getTime() : 0;
-              const isRecent = completedTime > fifteenMinsAgo && completedTime > clearedQueueTimeRef.current;
-              return isActive || isRecent;
-            });
-
-            const runningIdx = activeOrRecent.findIndex((j) => j.status === "running");
-            if (runningIdx !== -1) {
-              setActiveJobIndex(runningIdx);
-            } else if (activeOrRecent.length > 0 && activeJobIndexRef.current === -1) {
-              setActiveJobIndex(0);
-            }
-            return activeOrRecent;
+        // Merge: update existing local jobs with fresh backend data
+        const merged = prev.map((localJob) => {
+          const remoteJob = mappedJobs.find((rj) => rj.job_id === localJob.job_id);
+          if (remoteJob) {
+            return { ...localJob, ...remoteJob };
           }
-
-          const merged = prev.map((localJob) => {
-            const remoteJob = mappedJobs.find((rj) => rj.job_id === localJob.job_id);
-            if (remoteJob) {
-              return { ...localJob, ...remoteJob };
-            }
-            return localJob;
-          });
-
-          // ONLY add new jobs from backend if they are active
-          mappedJobs.forEach((rj) => {
-            if (!merged.some((lj) => lj.job_id === rj.job_id)) {
-              const isActive = rj.status === "running" || rj.status === "paused" || rj.status === "queued";
-              if (isActive) {
-                merged.push(rj);
-              }
-            }
-          });
-
-          const runningIdx = merged.findIndex((j) => j.status === "running");
-          if (runningIdx !== -1 && activeJobIndexRef.current !== runningIdx) {
-            setActiveJobIndex(runningIdx);
-          }
-
-          return merged;
+          return localJob;
         });
-      }
+
+        // Add genuinely new running jobs from backend (e.g. resumed from another device)
+        mappedJobs.forEach((rj) => {
+          if (!merged.some((lj) => lj.job_id === rj.job_id)) {
+            if (rj.status === "running" || rj.status === "queued") {
+              merged.push(rj);
+            }
+          }
+        });
+
+        const runningIdx = merged.findIndex((j) => j.status === "running");
+        if (runningIdx !== -1 && activeJobIndexRef.current !== runningIdx) {
+          setActiveJobIndex(runningIdx);
+        }
+
+        return merged;
+      });
     } catch (err) {
-      console.error("Failed to sync jobs from backend:", err);
+      console.error("[PipelineContext] Failed to sync jobs:", err);
     }
   }, [logout]);
 
+  // Adaptive polling: only poll when there are active jobs
   useEffect(() => {
-    // Initial sync
+    // Initial sync on mount
     syncJobsFromBackend();
 
     let timeoutId: NodeJS.Timeout;
 
     const runSyncLoop = () => {
-      // If there's an active job in queue or the queue runner loop is active, poll every 4s.
-      // Otherwise, poll every 45s.
       const hasActive = batchQueueRef.current.some(
-        (j) => j.status === "running" || j.status === "paused" || j.status === "queued"
+        (j) => j.status === "running" || j.status === "queued"
       );
       const isLoopRunning = isBatchRunningRef.current;
-      const delay = (hasActive || isLoopRunning) ? 4000 : 45000;
+
+      // If no active jobs and no batch loop running, DON'T poll at all
+      if (!hasActive && !isLoopRunning) {
+        return; // Stop the loop — it will be restarted by startBatch/resumeJob
+      }
+
+      // Active jobs exist → poll every 4 seconds
+      const delay = 4000;
 
       timeoutId = setTimeout(async () => {
         await syncJobsFromBackend();
@@ -353,8 +364,15 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
     return () => clearTimeout(timeoutId);
   }, [syncJobsFromBackend]);
 
+  // Restart sync loop when batch starts running
+  const restartSyncLoop = useCallback(() => {
+    // Trigger a re-render which causes the useEffect above to re-run
+    // by doing a harmless state update
+    syncJobsFromBackend();
+  }, [syncJobsFromBackend]);
 
-  // Main Sequential Queue Processing Loop with real API polling
+  // ── Batch Queue Processing Loop ──────────────────────────────────────────
+
   const runNextJobInQueue = useCallback(async () => {
     const queue = batchQueueRef.current;
     const currentIndex = activeJobIndexRef.current;
@@ -368,7 +386,6 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
     }
 
     setActiveJobIndex(nextIndex);
-
     setBatchQueue((prev) =>
       prev.map((job, idx) => (idx === nextIndex ? { ...job, status: "running" } : job))
     );
@@ -390,7 +407,10 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (!startRes.ok) {
-        throw new Error(`Failed to start job for ${targetJob.display_name}`);
+        const errBody = await startRes.text();
+        throw new Error(
+          `Failed to start job for '${targetJob.display_name}': ${startRes.status} — ${errBody}`
+        );
       }
 
       const startData = await startRes.json();
@@ -473,9 +493,12 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  // ── Actions ──────────────────────────────────────────────────────────────
+
   const startBatch = useCallback(async (folders: GcsFolderItem[]) => {
     if (!folders.length) return;
 
+    // FULL REPLACEMENT — old cancelled jobs cannot persist
     const newJobs: PipelineJobItem[] = folders.map((f, idx) => ({
       job_id: `pending-${idx}-${Date.now()}`,
       theme_slug: f.theme_slug,
@@ -495,11 +518,13 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
       error_msg: null,
     }));
 
+    // Clear any sync suppression from previous cancel
+    suppressSyncUntilRef.current = 0;
+
     setBatchQueue(newJobs);
     setActiveJobIndex(-1);
     setIsBatchRunning(true);
     setIsBatchPaused(false);
-    setShowFloatingWidget(true);
 
     setTimeout(() => {
       runNextJobInQueue();
@@ -523,13 +548,16 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const cancelBatch = useCallback(async () => {
+    // 1. Stop the batch loop IMMEDIATELY
     setIsBatchRunning(false);
     setIsBatchPaused(false);
     isBatchRunningRef.current = false;
     isBatchPausedRef.current = false;
-    clearedQueueTimeRef.current = Date.now();
 
-    // Terminate currently active/running backend job
+    // 2. Suppress sync for 10 seconds to prevent ghost re-fetch
+    suppressSyncUntilRef.current = Date.now() + 10000;
+
+    // 3. Stop the active backend job
     const active = activeJobIndexRef.current >= 0 ? batchQueueRef.current[activeJobIndexRef.current] : null;
     if (active && (active.status === "running" || active.status === "paused" || active.status === "queued")) {
       try {
@@ -539,10 +567,11 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
           headers: { Authorization: token ? `Bearer ${token}` : "" },
         });
       } catch (err) {
-        console.error("Failed to stop running job on backend:", err);
+        console.error("[PipelineContext] Failed to stop running job on backend:", err);
       }
     }
 
+    // 4. Clear everything
     setActiveJobIndex(-1);
     activeJobIndexRef.current = -1;
     setBatchQueue([]);
@@ -554,7 +583,10 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
     setIsBatchPaused(false);
     isBatchRunningRef.current = false;
     isBatchPausedRef.current = false;
-    clearedQueueTimeRef.current = Date.now();
+
+    // Suppress sync for 10 seconds to prevent ghost re-fetch
+    suppressSyncUntilRef.current = Date.now() + 10000;
+
     setActiveJobIndex(-1);
     activeJobIndexRef.current = -1;
     setBatchQueue([]);
@@ -564,30 +596,57 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
   const retryStage = useCallback(async (jobId: string, stageName: string) => {
     try {
       const token = typeof window !== "undefined" ? localStorage.getItem("craftdesk_access_token") : null;
-      const res = await fetch(`${getApiBaseUrl()}/pipeline/jobs/${jobId}/retry`, {
+      const res = await fetch(`${getApiBaseUrl()}/pipeline/jobs/${jobId}/stages/${stageName}/retry`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: token ? `Bearer ${token}` : "",
         },
-        body: JSON.stringify({ stage_name: stageName }),
       });
       if (!res.ok) {
-        alert("Retry request failed.");
+        const errBody = await res.text();
+        alert(`Retry failed: ${errBody}`);
       }
     } catch (err) {
       alert(`Error retrying stage: ${err}`);
     }
   }, []);
 
+  const resumeJob = useCallback(async (jobId: string) => {
+    try {
+      const token = typeof window !== "undefined" ? localStorage.getItem("craftdesk_access_token") : null;
+      const res = await fetch(`${getApiBaseUrl()}/pipeline/jobs/${jobId}/resume`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token ? `Bearer ${token}` : "",
+        },
+      });
+      if (!res.ok) {
+        const errBody = await res.text();
+        alert(`Resume failed: ${errBody}`);
+        return;
+      }
+
+      // Clear sync suppression and trigger immediate sync
+      suppressSyncUntilRef.current = 0;
+      await syncJobsFromBackend();
+    } catch (err) {
+      alert(`Error resuming job: ${err}`);
+    }
+  }, [syncJobsFromBackend]);
+
+  // ── Derived State ────────────────────────────────────────────────────────
+
   const activeJob =
     activeJobIndex >= 0 && activeJobIndex < batchQueue.length
       ? batchQueue[activeJobIndex]
       : null;
 
-  const dismissFloatingWidget = useCallback(() => {
-    setShowFloatingWidget(false);
-  }, []);
+  // Notification bell: only show for genuinely running jobs
+  const hasActiveNotification = batchQueue.some(
+    (j) => j.status === "running" || j.status === "paused"
+  );
 
   return (
     <PipelineContext.Provider
@@ -611,8 +670,8 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
         cancelBatch,
         clearBatch,
         retryStage,
-        showFloatingWidget,
-        dismissFloatingWidget,
+        resumeJob,
+        hasActiveNotification,
       }}
     >
       {children}

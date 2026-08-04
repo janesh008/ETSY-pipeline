@@ -133,11 +133,16 @@ class TestPipelineEndpoints:
         assert resp.status_code == 400
         assert "detail" in resp.json()
 
-    def test_start_pipeline_job_with_folder_path(self, client, auth_headers, tmp_path) -> None:
+    def test_start_pipeline_job_with_folder_path(
+        self, client, auth_headers, tmp_path
+    ) -> None:
         folder = tmp_path / "pooh_birthday"
         folder.mkdir(parents=True, exist_ok=True)
         txt = folder / "pooh_birthday.txt"
-        txt.write_text("Digital watercolor clipart of Pooh\nDigital watercolor clipart of Piglet", encoding="utf-8")
+        txt.write_text(
+            "Digital watercolor clipart of Pooh\nDigital watercolor clipart of Piglet",
+            encoding="utf-8",
+        )
 
         payload = {
             "theme_name": "Pooh Birthday Theme",
@@ -148,4 +153,66 @@ class TestPipelineEndpoints:
         data = resp.json()
         assert data["theme_name"] == "Pooh Birthday Theme"
 
+    def test_resume_interrupted_job(self, client, auth_headers) -> None:
+        # Start a job
+        start_resp = client.post(
+            "/api/v1/pipeline/jobs",
+            json={"theme_name": "Resume Theme"},
+            headers=auth_headers,
+        )
+        job_id = start_resp.json()["job_id"]
 
+        # Manually force status to "interrupted" in the backend store
+        from craftdesk_api.services.pipeline_runner import _PIPELINE_JOBS_STORE
+
+        job = _PIPELINE_JOBS_STORE[job_id]
+        job["status"] = "interrupted"
+        job["stages"][0]["status"] = "interrupted"
+
+        # Resume the job
+        res_resp = client.post(
+            f"/api/v1/pipeline/jobs/{job_id}/resume", headers=auth_headers
+        )
+        assert res_resp.status_code == 200
+        data = res_resp.json()
+        assert data["status"] == "running"
+        assert data["stages"][0]["status"] == "pending"
+
+    def test_startup_sanitization_and_purging(self, client, auth_headers) -> None:
+        # Create jobs in store: one running, one completed, one failed
+        from craftdesk_api.services.pipeline_runner import (
+            _PIPELINE_JOBS_STORE,
+            _sanitize_restored_jobs,
+        )
+
+        _PIPELINE_JOBS_STORE.clear()
+
+        _PIPELINE_JOBS_STORE["job-running"] = {
+            "job_id": "job-running",
+            "user_id": "user-1",
+            "theme_name": "Running Theme",
+            "status": "running",
+            "stages": [
+                {"stage_name": "image_gen", "status": "running"},
+                {"stage_name": "bg_removal", "status": "pending"},
+            ],
+        }
+
+        _PIPELINE_JOBS_STORE["job-completed"] = {
+            "job_id": "job-completed",
+            "user_id": "user-1",
+            "theme_name": "Completed Theme",
+            "status": "completed",
+            "stages": [],
+        }
+
+        # Run sanitization
+        _sanitize_restored_jobs()
+
+        # "job-running" should be "interrupted", "job-completed" should be purged
+        assert "job-completed" not in _PIPELINE_JOBS_STORE
+        assert "job-running" in _PIPELINE_JOBS_STORE
+        assert _PIPELINE_JOBS_STORE["job-running"]["status"] == "interrupted"
+        assert (
+            _PIPELINE_JOBS_STORE["job-running"]["stages"][0]["status"] == "interrupted"
+        )

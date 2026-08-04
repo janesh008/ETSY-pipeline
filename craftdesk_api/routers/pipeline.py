@@ -3,6 +3,10 @@
 from __future__ import annotations
 
 import asyncio
+import os
+import signal
+import socket
+import subprocess
 from pathlib import Path
 from typing import Any
 
@@ -102,7 +106,6 @@ async def start_pipeline_job(
     background_tasks.add_task(PipelineRunnerService.run_full_pipeline_async, job_id)
 
     return _build_job_response(job_data)
-
 
 
 @router.get(
@@ -217,40 +220,71 @@ async def get_job_stages(
 @router.post(
     "/jobs/{job_id}/stages/{stage_name}/retry",
     response_model=PipelineJobResponse,
-    summary="Retry a specific failed pipeline stage",
+    summary="Retry a specific pipeline stage (works on completed, failed, or interrupted)",
 )
-async def retry_failed_stage(
+async def retry_stage(
     job_id: str,
     stage_name: str,
     background_tasks: BackgroundTasks,
     user_id: str = Depends(get_current_user_id),
 ) -> PipelineJobResponse:
-    """Re-queue a single failed stage without restarting the whole pipeline."""
+    """Re-run a single stage and cascade-reset all downstream stages.
+
+    Accepts stages in any terminal state (completed, failed, interrupted).
+    When retrying a completed stage, all stages after it are also reset to
+    'pending' because their outputs may depend on the retried stage.
+    """
     job = PipelineRunnerService.get_job(job_id)
     if not job or job["user_id"] != user_id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Pipeline job not found.",
+            detail=f"Pipeline job '{job_id}' not found or access denied for user '{user_id}'.",
         )
 
-    stage = next((s for s in job["stages"] if s["stage_name"] == stage_name), None)
-    if not stage:
+    stage_names = [s["stage_name"] for s in job["stages"]]
+    if stage_name not in stage_names:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid stage name: {stage_name}",
+            detail=(f"Invalid stage name: '{stage_name}'. Valid stages: {stage_names}"),
         )
 
-    # Reset stage state
-    stage["status"] = "pending"
-    stage["progress_percent"] = 0
-    stage["error_message"] = None
-    stage["stderr_log"] = None
+    target_stage = next(s for s in job["stages"] if s["stage_name"] == stage_name)
+    if target_stage["status"] in ("pending", "running"):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                f"Stage '{stage_name}' is currently '{target_stage['status']}' "
+                f"and cannot be retried. Wait for it to finish or stop the job first."
+            ),
+        )
+
+    # Reset the target stage
+    target_stage["status"] = "pending"
+    target_stage["progress_percent"] = 0
+    target_stage["error_message"] = None
+    target_stage["stderr_log"] = None
+    target_stage["started_at"] = None
+    target_stage["completed_at"] = None
+
+    # Cascade-reset all downstream stages
+    target_idx = stage_names.index(stage_name)
+    downstream_reset = []
+    for downstream in job["stages"][target_idx + 1 :]:
+        if downstream["status"] != "pending":
+            downstream["status"] = "pending"
+            downstream["progress_percent"] = 0
+            downstream["error_message"] = None
+            downstream["stderr_log"] = None
+            downstream["started_at"] = None
+            downstream["completed_at"] = None
+            downstream_reset.append(downstream["stage_name"])
+
     job["status"] = "running"
     job["current_stage"] = stage_name
 
-    # Trigger async stage simulation without failing
+    # Trigger async stage execution
     background_tasks.add_task(
-        PipelineRunnerService.simulate_stage_execution, job_id, stage_name, False
+        PipelineRunnerService.run_stage_execution, job_id, stage_name, False
     )
 
     return _build_job_response(job)
@@ -270,11 +304,47 @@ async def stop_pipeline_job(
     if not job or job["user_id"] != user_id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Pipeline job not found.",
+            detail=f"Pipeline job '{job_id}' not found or access denied.",
         )
 
     stopped_job = PipelineRunnerService.stop_job(job_id) or job
     return _build_job_response(stopped_job)
+
+
+@router.post(
+    "/jobs/{job_id}/resume",
+    response_model=PipelineJobResponse,
+    summary="Resume an interrupted pipeline job from its last checkpoint",
+)
+async def resume_pipeline_job(
+    job_id: str,
+    background_tasks: BackgroundTasks,
+    user_id: str = Depends(get_current_user_id),
+) -> PipelineJobResponse:
+    """Resume a pipeline job that was interrupted by a server restart.
+
+    Resets interrupted stages to 'pending' and re-runs the orchestrator,
+    which will skip already-completed stages via checkpoint verification.
+    """
+    job = PipelineRunnerService.get_job(job_id)
+    if not job or job["user_id"] != user_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Pipeline job '{job_id}' not found or access denied.",
+        )
+
+    try:
+        resumed_job = PipelineRunnerService.resume_job(job_id)
+    except ValueError as err:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(err),
+        ) from err
+
+    # Fire the full pipeline orchestrator — it will checkpoint-skip completed stages
+    background_tasks.add_task(PipelineRunnerService.run_full_pipeline_async, job_id)
+
+    return _build_job_response(resumed_job)
 
 
 @router.websocket("/jobs/{job_id}/stream")
@@ -303,10 +373,6 @@ async def websocket_pipeline_stream(websocket: WebSocket, job_id: str) -> None:
 # ---------------------------------------------------------------------------
 # ComfyUI process management
 # ---------------------------------------------------------------------------
-import os
-import signal
-import socket
-import subprocess
 
 # Store the ComfyUI process handle in memory (single-process server assumption)
 _comfyui_process: subprocess.Popen | None = None
@@ -369,16 +435,16 @@ async def start_comfyui(
                 "status": "starting",
                 "message": f"ComfyUI launched (PID {_comfyui_process.pid}) — still initializing, check in a few seconds.",
             }
-    except FileNotFoundError:
+    except FileNotFoundError as err:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"ComfyUI not found at '{COMFYUI_DIR}'. Set COMFYUI_DIR env var to the correct path.",
-        )
+        ) from err
     except Exception as err:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to start ComfyUI: {err!s}",
-        )
+        ) from err
 
 
 @router.get(
@@ -422,7 +488,7 @@ async def stop_comfyui(
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Failed to stop ComfyUI: {err!s}",
-            )
+            ) from err
     if not _is_comfyui_running():
         return {"status": "not_running", "message": "ComfyUI was not running."}
     return {

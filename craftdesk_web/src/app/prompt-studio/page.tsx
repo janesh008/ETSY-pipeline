@@ -25,6 +25,7 @@ import {
   FolderOpen,
   Pencil,
 } from "lucide-react";
+import { PipelineNotificationBell } from "@/components/pipeline/PipelineNotificationBell";
 
 interface ScrapedEtsyData {
   url: string;
@@ -413,6 +414,7 @@ export default function PromptStudioPage() {
           </div>
 
           <div className="flex items-center gap-3">
+            <PipelineNotificationBell />
             <button
               onClick={handleSaveToGcp}
               disabled={!rawPromptText || isSavingGcp}

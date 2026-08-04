@@ -43,6 +43,7 @@ def _get_cache_file() -> Path:
 
 
 def _save_jobs_cache() -> None:
+    """Persist only non-terminal jobs to disk cache (running/interrupted/queued)."""
     try:
         cache_file = _get_cache_file()
         cache_file.parent.mkdir(parents=True, exist_ok=True)
@@ -55,11 +56,15 @@ def _save_jobs_cache() -> None:
                 s_data["completed_at"] = s_data["completed_at"].isoformat()
             serializable_jobs[jid] = s_data
         cache_file.write_text(json.dumps(serializable_jobs, indent=2))
+        logger.info(
+            f"[pipeline_runner] Saved {len(serializable_jobs)} jobs to disk cache."
+        )
     except Exception as exc:
         logger.warning(f"[pipeline_runner] Failed to save jobs cache: {exc}")
 
 
 def _load_jobs_cache() -> None:
+    """Load jobs from disk cache on server startup."""
     cache_file = _get_cache_file()
     if cache_file.exists():
         try:
@@ -70,9 +75,65 @@ def _load_jobs_cache() -> None:
             )
         except Exception as exc:
             logger.warning(f"[pipeline_runner] Failed to load jobs cache: {exc}")
+    else:
+        logger.info("[pipeline_runner] No disk cache found — starting fresh.")
+
+
+def _sanitize_restored_jobs() -> None:
+    """Mark orphaned 'running' jobs as 'interrupted' and purge terminal jobs.
+
+    Called once at module import time after _load_jobs_cache(). On server
+    restart no asyncio workers exist in memory, so any job still marked
+    'running' is orphaned and must be flagged so the frontend does not
+    treat it as actively processing.
+
+    Terminal jobs (completed / failed) are purged from the in-memory store
+    to prevent cache bloat — they remain in the output artifacts on disk.
+    """
+    if not _PIPELINE_JOBS_STORE:
+        return
+
+    orphaned_ids: list[str] = []
+    terminal_ids: list[str] = []
+
+    for jid, job_data in _PIPELINE_JOBS_STORE.items():
+        status = job_data.get("status", "")
+
+        # Mark orphaned running/queued jobs as interrupted
+        if status in ("running", "queued"):
+            job_data["status"] = "interrupted"
+            for stage in job_data.get("stages", []):
+                if stage.get("status") == "running":
+                    stage["status"] = "interrupted"
+                    stage["error_message"] = (
+                        "Stage was interrupted by server restart. "
+                        "Use the Resume button to continue from this point."
+                    )
+            orphaned_ids.append(jid)
+            logger.warning(
+                f"[pipeline_runner] Marked orphaned job '{jid}' "
+                f"(theme='{job_data.get('theme_name')}') as interrupted."
+            )
+
+        # Collect terminal jobs for purging
+        elif status in ("completed", "failed"):
+            terminal_ids.append(jid)
+
+    # Purge terminal jobs from in-memory store
+    for jid in terminal_ids:
+        del _PIPELINE_JOBS_STORE[jid]
+
+    if orphaned_ids or terminal_ids:
+        logger.info(
+            f"[pipeline_runner] Startup sanitization: "
+            f"{len(orphaned_ids)} orphaned→interrupted, "
+            f"{len(terminal_ids)} terminal jobs purged from cache."
+        )
+        _save_jobs_cache()
 
 
 _load_jobs_cache()
+_sanitize_restored_jobs()
 
 
 def _reconstruct_job_object(job_data: dict[str, Any]) -> Job:
@@ -110,20 +171,99 @@ class PipelineRunnerService:
     @classmethod
     def stop_job(cls, job_id: str) -> dict[str, Any] | None:
         """Stop/cancel a running pipeline execution job."""
+        logger.info(f"[pipeline_runner] Stop requested for job '{job_id}'.")
         _STOP_REQUESTS.add(job_id)
         job_data = _PIPELINE_JOBS_STORE.get(job_id)
-        if job_data:
-            job_data["status"] = "failed"
-            curr_stage = job_data.get("current_stage")
-            if curr_stage:
-                stage_dict = next(
-                    (s for s in job_data["stages"] if s["stage_name"] == curr_stage),
-                    None,
-                )
-                if stage_dict and stage_dict["status"] == "running":
-                    stage_dict["status"] = "failed"
-                    stage_dict["error_message"] = "Pipeline execution stopped by user."
-                    stage_dict["completed_at"] = datetime.now(UTC).isoformat()
+        if not job_data:
+            logger.warning(
+                f"[pipeline_runner] Stop requested for unknown job '{job_id}' — "
+                f"not found in store."
+            )
+            return None
+
+        job_data["status"] = "failed"
+        curr_stage = job_data.get("current_stage")
+        if curr_stage:
+            stage_dict = next(
+                (s for s in job_data["stages"] if s["stage_name"] == curr_stage),
+                None,
+            )
+            if stage_dict and stage_dict["status"] in ("running", "pending"):
+                stage_dict["status"] = "failed"
+                stage_dict["error_message"] = "Pipeline execution stopped by user."
+                stage_dict["completed_at"] = datetime.now(UTC).isoformat()
+
+        # Also fail any remaining queued/pending stages
+        for stage in job_data.get("stages", []):
+            if stage.get("status") in ("pending", "queued"):
+                stage["status"] = "failed"
+                stage["error_message"] = "Pipeline execution stopped by user."
+
+        _save_jobs_cache()
+        logger.info(
+            f"[pipeline_runner] Job '{job_id}' stopped. "
+            f"theme='{job_data.get('theme_name')}', "
+            f"stopped_at_stage='{curr_stage}'."
+        )
+        return job_data
+
+    @classmethod
+    def resume_job(cls, job_id: str) -> dict[str, Any]:
+        """Resume an interrupted pipeline job from its last checkpoint.
+
+        Resets interrupted/failed stages to 'pending' so the orchestrator's
+        checkpoint-skip logic will re-evaluate which stages need execution.
+
+        Raises:
+            ValueError: If the job is not found or not in interrupted state.
+        """
+        job_data = _PIPELINE_JOBS_STORE.get(job_id)
+        if not job_data:
+            error_msg = (
+                f"Cannot resume job '{job_id}': job not found in store. "
+                f"Available job IDs: {list(_PIPELINE_JOBS_STORE.keys())[:10]}"
+            )
+            logger.error(f"[pipeline_runner] {error_msg}")
+            raise ValueError(error_msg)
+
+        if job_data["status"] not in ("interrupted", "failed"):
+            error_msg = (
+                f"Cannot resume job '{job_id}': current status is "
+                f"'{job_data['status']}', expected 'interrupted' or 'failed'. "
+                f"theme='{job_data.get('theme_name')}'."
+            )
+            logger.error(f"[pipeline_runner] {error_msg}")
+            raise ValueError(error_msg)
+
+        # Reset interrupted/failed stages to pending for re-evaluation
+        reset_count = 0
+        for stage in job_data.get("stages", []):
+            if stage.get("status") in ("interrupted", "failed"):
+                stage["status"] = "pending"
+                stage["progress_percent"] = 0
+                stage["error_message"] = None
+                stage["stderr_log"] = None
+                stage["started_at"] = None
+                stage["completed_at"] = None
+                reset_count += 1
+
+        job_data["status"] = "running"
+        _STOP_REQUESTS.discard(job_id)
+
+        # Set current_stage to the first non-completed stage
+        first_pending = next(
+            (s["stage_name"] for s in job_data["stages"] if s["status"] != "completed"),
+            None,
+        )
+        job_data["current_stage"] = first_pending
+
+        _save_jobs_cache()
+        logger.info(
+            f"[pipeline_runner] Resumed job '{job_id}' "
+            f"(theme='{job_data.get('theme_name')}'). "
+            f"Reset {reset_count} stages to pending. "
+            f"Resuming from stage='{first_pending}'."
+        )
         return job_data
 
     @classmethod
@@ -195,7 +335,8 @@ class PipelineRunnerService:
                         # Directory prefix search fallback (e.g. Clipart/2026-08-03/pooh_birthday/)
                         prefix = blob_path.rstrip("/") + "/"
                         txt_blobs = [
-                            b for b in bucket.list_blobs(prefix=prefix)
+                            b
+                            for b in bucket.list_blobs(prefix=prefix)
                             if b.name.endswith(".txt")
                         ]
                         if txt_blobs:
@@ -228,7 +369,9 @@ class PipelineRunnerService:
                                 f"[pipeline_runner] Could not read local prompt file '{prompt_file_path}': {exc}"
                             )
                     elif p_file.is_dir():
-                        txt_files = list(p_file.glob("*.txt")) or list(p_file.rglob("*.txt"))
+                        txt_files = list(p_file.glob("*.txt")) or list(
+                            p_file.rglob("*.txt")
+                        )
                         if txt_files:
                             try:
                                 raw_text = txt_files[0].read_text(encoding="utf-8")
@@ -286,8 +429,11 @@ class PipelineRunnerService:
                 "progress_percent": 0,
                 "images_done": 0,
                 "images_total": (
-                    1 if def_item["stage_name"] in ("pdf_generation", "metadata_generation")
-                    else 4 if def_item["stage_name"] == "mockup_creation"
+                    1
+                    if def_item["stage_name"]
+                    in ("pdf_generation", "metadata_generation")
+                    else 4
+                    if def_item["stage_name"] == "mockup_creation"
                     else job.total_prompt_count
                 ),
                 "elapsed_seconds": 0.0,
@@ -326,14 +472,23 @@ class PipelineRunnerService:
     @classmethod
     def get_job(cls, job_id: str) -> dict[str, Any] | None:
         """Fetch job state by job_id."""
-        return _PIPELINE_JOBS_STORE.get(job_id)
+        job = _PIPELINE_JOBS_STORE.get(job_id)
+        if not job:
+            logger.warning(
+                f"[pipeline_runner] get_job('{job_id}'): not found. "
+                f"Store contains {len(_PIPELINE_JOBS_STORE)} jobs."
+            )
+        return job
 
     @classmethod
     def list_jobs(cls, user_id: str) -> list[dict[str, Any]]:
         """Return list of all stored pipeline jobs for user_id sorted by created_at descending."""
         jobs = [j for j in _PIPELINE_JOBS_STORE.values() if j.get("user_id") == user_id]
+        logger.info(
+            f"[pipeline_runner] list_jobs(user_id='{user_id}'): "
+            f"returning {len(jobs)} jobs (store total: {len(_PIPELINE_JOBS_STORE)})."
+        )
         return sorted(jobs, key=lambda x: str(x.get("created_at", "")), reverse=True)
-
 
     @classmethod
     def _is_stage_100pct_complete(cls, job: Job, stage_name: str) -> bool:
@@ -507,6 +662,7 @@ class PipelineRunnerService:
             if local_meta.exists():
                 try:
                     import json
+
                     meta_data = json.loads(local_meta.read_text(encoding="utf-8"))
                     if meta_data.get("title") and len(meta_data.get("tags", [])) >= 5:
                         job.metadata = meta_data
@@ -521,18 +677,26 @@ class PipelineRunnerService:
             if settings.gcs_bucket:
                 try:
                     from etsy_pipeline.services.gcs_store import GCSStore
+
                     gcs = GCSStore(settings=settings)
-                    gcs_key = f"Clipart/{date_folder}/{theme_slug}/metadata/listing.json"
+                    gcs_key = (
+                        f"Clipart/{date_folder}/{theme_slug}/metadata/listing.json"
+                    )
                     objs = gcs.list_objects(gcs_key)
                     if objs:
                         import tempfile
+
                         with tempfile.NamedTemporaryFile(delete=False) as tmp:
                             tmp_path = Path(tmp.name)
                         try:
                             gcs.download_file(gcs_key, tmp_path)
                             import json
+
                             meta_data = json.loads(tmp_path.read_text(encoding="utf-8"))
-                            if meta_data.get("title") and len(meta_data.get("tags", [])) >= 5:
+                            if (
+                                meta_data.get("title")
+                                and len(meta_data.get("tags", [])) >= 5
+                            ):
                                 job.metadata = meta_data
                                 stored_job = _PIPELINE_JOBS_STORE.get(job.job_id)
                                 if stored_job:
@@ -801,7 +965,7 @@ class PipelineRunnerService:
             is_upload_stage = s_name in ("etsy_upload", "listing_record")
             should_skip = False
             if is_upload_stage:
-                should_skip = (stage.get("status") == "completed")
+                should_skip = stage.get("status") == "completed"
             else:
                 should_skip = cls._is_stage_100pct_complete(job, s_name)
 

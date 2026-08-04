@@ -12,7 +12,7 @@ class StageStatus(BaseModel):
 
     stage_name: str  # "image_gen" | "bg_removal" | "upscaling" | "mockup_creation" | "pdf_generation" | "metadata_generation"
     label: str
-    status: str  # "pending" | "running" | "completed" | "failed"
+    status: str  # "pending" | "running" | "completed" | "failed" | "interrupted"
     progress_percent: int = Field(0, ge=0, le=100)
     images_done: int = 0
     images_total: int = 0
@@ -42,7 +42,7 @@ class PipelineJobResponse(BaseModel):
     job_id: str
     user_id: str
     theme_name: str
-    status: str  # "running" | "completed" | "failed"
+    status: str  # "running" | "completed" | "failed" | "interrupted"
     current_stage: str | None = None
     stages: list[StageStatus]
     hero_image_url: str | None = None

@@ -18,6 +18,8 @@ import {
   Check,
 } from "lucide-react";
 
+import { PipelineNotificationBell } from "@/components/pipeline/PipelineNotificationBell";
+
 interface ReviewData {
   job_id: string;
   theme_name: string;
@@ -234,6 +236,7 @@ export default function ReviewPage({ params }: { params: Promise<{ job_id: strin
           </div>
 
           <div className="flex items-center gap-3">
+            <PipelineNotificationBell />
             {/* Connected Shop Selector */}
             <div className="flex items-center gap-2 px-3 py-1.5 bg-[#F9F8F3] border border-[#DCD8CF] rounded-xl text-xs">
               <Store className="w-4 h-4 text-[#C85A32]" />

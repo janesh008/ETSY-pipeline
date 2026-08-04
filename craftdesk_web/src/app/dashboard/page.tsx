@@ -18,6 +18,8 @@ import {
   CheckCircle2,
 } from "lucide-react";
 
+import { PipelineNotificationBell } from "@/components/pipeline/PipelineNotificationBell";
+
 export default function DashboardPage() {
   const { user, logout } = useAuth();
   const [vmState, setVmState] = useState<"stopped" | "starting" | "ready">("stopped");
@@ -53,6 +55,7 @@ export default function DashboardPage() {
           </div>
 
           <div className="flex items-center gap-4">
+            <PipelineNotificationBell />
             <span className="text-xs text-[#5A6561] font-medium hidden sm:inline">
               Logged in as <strong className="text-[#1C2421]">{user?.full_name || user?.email}</strong>
             </span>

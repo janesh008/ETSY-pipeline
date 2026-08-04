@@ -20,6 +20,8 @@ import {
 import { slugifyShopName } from "@/lib/slug";
 
 
+import { PipelineNotificationBell } from "@/components/pipeline/PipelineNotificationBell";
+
 interface EtsyShop {
   id: string;
   shop_id: string;
@@ -183,6 +185,7 @@ export default function ShopsPage() {
           </div>
 
           <div className="flex items-center gap-2">
+            <PipelineNotificationBell />
             <button
               onClick={() => setIsAddModalOpen(true)}
               className="px-3.5 py-2 bg-[#EFECE6] border border-[#DCD8CF] hover:bg-[#DCD8CF]/40 text-[#1C2421] font-bold text-xs rounded-xl shadow-sm flex items-center gap-1.5 transition cursor-pointer"

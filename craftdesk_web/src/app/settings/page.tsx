@@ -16,6 +16,8 @@ import {
   Trash2,
 } from "lucide-react";
 
+import { PipelineNotificationBell } from "@/components/pipeline/PipelineNotificationBell";
+
 export default function SettingsPage() {
   const { user } = useAuth();
   
@@ -150,6 +152,10 @@ export default function SettingsPage() {
                 Studio Settings & Key Store
               </h1>
             </div>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <PipelineNotificationBell />
           </div>
         </div>
       </header>

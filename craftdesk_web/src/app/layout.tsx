@@ -3,7 +3,6 @@ import { Outfit, Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "../context/AuthContext";
 import { PipelineProvider } from "../context/PipelineContext";
-import { FloatingPipelineWidget } from "../components/pipeline/FloatingPipelineWidget";
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -42,10 +41,10 @@ export default function RootLayout({
         <AuthProvider>
           <PipelineProvider>
             {children}
-            <FloatingPipelineWidget />
           </PipelineProvider>
         </AuthProvider>
       </body>
     </html>
   );
 }
+
