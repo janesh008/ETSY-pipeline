@@ -495,6 +495,55 @@ class PipelineRunnerService:
                 and len(job.metadata.get("tags", [])) >= 5
             ):
                 return True
+
+            # Local VM check
+            local_meta = (
+                Path(settings.output_root)
+                / date_folder
+                / theme_slug
+                / "metadata"
+                / "listing.json"
+            )
+            if local_meta.exists():
+                try:
+                    import json
+                    meta_data = json.loads(local_meta.read_text(encoding="utf-8"))
+                    if meta_data.get("title") and len(meta_data.get("tags", [])) >= 5:
+                        job.metadata = meta_data
+                        stored_job = _PIPELINE_JOBS_STORE.get(job.job_id)
+                        if stored_job:
+                            stored_job["metadata"] = meta_data
+                        return True
+                except Exception:
+                    pass
+
+            # GCS check
+            if settings.gcs_bucket:
+                try:
+                    from etsy_pipeline.services.gcs_store import GCSStore
+                    gcs = GCSStore(settings=settings)
+                    gcs_key = f"Clipart/{date_folder}/{theme_slug}/metadata/listing.json"
+                    objs = gcs.list_objects(gcs_key)
+                    if objs:
+                        import tempfile
+                        with tempfile.NamedTemporaryFile(delete=False) as tmp:
+                            tmp_path = Path(tmp.name)
+                        try:
+                            gcs.download_file(gcs_key, tmp_path)
+                            import json
+                            meta_data = json.loads(tmp_path.read_text(encoding="utf-8"))
+                            if meta_data.get("title") and len(meta_data.get("tags", [])) >= 5:
+                                job.metadata = meta_data
+                                stored_job = _PIPELINE_JOBS_STORE.get(job.job_id)
+                                if stored_job:
+                                    stored_job["metadata"] = meta_data
+                                return True
+                        finally:
+                            if tmp_path.exists():
+                                tmp_path.unlink()
+                except Exception:
+                    pass
+
             return False
 
         return False
@@ -749,17 +798,28 @@ class PipelineRunnerService:
             s_name = stage["stage_name"]
             job_data["current_stage"] = s_name
 
-            # Check if 100% of stage outputs exist in storage or stage is already marked completed
-            if stage.get("status") == "completed" or cls._is_stage_100pct_complete(
-                job, s_name
-            ):
+            is_upload_stage = s_name in ("etsy_upload", "listing_record")
+            should_skip = False
+            if is_upload_stage:
+                should_skip = (stage.get("status") == "completed")
+            else:
+                should_skip = cls._is_stage_100pct_complete(job, s_name)
+
+            if should_skip:
                 logger.info(
-                    f"[pipeline_runner] Stage '{s_name}' is 100% completed in storage — skipping worker execution."
+                    f"[pipeline_runner] Stage '{s_name}' is 100% completed in storage or completed upload — skipping worker execution."
                 )
                 stage["status"] = "completed"
                 stage["progress_percent"] = 100
-                stage["images_done"] = job.total_prompt_count
-                stage["images_total"] = job.total_prompt_count
+                if s_name in ("pdf_generation", "metadata_generation"):
+                    stage["images_done"] = 1
+                    stage["images_total"] = 1
+                elif s_name == "mockup_creation":
+                    stage["images_done"] = len(job.mockups) if job.mockups else 4
+                    stage["images_total"] = len(job.mockups) if job.mockups else 4
+                else:
+                    stage["images_done"] = job.total_prompt_count
+                    stage["images_total"] = job.total_prompt_count
                 stage["completed_at"] = (
                     stage.get("completed_at") or datetime.now(UTC).isoformat()
                 )

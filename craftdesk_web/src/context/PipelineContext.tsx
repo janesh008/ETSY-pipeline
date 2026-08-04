@@ -119,6 +119,7 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
   const isBatchPausedRef = useRef(isBatchPaused);
   const batchQueueRef = useRef(batchQueue);
   const gcsFoldersRef = useRef(gcsFolders);
+  const clearedQueueTimeRef = useRef<number>(0);
 
   activeJobIndexRef.current = activeJobIndex;
   isBatchRunningRef.current = isBatchRunning;
@@ -276,13 +277,23 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
 
         setBatchQueue((prev) => {
           if (prev.length === 0) {
-            const runningIdx = mappedJobs.findIndex((j) => j.status === "running");
+            // Restore only active jobs or jobs completed within the last 15 minutes
+            const fifteenMinsAgo = Date.now() - 15 * 60 * 1000;
+            const activeOrRecent = mappedJobs.filter((rj) => {
+              const isActive = rj.status === "running" || rj.status === "paused" || rj.status === "queued";
+              const lastStage = rj.stages[rj.stages.length - 1];
+              const completedTime = lastStage && lastStage.completed_at ? new Date(lastStage.completed_at).getTime() : 0;
+              const isRecent = completedTime > fifteenMinsAgo && completedTime > clearedQueueTimeRef.current;
+              return isActive || isRecent;
+            });
+
+            const runningIdx = activeOrRecent.findIndex((j) => j.status === "running");
             if (runningIdx !== -1) {
               setActiveJobIndex(runningIdx);
-            } else if (mappedJobs.length > 0 && activeJobIndexRef.current === -1) {
+            } else if (activeOrRecent.length > 0 && activeJobIndexRef.current === -1) {
               setActiveJobIndex(0);
             }
-            return mappedJobs;
+            return activeOrRecent;
           }
 
           const merged = prev.map((localJob) => {
@@ -293,10 +304,13 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
             return localJob;
           });
 
-          // Add any new jobs started from elsewhere
+          // ONLY add new jobs from backend if they are active
           mappedJobs.forEach((rj) => {
             if (!merged.some((lj) => lj.job_id === rj.job_id)) {
-              merged.push(rj);
+              const isActive = rj.status === "running" || rj.status === "paused" || rj.status === "queued";
+              if (isActive) {
+                merged.push(rj);
+              }
             }
           });
 
@@ -508,11 +522,27 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
     );
   }, []);
 
-  const cancelBatch = useCallback(() => {
+  const cancelBatch = useCallback(async () => {
     setIsBatchRunning(false);
     setIsBatchPaused(false);
     isBatchRunningRef.current = false;
     isBatchPausedRef.current = false;
+    clearedQueueTimeRef.current = Date.now();
+
+    // Terminate currently active/running backend job
+    const active = activeJobIndexRef.current >= 0 ? batchQueueRef.current[activeJobIndexRef.current] : null;
+    if (active && (active.status === "running" || active.status === "paused" || active.status === "queued")) {
+      try {
+        const token = typeof window !== "undefined" ? localStorage.getItem("craftdesk_access_token") : null;
+        await fetch(`${getApiBaseUrl()}/pipeline/jobs/${active.job_id}/stop`, {
+          method: "POST",
+          headers: { Authorization: token ? `Bearer ${token}` : "" },
+        });
+      } catch (err) {
+        console.error("Failed to stop running job on backend:", err);
+      }
+    }
+
     setActiveJobIndex(-1);
     activeJobIndexRef.current = -1;
     setBatchQueue([]);
@@ -524,6 +554,7 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
     setIsBatchPaused(false);
     isBatchRunningRef.current = false;
     isBatchPausedRef.current = false;
+    clearedQueueTimeRef.current = Date.now();
     setActiveJobIndex(-1);
     activeJobIndexRef.current = -1;
     setBatchQueue([]);
