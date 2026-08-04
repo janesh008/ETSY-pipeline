@@ -806,7 +806,7 @@ class EtsyListingService:
             "type": "download",
             "is_digital": True,
             "is_ai_created": bool(is_ai_created),
-            "renewal_option": str(renewal_option),
+            "should_auto_renew": bool(renewal_option == "automatic"),
             "craft_type": ["Card making & stationery", "Collage", "Kids' crafts"],
             "materials": ["PNG", "Digital Download", "Transparent Background"],
             "state": "draft",
@@ -878,7 +878,7 @@ class EtsyListingService:
         mockup_files: list[Path],
         headers: dict[str, str],
     ) -> int:
-        """POST /v3/application/shops/{shop_id}/listings/{listing_id}/images in parallel"""
+        """POST /v3/application/shops/{shop_id}/listings/{listing_id}/images sequentially"""
         url = f"{ETSY_API_BASE}/shops/{shop_id}/listings/{listing_id}/images"
 
         def _upload_single_image(rank: int, img_path: Path) -> bool:
@@ -908,16 +908,13 @@ class EtsyListingService:
             return False
 
         uploaded_count = 0
-        from concurrent.futures import ThreadPoolExecutor, as_completed
+        import time
 
-        with ThreadPoolExecutor(max_workers=5) as executor:
-            futures = [
-                executor.submit(_upload_single_image, rank, img_path)
-                for rank, img_path in enumerate(mockup_files, start=1)
-            ]
-            for future in as_completed(futures):
-                if future.result():
-                    uploaded_count += 1
+        for rank, img_path in enumerate(mockup_files, start=1):
+            if _upload_single_image(rank, img_path):
+                uploaded_count += 1
+            # Rate limiting / concurrency guard: sleep 1.0 second between sequential image uploads
+            time.sleep(1.0)
 
         return uploaded_count
 

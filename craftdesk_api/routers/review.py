@@ -203,6 +203,7 @@ async def push_to_etsy_shop(
         "description", "Watercolor clipart bundle for commercial use."
     )
     tags = meta.get("tags", ["watercolor clipart", "digital download"])
+    renewal_option = meta.get("renewal_option", "automatic")
 
     pub_result = await EtsyPublisherService.create_draft_listing(
         shop_id=shop_id,
@@ -212,6 +213,7 @@ async def push_to_etsy_shop(
         tags=tags,
         price=body.price,
         quantity=body.quantity,
+        renewal_option=renewal_option,
     )
 
     return EtsyPushResponse(
