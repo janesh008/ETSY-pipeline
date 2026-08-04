@@ -36,6 +36,7 @@ STAGE_DEFINITIONS = [
 _PIPELINE_JOBS_STORE: dict[str, dict[str, Any]] = {}
 _ACTIVE_JOB_OBJECTS: dict[str, Job] = {}
 _STOP_REQUESTS: set[str] = set()
+_ACTIVE_RUNNER_TASKS: dict[str, asyncio.Task] = {}
 
 
 def _get_cache_file() -> Path:
@@ -173,6 +174,19 @@ class PipelineRunnerService:
         """Stop/cancel a running pipeline execution job."""
         logger.info(f"[pipeline_runner] Stop requested for job '{job_id}'.")
         _STOP_REQUESTS.add(job_id)
+
+        # Cancel runner task if registered
+        active_task = _ACTIVE_RUNNER_TASKS.get(job_id)
+        if active_task and not active_task.done():
+            logger.info(
+                f"[pipeline_runner] Cancelling active runner task for job {job_id}"
+            )
+            active_task.cancel()
+            _ACTIVE_RUNNER_TASKS.pop(job_id, None)
+
+        # Clear in-memory Job object to reset stage state
+        _ACTIVE_JOB_OBJECTS.pop(job_id, None)
+
         job_data = _PIPELINE_JOBS_STORE.get(job_id)
         if not job_data:
             logger.warning(
@@ -206,6 +220,11 @@ class PipelineRunnerService:
             f"stopped_at_stage='{curr_stage}'."
         )
         return job_data
+
+    @classmethod
+    def clear_active_job(cls, job_id: str) -> None:
+        """Remove a job from active in-memory store so it gets reconstructed fresh."""
+        _ACTIVE_JOB_OBJECTS.pop(job_id, None)
 
     @classmethod
     def resume_job(cls, job_id: str) -> dict[str, Any]:
@@ -621,26 +640,80 @@ class PipelineRunnerService:
             local_base = Path(settings.output_root) / date_folder / theme_slug
             pdf_file = local_base / f"{theme_slug}.pdf"
             mockup_dir = local_base / "mockups"
+
+            # 1. Local VM Disk Check
+            local_complete = False
+            local_mockup_pngs = []
             if pdf_file.exists() and mockup_dir.exists():
-                mockup_pngs = sorted(
+                local_mockup_pngs = sorted(
                     [
                         str(f)
                         for f in mockup_dir.glob("*.png")
                         if f.stat().st_size > 10240
                     ]
                 )
-                if len(mockup_pngs) >= 4 and pdf_file.stat().st_size > 10240:
+                if stage_name == "mockup_creation":
+                    local_complete = len(local_mockup_pngs) >= 4
+                else:  # pdf_generation
+                    local_complete = pdf_file.stat().st_size > 10240
+
+            if local_complete:
+                if stage_name == "mockup_creation":
+                    job.mockups = local_mockup_pngs
+                    if local_mockup_pngs:
+                        job.hero_image_url = local_mockup_pngs[0]
+                    stored_job = _PIPELINE_JOBS_STORE.get(job.job_id)
+                    if stored_job:
+                        stored_job["mockups"] = local_mockup_pngs
+                        if local_mockup_pngs:
+                            stored_job["hero_image_url"] = local_mockup_pngs[0]
+                else:  # pdf_generation
                     job.pdf_path = str(pdf_file)
-                    job.mockups = mockup_pngs
-                    if mockup_pngs:
-                        job.hero_image_url = mockup_pngs[0]
                     stored_job = _PIPELINE_JOBS_STORE.get(job.job_id)
                     if stored_job:
                         stored_job["pdf_local_path"] = str(pdf_file)
-                        stored_job["mockups"] = mockup_pngs
-                        if mockup_pngs:
-                            stored_job["hero_image_url"] = mockup_pngs[0]
-                    return True
+                return True
+
+            # 2. GCS Storage Check
+            if settings.gcs_bucket:
+                try:
+                    from etsy_pipeline.services.gcs_store import GCSStore
+
+                    gcs = GCSStore(settings=settings)
+
+                    if stage_name == "mockup_creation":
+                        gcs_mockup_prefix = (
+                            f"Clipart/{date_folder}/{theme_slug}/mockups/"
+                        )
+                        objs = gcs.list_objects(gcs_mockup_prefix)
+                        png_objs = [o for o in objs if o.lower().endswith(".png")]
+                        if len(png_objs) >= 4:
+                            mockups_urls = [
+                                f"/api/v1/etsy/gcs-media?object_key={o}"
+                                for o in sorted(png_objs)
+                            ]
+                            job.mockups = mockups_urls
+                            job.hero_image_url = mockups_urls[0]
+                            stored_job = _PIPELINE_JOBS_STORE.get(job.job_id)
+                            if stored_job:
+                                stored_job["mockups"] = mockups_urls
+                                stored_job["hero_image_url"] = mockups_urls[0]
+                            return True
+                    else:  # pdf_generation
+                        gcs_pdf_key = (
+                            f"Clipart/{date_folder}/{theme_slug}/pdf/{theme_slug}.pdf"
+                        )
+                        if gcs.exists(gcs_pdf_key):
+                            job.pdf_drive_link = f"https://drive.google.com/file/d/demo-pdf-{job.job_id}/view"
+                            stored_job = _PIPELINE_JOBS_STORE.get(job.job_id)
+                            if stored_job:
+                                stored_job["pdf_drive_link"] = job.pdf_drive_link
+                            return True
+                except Exception as exc:
+                    logger.warning(
+                        f"[pipeline_runner] GCS check failed for '{stage_name}': {exc}"
+                    )
+
             return False
 
         elif stage_name == "metadata_generation":
@@ -952,6 +1025,17 @@ class PipelineRunnerService:
         job_data = _PIPELINE_JOBS_STORE.get(job_id)
         if not job_data:
             return
+
+        # Prevent duplicate parallel execution loops for the same job_id
+        task = asyncio.current_task()
+        if task:
+            old_task = _ACTIVE_RUNNER_TASKS.get(job_id)
+            if old_task and not old_task.done() and old_task != task:
+                logger.info(
+                    f"[pipeline_runner] Cancelling concurrent active runner task for job {job_id}"
+                )
+                old_task.cancel()
+            _ACTIVE_RUNNER_TASKS[job_id] = task
 
         job = _ACTIVE_JOB_OBJECTS.get(job_id)
         if not job:

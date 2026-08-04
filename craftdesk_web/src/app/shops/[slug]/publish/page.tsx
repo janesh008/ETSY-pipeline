@@ -559,7 +559,7 @@ export default function ShopPublishPage({
 
                     className="w-16 h-16 rounded-xl bg-white border border-[#DCD8CF] hover:border-[#C85A32] transition cursor-pointer flex flex-col items-center justify-center p-1 shrink-0 group relative shadow-xs overflow-hidden"
                   >
-                    {key.startsWith("http") ? (
+                    {key.startsWith("http") || key.startsWith("/") ? (
                       <img
                         src={key}
                         alt={`Mockup ${idx + 1}`}
@@ -894,7 +894,7 @@ export default function ShopPublishPage({
 
             {/* High-Res Mockup Image Card */}
             <div className="max-w-3xl max-h-[70vh] bg-[#161D1A] border border-[#2C3632] rounded-2xl p-4 flex flex-col items-center justify-center text-white shadow-2xl space-y-3 overflow-hidden">
-              {activeMockupKeys[lightboxImageIndex]?.startsWith("http") ? (
+              {activeMockupKeys[lightboxImageIndex]?.startsWith("http") || activeMockupKeys[lightboxImageIndex]?.startsWith("/") ? (
                 <img
                   src={activeMockupKeys[lightboxImageIndex]}
                   alt="Mockup Large Preview"
@@ -944,7 +944,7 @@ export default function ShopPublishPage({
                       : "bg-white/10 text-white/70 border-white/20 hover:bg-white/20"
                   }`}
                 >
-                  {key.startsWith("http") ? (
+                  {key.startsWith("http") || key.startsWith("/") ? (
                     <img
                       src={key}
                       alt={`Thumb ${idx + 1}`}

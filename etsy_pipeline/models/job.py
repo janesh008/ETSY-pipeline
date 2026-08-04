@@ -320,6 +320,18 @@ class Job(BaseModel):
         """URL and filesystem-safe character + theme identifier (e.g. 'Winnie_The_Pooh_Birthday')."""
         import re
 
+        # Extract direct folder name from prompt_file_path if available
+        if self.prompt_file_path:
+            p = self.prompt_file_path.replace("\\", "/").rstrip("/")
+            if p.lower().endswith(".txt"):
+                parts = p.split("/")
+                if len(parts) >= 2:
+                    return parts[-2]
+            else:
+                parts = p.split("/")
+                if parts:
+                    return parts[-1]
+
         if not self.theme:
             return "Clipart_Set"
         cleaned = self.theme.replace("&", "and")

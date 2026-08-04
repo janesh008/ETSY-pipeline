@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-08-04T17:32:51.733920+00:00",
+  "generated_at": "2026-08-04T18:06:31.931689+00:00",
   "generator": "scripts/build_graph.py",
   "static_only": true,
   "scan_roots": [
@@ -9,7 +9,7 @@
     "tests"
   ],
   "node_count": 335,
-  "edge_count": 1825,
+  "edge_count": 1828,
   "nodes": [
     {
       "id": "etsy_pipeline",
@@ -3666,6 +3666,13 @@
     },
     {
       "from": "etsy_pipeline.models.job.Job.theme_slug",
+      "to": "endswith",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.models.job.Job.theme_slug",
       "to": "isdigit",
       "kind": "call",
       "static_only": true,
@@ -3680,6 +3687,13 @@
     },
     {
       "from": "etsy_pipeline.models.job.Job.theme_slug",
+      "to": "len",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.models.job.Job.theme_slug",
       "to": "lower",
       "kind": "call",
       "static_only": true,
@@ -3688,6 +3702,13 @@
     {
       "from": "etsy_pipeline.models.job.Job.theme_slug",
       "to": "replace",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.models.job.Job.theme_slug",
+      "to": "rstrip",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"

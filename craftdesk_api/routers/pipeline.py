@@ -282,10 +282,11 @@ async def retry_stage(
     job["status"] = "running"
     job["current_stage"] = stage_name
 
-    # Trigger async stage execution
-    background_tasks.add_task(
-        PipelineRunnerService.run_stage_execution, job_id, stage_name, False
-    )
+    # Clear in-memory job so it is reconstructed with the fresh pending statuses
+    PipelineRunnerService.clear_active_job(job_id)
+
+    # Trigger async stage execution cascading downstream stages
+    background_tasks.add_task(PipelineRunnerService.run_full_pipeline_async, job_id)
 
     return _build_job_response(job)
 
