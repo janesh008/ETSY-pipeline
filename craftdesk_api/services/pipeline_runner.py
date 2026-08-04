@@ -285,7 +285,11 @@ class PipelineRunnerService:
                 "status": "pending",
                 "progress_percent": 0,
                 "images_done": 0,
-                "images_total": job.total_prompt_count,
+                "images_total": (
+                    1 if def_item["stage_name"] in ("pdf_generation", "metadata_generation")
+                    else 4 if def_item["stage_name"] == "mockup_creation"
+                    else job.total_prompt_count
+                ),
                 "elapsed_seconds": 0.0,
                 "estimated_time_remaining_sec": None,
                 "error_message": None,
@@ -621,7 +625,7 @@ class PipelineRunnerService:
                         log_msg += f"\nError: {err_msg}"
                     stage_dict["live_log"] = log_msg
 
-                    if stage_name in ("mockup_creation", "pdf_generation"):
+                    if stage_name == "mockup_creation":
                         local_mockups_dir = (
                             Path(settings.output_root)
                             / job.date_folder
@@ -643,6 +647,12 @@ class PipelineRunnerService:
                             stage_dict["progress_percent"] = min(
                                 90, max(10, int(elapsed_sec * 3))
                             )
+                    elif stage_name in ("pdf_generation", "metadata_generation"):
+                        stage_dict["images_done"] = 0
+                        stage_dict["images_total"] = 1
+                        stage_dict["progress_percent"] = min(
+                            95, max(10, int(elapsed_sec * 8))
+                        )
                     elif st_res.images_total > 0:
                         stage_dict["images_done"] = st_res.images_done
                         stage_dict["images_total"] = st_res.images_total
@@ -674,6 +684,13 @@ class PipelineRunnerService:
                 (completed_dt - start_dt).total_seconds(), 1
             )
             stage_dict["estimated_time_remaining_sec"] = 0.0
+
+            if stage_name in ("pdf_generation", "metadata_generation"):
+                stage_dict["images_done"] = 1
+                stage_dict["images_total"] = 1
+            elif stage_name == "mockup_creation" and job.mockups:
+                stage_dict["images_done"] = len(job.mockups)
+                stage_dict["images_total"] = len(job.mockups)
 
             # Update outputs in job_data
             if job.mockups:

@@ -17,6 +17,8 @@ export function FloatingPipelineWidget() {
     pauseBatch,
     resumeBatch,
     cancelBatch,
+    showFloatingWidget,
+    dismissFloatingWidget,
   } = usePipeline();
 
   // Draggable widget state
@@ -69,8 +71,8 @@ export function FloatingPipelineWidget() {
     }
   }, [isDragging, handleMouseMove, handleMouseUp]);
 
-  // Hide widget if no active batch running/paused or queue is empty (AFTER all hooks)
-  if (!isBatchRunning && !isBatchPaused && batchQueue.length === 0) {
+  // Hide widget if explicitly dismissed, or if no active batch is running/paused and queue is empty
+  if (!showFloatingWidget || (!isBatchRunning && !isBatchPaused && batchQueue.length === 0)) {
     return null;
   }
 
@@ -144,10 +146,10 @@ export function FloatingPipelineWidget() {
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                cancelBatch();
+                dismissFloatingWidget();
               }}
               className="p-1 rounded-lg bg-[#5A6561]/30 hover:bg-red-600/40 text-gray-300 hover:text-red-400 transition cursor-pointer"
-              title="Stop and Close Widget"
+              title="Close Widget"
             >
               <X className="w-3.5 h-3.5" />
             </button>

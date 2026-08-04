@@ -201,11 +201,9 @@ class Renderer:
             elif elem_type == "text":
                 content = element.get("content", "")
 
-                # Calculate bundle count (unique images only, skipping duplicates from aggregate pools)
-                unique_images = set()
-                for imgs in indexed_images.values():
-                    unique_images.update(imgs)
-                bundle_count = str(len(unique_images))
+                # Calculate bundle count (unique filenames only, skipping duplicate paths from subfolders/aggregate pools)
+                unique_filenames = {os.path.basename(p) for imgs in indexed_images.values() for p in imgs}
+                bundle_count = str(len(unique_filenames))
 
                 # Variable interpolation
                 content = content.replace("{theme_name_title}", theme_name.title())

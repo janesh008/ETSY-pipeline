@@ -80,6 +80,8 @@ interface PipelineContextType {
   cancelBatch: () => void;
   clearBatch: () => void;
   retryStage: (jobId: string, stageName: string) => Promise<void>;
+  showFloatingWidget: boolean;
+  dismissFloatingWidget: () => void;
 }
 
 const INITIAL_STAGES: PipelineStageStatus[] = [
@@ -110,6 +112,7 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
   const [activeJobIndex, setActiveJobIndex] = useState<number>(-1);
   const [isBatchRunning, setIsBatchRunning] = useState(false);
   const [isBatchPaused, setIsBatchPaused] = useState(false);
+  const [showFloatingWidget, setShowFloatingWidget] = useState(false);
 
   const activeJobIndexRef = useRef(activeJobIndex);
   const isBatchRunningRef = useRef(isBatchRunning);
@@ -265,6 +268,12 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
           };
         });
 
+        // Auto-show widget if there's an active running/paused job in the mapped list
+        const hasActiveJob = mappedJobs.some((j) => j.status === "running" || j.status === "paused");
+        if (hasActiveJob) {
+          setShowFloatingWidget(true);
+        }
+
         setBatchQueue((prev) => {
           if (prev.length === 0) {
             const runningIdx = mappedJobs.findIndex((j) => j.status === "running");
@@ -305,9 +314,29 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
   }, [logout]);
 
   useEffect(() => {
+    // Initial sync
     syncJobsFromBackend();
-    const interval = setInterval(syncJobsFromBackend, 4000);
-    return () => clearInterval(interval);
+
+    let timeoutId: NodeJS.Timeout;
+
+    const runSyncLoop = () => {
+      // If there's an active job in queue or the queue runner loop is active, poll every 4s.
+      // Otherwise, poll every 45s.
+      const hasActive = batchQueueRef.current.some(
+        (j) => j.status === "running" || j.status === "paused" || j.status === "queued"
+      );
+      const isLoopRunning = isBatchRunningRef.current;
+      const delay = (hasActive || isLoopRunning) ? 4000 : 45000;
+
+      timeoutId = setTimeout(async () => {
+        await syncJobsFromBackend();
+        runSyncLoop();
+      }, delay);
+    };
+
+    runSyncLoop();
+
+    return () => clearTimeout(timeoutId);
   }, [syncJobsFromBackend]);
 
 
@@ -456,6 +485,7 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
     setActiveJobIndex(-1);
     setIsBatchRunning(true);
     setIsBatchPaused(false);
+    setShowFloatingWidget(true);
 
     setTimeout(() => {
       runNextJobInQueue();
@@ -524,6 +554,10 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
       ? batchQueue[activeJobIndex]
       : null;
 
+  const dismissFloatingWidget = useCallback(() => {
+    setShowFloatingWidget(false);
+  }, []);
+
   return (
     <PipelineContext.Provider
       value={{
@@ -546,6 +580,8 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
         cancelBatch,
         clearBatch,
         retryStage,
+        showFloatingWidget,
+        dismissFloatingWidget,
       }}
     >
       {children}
