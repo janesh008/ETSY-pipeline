@@ -9,6 +9,7 @@ import React, {
   useRef,
 } from "react";
 import { GcsFolderItem } from "@/components/gcs/EnterpriseGcsThemeSelector";
+import { useAuth } from "./AuthContext";
 
 function getApiBaseUrl(): string {
   if (process.env.NEXT_PUBLIC_API_URL) {
@@ -94,6 +95,7 @@ const PipelineContext = createContext<PipelineContextType | undefined>(undefined
 const SESSION_CACHE_KEY = "craftdesk_gcs_folders_session_v1";
 
 export function PipelineProvider({ children }: { children: React.ReactNode }) {
+  const { logout } = useAuth();
   // GCS Folder Cache State
   const [gcsFolders, setGcsFolders] = useState<GcsFolderItem[]>([]);
   const [isLoadingGcs, setIsLoadingGcs] = useState(false);
@@ -208,6 +210,106 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     checkComfyStatus();
   }, [checkComfyStatus]);
+
+  const syncJobsFromBackend = useCallback(async () => {
+    const token = typeof window !== "undefined" ? localStorage.getItem("craftdesk_access_token") : null;
+    if (!token) return;
+
+    try {
+      const res = await fetch(`${getApiBaseUrl()}/pipeline/jobs`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (res.status === 401) {
+        console.warn("[PipelineContext] Token expired or invalid during job sync. Logging out...");
+        logout();
+        return;
+      }
+
+      if (res.ok) {
+        const data = await res.json();
+        if (!Array.isArray(data)) return;
+
+        const mappedJobs: PipelineJobItem[] = data.map((job: any) => {
+          const fetchedStages: PipelineStageStatus[] = job.stages || [];
+          const compStages = fetchedStages.filter((s) => s.status === "completed").length;
+          const runStage = fetchedStages.find((s) => s.status === "running");
+          const runPct = runStage ? runStage.progress_percent : 0;
+          const overallPct = fetchedStages.length > 0 ? Math.min(
+            100,
+            Math.round(((compStages * 100 + runPct) / (fetchedStages.length * 100)) * 100)
+          ) : 0;
+
+          const activeStageWithEta = fetchedStages.find(
+            (s) => s.status === "running" && s.estimated_time_remaining_sec != null
+          );
+          const currentEta = activeStageWithEta ? activeStageWithEta.estimated_time_remaining_sec : null;
+
+          return {
+            job_id: job.job_id,
+            theme_slug: job.theme_name,
+            display_name: job.theme_name,
+            date_folder: job.created_at ? job.created_at.split("T")[0] : "",
+            gcs_prefix: job.prompt_file_path || "",
+            status: job.status,
+            current_stage: job.current_stage,
+            stages: fetchedStages,
+            total_progress: overallPct,
+            elapsed_seconds: fetchedStages.reduce((sum: number, s: any) => sum + (s.elapsed_seconds || 0), 0),
+            estimated_eta_sec: currentEta,
+            hero_image_url: job.hero_image_url,
+            mockups: job.mockups || [],
+            pdf_drive_link: job.pdf_drive_link,
+            pdf_local_path: job.pdf_local_path,
+            error_msg: fetchedStages.find((s) => s.error_message)?.error_message || null,
+          };
+        });
+
+        setBatchQueue((prev) => {
+          if (prev.length === 0) {
+            const runningIdx = mappedJobs.findIndex((j) => j.status === "running");
+            if (runningIdx !== -1) {
+              setActiveJobIndex(runningIdx);
+            } else if (mappedJobs.length > 0 && activeJobIndexRef.current === -1) {
+              setActiveJobIndex(0);
+            }
+            return mappedJobs;
+          }
+
+          const merged = prev.map((localJob) => {
+            const remoteJob = mappedJobs.find((rj) => rj.job_id === localJob.job_id);
+            if (remoteJob) {
+              return { ...localJob, ...remoteJob };
+            }
+            return localJob;
+          });
+
+          // Add any new jobs started from elsewhere
+          mappedJobs.forEach((rj) => {
+            if (!merged.some((lj) => lj.job_id === rj.job_id)) {
+              merged.push(rj);
+            }
+          });
+
+          const runningIdx = merged.findIndex((j) => j.status === "running");
+          if (runningIdx !== -1 && activeJobIndexRef.current !== runningIdx) {
+            setActiveJobIndex(runningIdx);
+          }
+
+          return merged;
+        });
+      }
+    } catch (err) {
+      console.error("Failed to sync jobs from backend:", err);
+    }
+  }, [logout]);
+
+  useEffect(() => {
+    syncJobsFromBackend();
+    const interval = setInterval(syncJobsFromBackend, 4000);
+    return () => clearInterval(interval);
+  }, [syncJobsFromBackend]);
+
 
   // Main Sequential Queue Processing Loop with real API polling
   const runNextJobInQueue = useCallback(async () => {
