@@ -103,9 +103,7 @@ class EtsyListingService:
                     if "metadata/listing.json" in obj or "listing.json" in obj:
                         folder_map[prefix]["has_metadata"] = True
 
-            folder_items = [
-                GcsFolderItem(**item) for item in folder_map.values()
-            ]
+            folder_items = [GcsFolderItem(**item) for item in folder_map.values()]
             # Sort newest date first
             folder_items.sort(key=lambda x: (x.date_folder, x.theme_slug), reverse=True)
 
@@ -116,7 +114,6 @@ class EtsyListingService:
             logger.warning(f"[etsy_listing_service] GCS folder list failed: {exc}")
             return GcsFolderListResponse(folders=[], gcs_available=False)
 
-
     @classmethod
     def get_gcs_folder_details(
         cls, gcs_prefix: str, settings: Settings | None = None
@@ -126,14 +123,27 @@ class EtsyListingService:
         clean_prefix = gcs_prefix.rstrip("/") + "/"
         parts = clean_prefix.split("/")
         date_folder = parts[1] if len(parts) >= 3 else ""
-        theme_slug = parts[2] if len(parts) >= 3 else parts[-2] if len(parts) >= 2 else "Clipart"
+        theme_slug = (
+            parts[2] if len(parts) >= 3 else parts[-2] if len(parts) >= 2 else "Clipart"
+        )
         display_name = theme_slug.replace("_", " ")
 
         record = cls.load_gcs_listing_record(clean_prefix, app_settings) or {}
 
-        title = record.get("etsy_title") or f"{display_name} Clipart PNG Bundle Transparent Digital Download"
-        description = record.get("etsy_description") or f"High quality digital clipart set for {display_name}."
-        tags = record.get("etsy_tags") or ["clipart", "digital download", "png", "bundle"]
+        title = (
+            record.get("etsy_title")
+            or f"{display_name} Clipart PNG Bundle Transparent Digital Download"
+        )
+        description = (
+            record.get("etsy_description")
+            or f"High quality digital clipart set for {display_name}."
+        )
+        tags = record.get("etsy_tags") or [
+            "clipart",
+            "digital download",
+            "png",
+            "bundle",
+        ]
         price = float(record.get("listing_price_usd", 5.99))
         quantity = int(record.get("listing_quantity", 999))
 
@@ -145,11 +155,13 @@ class EtsyListingService:
                 objects = gcs.list_objects(mockup_prefix)
                 for obj in sorted(objects):
                     if obj.lower().endswith((".png", ".jpg", ".jpeg", ".webp")):
-                        # Format local media proxy URL
-                        media_url = f"http://localhost:8000/api/v1/etsy/gcs-media?object_key={obj}"
+                        # Format GCS media proxy URL
+                        media_url = f"/api/v1/etsy/gcs-media?object_key={obj}"
                         mockups.append(media_url)
             except Exception as exc:
-                logger.warning(f"[etsy_listing_service] Listing mockups failed for '{clean_prefix}': {exc}")
+                logger.warning(
+                    f"[etsy_listing_service] Listing mockups failed for '{clean_prefix}': {exc}"
+                )
 
         return GcsFolderDetailsResponse(
             gcs_prefix=clean_prefix,
@@ -166,7 +178,8 @@ class EtsyListingService:
             is_ai_created=bool(record.get("is_ai_created", True)),
             renewal_option=record.get("renewal_option", "automatic"),
             taxonomy_id=int(record.get("taxonomy_id", 6844)),
-            craft_type=record.get("craft_type") or [
+            craft_type=record.get("craft_type")
+            or [
                 "Card making & stationery",
                 "Collage",
                 "Kids' crafts",
@@ -174,14 +187,10 @@ class EtsyListingService:
             mockups=mockups,
         )
 
-
-
-
     @classmethod
     def load_gcs_listing_record(
         cls, gcs_prefix: str, settings: Settings | None = None
     ) -> dict[str, Any] | None:
-
         """Download and parse listing.json from GCS."""
         app_settings = settings or get_settings()
         if not is_gcp_available():
@@ -278,7 +287,6 @@ class EtsyListingService:
         # 2b. Set required Craft type property (Property ID 47626759760)
         cls._set_listing_craft_type(shop_id, listing_id, headers)
 
-
         # 3. Download mockups from GCS to temp dir in parallel
         mockup_files: list[Path] = []
         pdf_file: Path | None = None
@@ -289,11 +297,13 @@ class EtsyListingService:
             mockup_dir.mkdir(parents=True, exist_ok=True)
 
             mockup_objects = [
-                obj for obj in gcs.list_objects(mockup_search_prefix)
+                obj
+                for obj in gcs.list_objects(mockup_search_prefix)
                 if Path(obj).name.lower().endswith((".png", ".jpg", ".jpeg", ".webp"))
             ]
             pdf_objects = [
-                obj for obj in gcs.list_objects(pdf_search_prefix)
+                obj
+                for obj in gcs.list_objects(pdf_search_prefix)
                 if obj.endswith(".pdf") or "pdf/" in obj
             ]
 
@@ -303,13 +313,17 @@ class EtsyListingService:
                 return dest_path
 
             with ThreadPoolExecutor(max_workers=5) as executor:
-                futures = [executor.submit(_download_single_gcs, key) for key in mockup_objects]
+                futures = [
+                    executor.submit(_download_single_gcs, key) for key in mockup_objects
+                ]
                 for future in as_completed(futures):
                     try:
                         file_path = future.result()
                         mockup_files.append(file_path)
                     except Exception as exc:
-                        logger.warning(f"[etsy_listing_service] GCS parallel download failed: {exc}")
+                        logger.warning(
+                            f"[etsy_listing_service] GCS parallel download failed: {exc}"
+                        )
 
             if pdf_objects:
                 try:
@@ -319,7 +333,6 @@ class EtsyListingService:
                     pdf_file = local_pdf
                 except Exception:
                     pass
-
 
             # 4. Upload images (Hero first)
             logger.info(
@@ -392,7 +405,6 @@ class EtsyListingService:
             message=f"Successfully published listing '{title}' to {shop_name}.",
         )
 
-
     @classmethod
     async def publish_from_upload(
         cls,
@@ -429,17 +441,16 @@ class EtsyListingService:
         # 1b. Set required Craft type property (Property ID 47626759760)
         cls._set_listing_craft_type(shop_id, listing_id, headers)
 
-
         # 2. Save uploaded files to temp dir
         saved_mockups: list[Path] = []
         saved_pdf: Path | None = None
 
         date_str = datetime.now(UTC).strftime("%Y-%m-%d")
-        theme_slug = re.sub(r"[^\w]", "_", title.split()[0] if title else "Clipart")[:30]
+        theme_slug = re.sub(r"[^\w]", "_", title.split()[0] if title else "Clipart")[
+            :30
+        ]
         sanitized_shop_name = re.sub(r"[^\w]", "_", shop_name)
-        gcs_shop_prefix = (
-            f"EtsyShops/{sanitized_shop_name}/{date_str}/{theme_slug}/"
-        )
+        gcs_shop_prefix = f"EtsyShops/{sanitized_shop_name}/{date_str}/{theme_slug}/"
 
         gcs = GCSStore(settings=app_settings) if is_gcp_available() else None
 
@@ -510,7 +521,6 @@ class EtsyListingService:
             headers=headers,
             fallback_url=listing_url,
         )
-
 
         # 6. Save listing.json to GCS under EtsyShops/{shop_name}/...
         if gcs:
@@ -649,18 +659,29 @@ class EtsyListingService:
         """Fetch live shop metrics & listing count directly from Etsy API v3."""
         global _SHOP_STATS_CACHE_STORE
         now = time.time()
-        if shop_id in _SHOP_STATS_CACHE_STORE and (now - _SHOP_STATS_CACHE_STORE[shop_id][0]) < 600:
+        if (
+            shop_id in _SHOP_STATS_CACHE_STORE
+            and (now - _SHOP_STATS_CACHE_STORE[shop_id][0]) < 600
+        ):
             return _SHOP_STATS_CACHE_STORE[shop_id][1]
 
         headers = cls._get_headers(access_token)
 
         # 1. Try real Etsy API lookup by shop_id or shop_name
         try:
-            url = f"{ETSY_API_BASE}/shops/{shop_id}" if shop_id.isdigit() else f"{ETSY_API_BASE}/shops?shop_name={shop_name}"
+            url = (
+                f"{ETSY_API_BASE}/shops/{shop_id}"
+                if shop_id.isdigit()
+                else f"{ETSY_API_BASE}/shops?shop_name={shop_name}"
+            )
             resp = requests.get(url, headers=headers, timeout=15)
             if resp.status_code == 200:
                 data = resp.json()
-                if "results" in data and isinstance(data["results"], list) and data["results"]:
+                if (
+                    "results" in data
+                    and isinstance(data["results"], list)
+                    and data["results"]
+                ):
                     data = data["results"][0]
 
                 if "listing_active_count" in data or "shop_name" in data:
@@ -686,10 +707,16 @@ class EtsyListingService:
                     _SHOP_STATS_CACHE_STORE[shop_id] = (now, res)
                     return res
         except Exception as exc:
-            logger.warning(f"[etsy_listing_service] Shop stats fetch exception for {shop_name}: {exc}")
+            logger.warning(
+                f"[etsy_listing_service] Shop stats fetch exception for {shop_name}: {exc}"
+            )
 
         # If live stats fetch fails (e.g. invalid token or unverified shop), return exact 0 metrics
-        formatted_url = f"https://www.etsy.com/shop/{shop_name}" if " " not in shop_name and "#" not in shop_name else ""
+        formatted_url = (
+            f"https://www.etsy.com/shop/{shop_name}"
+            if " " not in shop_name and "#" not in shop_name
+            else ""
+        )
         res = EtsyShopStatsResponse(
             is_connected=True,
             shop_id=shop_id,
@@ -705,7 +732,6 @@ class EtsyListingService:
         _SHOP_STATS_CACHE_STORE[shop_id] = (now, res)
         return res
 
-
     @classmethod
     def _get_api_key_header(cls) -> str:
         """Get the x-api-key header value (keystring or keystring:shared_secret)."""
@@ -718,7 +744,9 @@ class EtsyListingService:
             or api_settings.etsy_keystring
             or "s9ido8gpuc6tbtvzcchl1s4z"
         )
-        shared_secret = os.getenv("ETSY_SHARED_SECRET") or app_settings.etsy_shared_secret
+        shared_secret = (
+            os.getenv("ETSY_SHARED_SECRET") or app_settings.etsy_shared_secret
+        )
         if shared_secret:
             return f"{keystring}:{shared_secret}"
         return keystring
@@ -781,10 +809,8 @@ class EtsyListingService:
             "renewal_option": str(renewal_option),
             "craft_type": ["Card making & stationery", "Collage", "Kids' crafts"],
             "materials": ["PNG", "Digital Download", "Transparent Background"],
-
             "state": "draft",
         }
-
 
         logger.info(
             f"[etsy_listing_service] [Stage 1] Creating Etsy draft listing shell for shop '{shop_id}' (price={valid_price})..."
@@ -800,9 +826,7 @@ class EtsyListingService:
 
         data = resp.json()
         listing_id = data.get("listing_id")
-        listing_url = data.get(
-            "url", f"https://www.etsy.com/listing/{listing_id}"
-        )
+        listing_url = data.get("url", f"https://www.etsy.com/listing/{listing_id}")
         logger.info(
             f"[etsy_listing_service] [Stage 1 SUCCESS] Created draft listing_id={listing_id}, url={listing_url}"
         )
@@ -819,7 +843,11 @@ class EtsyListingService:
         """PUT /v3/application/shops/{shop_id}/listings/{listing_id}/properties/47626759760 (Craft type)"""
         url = f"{ETSY_API_BASE}/shops/{shop_id}/listings/{listing_id}/properties/47626759760"
         payload = {
-            "value_ids": [538, 541, 562],  # Card making & stationery, Collage, Kids' crafts
+            "value_ids": [
+                538,
+                541,
+                562,
+            ],  # Card making & stationery, Collage, Kids' crafts
             "values": values or ["Card making & stationery", "Collage", "Kids' crafts"],
         }
         try:
@@ -837,9 +865,10 @@ class EtsyListingService:
                     f"[etsy_listing_service] Craft type property set returned HTTP {resp.status_code}: {resp.text}"
                 )
         except Exception as exc:
-            logger.warning(f"[etsy_listing_service] Failed to set Craft type property: {exc}")
+            logger.warning(
+                f"[etsy_listing_service] Failed to set Craft type property: {exc}"
+            )
         return False
-
 
     @classmethod
     def _upload_mockup_images(
@@ -880,6 +909,7 @@ class EtsyListingService:
 
         uploaded_count = 0
         from concurrent.futures import ThreadPoolExecutor, as_completed
+
         with ThreadPoolExecutor(max_workers=5) as executor:
             futures = [
                 executor.submit(_upload_single_image, rank, img_path)
@@ -904,8 +934,12 @@ class EtsyListingService:
         try:
             with open(pdf_path, "rb") as pdf_file:
                 files = {"file": (pdf_path.name, pdf_file, "application/pdf")}
-                data = {"name": pdf_path.name}  # Required parameter for Etsy API v3 digital file upload
-                resp = requests.post(url, headers=headers, files=files, data=data, timeout=60)
+                data = {
+                    "name": pdf_path.name
+                }  # Required parameter for Etsy API v3 digital file upload
+                resp = requests.post(
+                    url, headers=headers, files=files, data=data, timeout=60
+                )
                 if resp.status_code in (200, 201):
                     logger.info(
                         f"[etsy_listing_service] Digital PDF file '{pdf_path.name}' successfully uploaded for listing {listing_id}"
@@ -955,4 +989,3 @@ class EtsyListingService:
                 exc_info=True,
             )
         return fallback_url
-

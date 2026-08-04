@@ -334,15 +334,25 @@ export default function PipelinePage() {
                 </p>
               </div>
 
-              {isBatchRunning ? (
+              {isBatchRunning || (activeJob && (activeJob.status === "running" || activeJob.status === "paused")) ? (
                 <div className="flex items-center gap-2">
-                  <button
-                    onClick={pauseBatch}
-                    className="px-3 py-1.5 bg-[#5A6561] hover:bg-[#47514D] text-white text-xs font-semibold rounded-xl flex items-center gap-1 transition cursor-pointer"
-                  >
-                    <Pause className="w-3.5 h-3.5" />
-                    <span>Pause</span>
-                  </button>
+                  {(isBatchRunning && !isBatchPaused) || (activeJob && activeJob.status === "running") ? (
+                    <button
+                      onClick={pauseBatch}
+                      className="px-3 py-1.5 bg-[#5A6561] hover:bg-[#47514D] text-white text-xs font-semibold rounded-xl flex items-center gap-1 transition cursor-pointer"
+                    >
+                      <Pause className="w-3.5 h-3.5" />
+                      <span>Pause</span>
+                    </button>
+                  ) : (
+                    <button
+                      onClick={resumeBatch}
+                      className="px-3 py-1.5 bg-[#0D5C46] hover:bg-[#094534] text-white text-xs font-semibold rounded-xl flex items-center gap-1 transition cursor-pointer"
+                    >
+                      <Play className="w-3.5 h-3.5" />
+                      <span>Resume Batch</span>
+                    </button>
+                  )}
                   <button
                     onClick={cancelBatch}
                     className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-xl flex items-center gap-1 transition cursor-pointer"
@@ -351,14 +361,6 @@ export default function PipelinePage() {
                     <span>Stop</span>
                   </button>
                 </div>
-              ) : isBatchPaused ? (
-                <button
-                  onClick={resumeBatch}
-                  className="px-3 py-1.5 bg-[#0D5C46] hover:bg-[#094534] text-white text-xs font-semibold rounded-xl flex items-center gap-1 transition cursor-pointer"
-                >
-                  <Play className="w-3.5 h-3.5" />
-                  <span>Resume Batch</span>
-                </button>
               ) : null}
             </div>
 

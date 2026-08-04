@@ -106,7 +106,7 @@ export function PipelineNotificationBell() {
 
             {/* Controls */}
             <div className="flex items-center gap-1.5">
-              {isBatchRunning && (
+              {(isBatchRunning && !isBatchPaused) || (activeJob && activeJob.status === "running") ? (
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -117,8 +117,7 @@ export function PipelineNotificationBell() {
                 >
                   <Pause className="w-3.5 h-3.5" />
                 </button>
-              )}
-              {isBatchPaused && (
+              ) : isBatchPaused || (activeJob && activeJob.status === "paused") ? (
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -129,8 +128,9 @@ export function PipelineNotificationBell() {
                 >
                   <Play className="w-3.5 h-3.5" />
                 </button>
-              )}
-              {(isBatchRunning || isBatchPaused) && (
+              ) : null}
+
+              {isBatchRunning || isBatchPaused || (activeJob && (activeJob.status === "running" || activeJob.status === "paused")) ? (
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -142,7 +142,7 @@ export function PipelineNotificationBell() {
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
-              )}
+              ) : null}
             </div>
           </div>
 

@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+from typing import Any
+
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import FileResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -22,6 +26,95 @@ from craftdesk_api.services.pipeline_runner import PipelineRunnerService
 router = APIRouter(prefix="/review", tags=["review"])
 
 
+def _format_media_url(path: str) -> str:
+    """Format local file path to proxy endpoint URL for frontend preview."""
+    if not path:
+        return ""
+    if path.startswith("http://") or path.startswith("https://"):
+        return path
+    # If path starts with output/ or is a relative path in output dir
+    normalized = path.replace("\\", "/")
+
+    from etsy_pipeline.services.gcs_store import is_gcp_available
+
+    if is_gcp_available():
+        gcs_key = normalized
+        if gcs_key.startswith("output/"):
+            gcs_key = "Clipart/" + gcs_key[len("output/") :]
+        return f"/api/v1/etsy/gcs-media?object_key={gcs_key}"
+
+    return f"/api/v1/review/media?path={normalized}"
+
+
+def _build_review_response(job: dict[str, Any]) -> ReviewJobResponse:
+    """Build ReviewJobResponse mapping local file paths to proxy media URLs."""
+    meta = job.get("metadata", {})
+    raw_mockups = job.get("mockups") or []
+
+    mockups = [_format_media_url(m) for m in raw_mockups]
+    if not mockups:
+        # Fallback list of placeholders
+        mockups = [
+            "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=600",
+            "https://images.unsplash.com/photo-1579783902614-a3fb3927b675?w=600",
+            "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=600",
+            "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=600",
+        ]
+
+    raw_hero = job.get("hero_image_url")
+    hero = _format_media_url(raw_hero) if raw_hero else mockups[0]
+
+    pdf_url = (
+        job.get("pdf_drive_link")
+        or f"https://drive.google.com/file/d/demo-pdf-{job['job_id']}/view"
+    )
+
+    return ReviewJobResponse(
+        job_id=job["job_id"],
+        theme_name=job["theme_name"],
+        hero_image_url=hero,
+        mockups=mockups,
+        pdf_download_url=pdf_url,
+        title=meta.get("title", f"✨ {job['theme_name']} Watercolor Clipart Set"),
+        description=meta.get(
+            "description",
+            "High-resolution digital watercolor clipart bundle for commercial use.",
+        ),
+        tags=meta.get("tags", ["watercolor clipart", "digital download", "craft png"]),
+        price=5.99,
+        quantity=999,
+        status="READY_FOR_REVIEW",
+    )
+
+
+@router.get(
+    "/media",
+    summary="Serve local mockup or PDF files from output directory",
+)
+async def serve_local_media(
+    path: str,
+    user_id: str = Depends(get_current_user_id),
+) -> FileResponse:
+    """Serve a local file from the output directory for preview/lightbox."""
+    normalized = path.replace("\\", "/")
+
+    # Prevent directory traversal attacks
+    if ".." in normalized or not normalized.startswith("output/"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied: path must be inside the output directory.",
+        )
+
+    file_path = Path(normalized)
+    if not file_path.exists() or not file_path.is_file():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"File not found: {path}",
+        )
+
+    return FileResponse(file_path)
+
+
 @router.get(
     "/{job_id}",
     response_model=ReviewJobResponse,
@@ -39,34 +132,7 @@ async def get_job_review_data(
             user_id, "Wonder Woman Birthday Watercolor", []
         )
 
-    meta = job.get("metadata", {})
-    mockups = job.get("mockups") or [
-        "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=600",
-        "https://images.unsplash.com/photo-1579783902614-a3fb3927b675?w=600",
-        "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=600",
-        "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=600",
-    ]
-    hero = job.get("hero_image_url") or mockups[0]
-    pdf_url = (
-        job.get("pdf_drive_link")
-        or f"https://drive.google.com/file/d/demo-pdf-{job['job_id']}/view"
-    )
-    return ReviewJobResponse(
-        job_id=job["job_id"],
-        theme_name=job["theme_name"],
-        hero_image_url=hero,
-        mockups=mockups,
-        pdf_download_url=pdf_url,
-        title=meta.get("title", f"✨ {job['theme_name']} Watercolor Clipart Set"),
-        description=meta.get(
-            "description",
-            "High-resolution digital watercolor clipart bundle for commercial use.",
-        ),
-        tags=meta.get("tags", ["watercolor clipart", "digital download", "craft png"]),
-        price=5.99,
-        quantity=999,
-        status="READY_FOR_REVIEW",
-    )
+    return _build_review_response(job)
 
 
 @router.put(
@@ -91,31 +157,7 @@ async def update_job_metadata(
     job["metadata"]["description"] = body.description
     job["metadata"]["tags"] = body.tags
 
-    meta = job["metadata"]
-    mockups = job.get("mockups") or [
-        "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=600",
-        "https://images.unsplash.com/photo-1579783902614-a3fb3927b675?w=600",
-        "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=600",
-        "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=600",
-    ]
-    hero = job.get("hero_image_url") or mockups[0]
-    pdf_url = (
-        job.get("pdf_drive_link")
-        or f"https://drive.google.com/file/d/demo-pdf-{job['job_id']}/view"
-    )
-    return ReviewJobResponse(
-        job_id=job["job_id"],
-        theme_name=job["theme_name"],
-        hero_image_url=hero,
-        mockups=mockups,
-        pdf_download_url=pdf_url,
-        title=meta["title"],
-        description=meta["description"],
-        tags=meta["tags"],
-        price=5.99,
-        quantity=999,
-        status="READY_FOR_REVIEW",
-    )
+    return _build_review_response(job)
 
 
 @router.post(

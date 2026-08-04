@@ -542,10 +542,20 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
   const resumeBatch = useCallback(() => {
     setIsBatchPaused(false);
     isBatchPausedRef.current = false;
-    setBatchQueue((prev) =>
-      prev.map((j, idx) => (idx === activeJobIndexRef.current ? { ...j, status: "running" } : j))
-    );
-  }, []);
+
+    // If loop was terminated (e.g. navigation/reload), restart it!
+    if (!isBatchRunningRef.current) {
+      setIsBatchRunning(true);
+      isBatchRunningRef.current = true;
+      setTimeout(() => {
+        runNextJobInQueue();
+      }, 300);
+    } else {
+      setBatchQueue((prev) =>
+        prev.map((j, idx) => (idx === activeJobIndexRef.current ? { ...j, status: "running" } : j))
+      );
+    }
+  }, [runNextJobInQueue]);
 
   const cancelBatch = useCallback(async () => {
     // 1. Stop the batch loop IMMEDIATELY
