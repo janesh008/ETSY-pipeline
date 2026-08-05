@@ -322,9 +322,9 @@ export default function ShopPublishPage({
           },
           body: JSON.stringify({
             gcs_prefix: targetPrefix,
-            title_override: title.trim() || undefined,
-            description_override: description.trim() || undefined,
-            tags_override: tags.length > 0 ? tags : undefined,
+            title: title.trim() || undefined,
+            description: description.trim() || undefined,
+            tags: tags.length > 0 ? tags : undefined,
             price: parseFloat(price) || 5.99,
             quantity: parseInt(quantity, 10) || 999,
           }),
@@ -332,8 +332,22 @@ export default function ShopPublishPage({
       );
 
       if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.detail || "Failed to publish GCS listing to Etsy.");
+        let errMsg = `Failed to publish GCS listing to Etsy. Status: ${res.status} ${res.statusText}`;
+        try {
+          const contentType = res.headers.get("content-type");
+          if (contentType && contentType.includes("application/json")) {
+            const errData = await res.json();
+            errMsg = errData.detail || errMsg;
+          } else {
+            const text = await res.text();
+            if (text) {
+              errMsg = text.slice(0, 150);
+            }
+          }
+        } catch {
+          // ignore parsing error and keep default
+        }
+        throw new Error(errMsg);
       }
 
       const result = await res.json();
@@ -376,8 +390,22 @@ export default function ShopPublishPage({
       );
 
       if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.detail || "Failed to upload manual listing to Etsy.");
+        let errMsg = `Failed to upload manual listing to Etsy. Status: ${res.status} ${res.statusText}`;
+        try {
+          const contentType = res.headers.get("content-type");
+          if (contentType && contentType.includes("application/json")) {
+            const errData = await res.json();
+            errMsg = errData.detail || errMsg;
+          } else {
+            const text = await res.text();
+            if (text) {
+              errMsg = text.slice(0, 150);
+            }
+          }
+        } catch {
+          // ignore parsing error and keep default
+        }
+        throw new Error(errMsg);
       }
 
       const result = await res.json();

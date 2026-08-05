@@ -109,3 +109,15 @@ This specification details the **Seller Business Intent**, **Component State Mac
   1. Profile Settings: Update full name.
   2. GCP Compute Engine GPU VM Config: Set project ID, zone, instance name, and paste service account JSON key (AES-256 encrypted).
   3. AI Provider Keys: Store Gemini 2.5 Flash and Replicate API keys (AES-256 encrypted).
+
+---
+
+## 📄 8. Etsy Shop Clipart GCS Publisher (`/shops/[slug]/publish`)
+
+- **Business Intent:** Publish listing packages directly from Google Cloud Storage folders to connected Etsy stores.
+- **Key Workflows:**
+  - Fetches existing clipart folders directly from the configured GCS bucket.
+  - Submits GCS metadata details and custom title/description/tags overrides.
+  - Aligns request keys with the backend (`title`, `description`, and `tags`) to successfully override GCS defaults.
+- **Error Handling**: Gracefully handles non-JSON plain text error responses (e.g. status 500 "Internal Server Error" returned during connection/refusal/crashes) by checking content-type header and falling back to clean text slices, preventing frontend page crashes during response parsing.
+
