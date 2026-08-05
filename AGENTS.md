@@ -21,24 +21,29 @@ Only open full source files for the specific nodes you actually need to change.
 
 ## Development Workflow — Plan Before Code
 
-Before writing or modifying any code, follow this sequence for every feature request, new module, or bug fix:
-
 1. **Analyze first.** Read the request against the existing CONTEXT.md files and `.repo-graph/graph.json` before responding. Do not start planning until you understand what already exists and what would be affected.
 
-2. **Ask before assuming.** If the request is ambiguous or has real design tradeoffs, ask targeted clarifying questions — the way a senior engineer scoping work would, not a generic checklist. Cover things like: expected scale/failure modes, backward compatibility, which existing module owns this responsibility, and whether this is a one-off or a pattern that will repeat. Skip questions whose answers are already inferable from the codebase or the request itself.
+2. **Query developer memory.** Before proposing a plan or writing code, search the local developer memory core for relevant decisions or project-specific conventions.
+   - Run `python scripts/memory_cli.py recall "<search term>"` (e.g. using class names, filenames, or keywords like `vertex ai`, `mongodb`, `metadata_worker`).
+   - Integrate any returned guidelines (such as prefixing Vertex AI model names with `google/`) directly into your proposed approach.
 
-3. **Propose a plan, not code.** Once the approach is clear, write an implementation plan and stop — do not write code yet. The plan must include:
+3. **Ask before assuming.** If the request is ambiguous or has real design tradeoffs, ask targeted clarifying questions — the way a senior engineer scoping work would, not a generic checklist. Cover things like: expected scale/failure modes, backward compatibility, which existing module owns this responsibility, and whether this is a one-off or a pattern that will repeat. Skip questions whose answers are already inferable from the codebase or the request itself.
+
+4. **Propose a plan, not code.** Once the approach is clear, write an implementation plan and stop — do not write code yet. The plan must include:
    - Problem statement (1–2 sentences)
    - Proposed approach and why (including any rejected alternatives)
    - Files/modules to be created or touched
    - Risks, edge cases, and rollback consideration
    - Ordered implementation steps
 
-4. **Wait for explicit approval.** Do not proceed to implementation until the user confirms the plan.
+5. **Wait for explicit approval.** Do not proceed to implementation until the user confirms the plan.
 
-5. **Save the plan, then implement.** On approval, save the plan as a Markdown file at `plans/YYYY-MM-DD-<short-slug>.md` (see [`plans/_template.md`](plans/_template.md)) *before* writing any code. Only then begin implementation, following the saved plan. If the approach changes mid-implementation, update the plan file to match — it should always reflect what was actually built, not just what was intended.
+6. **Save the plan, then implement.** On approval, save the plan as a Markdown file at `plans/YYYY-MM-DD-<short-slug>.md` (see [`plans/_template.md`](plans/_template.md)) *before* writing any code. Only then begin implementation, following the saved plan. If the approach changes mid-implementation, update the plan file to match — it should always reflect what was actually built, not just what was intended.
 
-6. **Git Pushes:** Committing files locally to track progress is allowed. However, **never run `git push`** to the remote repository (GitHub) automatically. Only push the code to GitHub when the user explicitly requests it in their message.
+7. **Consolidate memory.** After completing a feature or resolving a bug, capture any newly learned engineering guidelines or project conventions using the memory tool:
+   - Run `python scripts/memory_cli.py capture "<engineering fact>" --category <category>` (categories: `coding_convention`, `architecture`, `bug_fix`, `design_pattern`, `decision_log`).
+
+8. **Git Pushes:** Committing files locally to track progress is allowed. However, **never run `git push`** to the remote repository (GitHub) automatically. Only push the code to GitHub when the user explicitly requests it in their message.
 
 This applies regardless of which agent is executing — plan files are plain Markdown with no tool-specific syntax, so any agent can read past plans for context on prior decisions.
 

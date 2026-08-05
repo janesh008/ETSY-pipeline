@@ -90,6 +90,9 @@ Use these links to jump directly to any directory or file in the codebase:
 *   [**📁 Core Pipeline Package (`etsy_pipeline`)**](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline)
     *   [📄 __init__.py](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/__init__.py) — Package entry point.
     *   [**📁 config/**](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/config) — System settings and env-var validation.
+    *   [**📁 memory/**](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/memory) — Developer Memory Abstraction Layer (`service.py`, `base.py`, `tencent_provider.py`, `filter.py`).
     *   [**📁 models/**](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/models) — Shared data structures (`job.py`).
     *   [**📁 pipeline/**](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/pipeline) — Sequencer (`orchestrator.py`).
     *   [**📁 workers/**](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/workers) — Stage implementations (`prompt_worker`, `image_worker`, `bg_removal_worker`, `upscale_worker`).
+    *   [📄 doc/MEMORY_ARCHITECTURE.md](file:///d:/Janesh/ETSY/ETSY-pipeline/doc/MEMORY_ARCHITECTURE.md) — Developer Memory Abstraction technical architecture guide.
+

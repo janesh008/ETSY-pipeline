@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-08-04T19:11:00.989102+00:00",
+  "generated_at": "2026-08-05T13:16:21.813536+00:00",
   "generator": "scripts/build_graph.py",
   "static_only": true,
   "scan_roots": [
@@ -8,8 +8,8 @@
     "scripts",
     "tests"
   ],
-  "node_count": 335,
-  "edge_count": 1828,
+  "node_count": 391,
+  "edge_count": 2035,
   "nodes": [
     {
       "id": "etsy_pipeline",
@@ -65,6 +65,527 @@
       "signature": "()",
       "is_public": true,
       "is_async": false
+    },
+    {
+      "id": "etsy_pipeline.memory",
+      "kind": "module",
+      "path": "etsy_pipeline/memory/__init__.py",
+      "docstring_summary": "Developer memory package for etsy_pipeline.",
+      "children": []
+    },
+    {
+      "id": "etsy_pipeline.memory.base",
+      "kind": "module",
+      "path": "etsy_pipeline/memory/base.py",
+      "docstring_summary": "Base memory abstraction models and interface definitions.",
+      "children": [
+        "etsy_pipeline.memory.base.MemoryCategory",
+        "etsy_pipeline.memory.base.MemoryEntry",
+        "etsy_pipeline.memory.base.BaseMemoryProvider"
+      ]
+    },
+    {
+      "id": "etsy_pipeline.memory.base.BaseMemoryProvider",
+      "kind": "class",
+      "module": "etsy_pipeline.memory.base",
+      "docstring_summary": "Abstract base class for provider-agnostic memory storage implementations.",
+      "methods": [
+        "capture",
+        "recall",
+        "search",
+        "delete",
+        "health"
+      ],
+      "public_methods": [
+        "capture",
+        "recall",
+        "search",
+        "delete",
+        "health"
+      ]
+    },
+    {
+      "id": "etsy_pipeline.memory.base.BaseMemoryProvider.capture",
+      "kind": "function",
+      "module": "etsy_pipeline.memory.base",
+      "docstring_summary": "Capture and store a new memory item.",
+      "signature": "(self, content, category, tags, metadata)",
+      "is_public": true,
+      "is_async": true,
+      "class": "BaseMemoryProvider"
+    },
+    {
+      "id": "etsy_pipeline.memory.base.BaseMemoryProvider.delete",
+      "kind": "function",
+      "module": "etsy_pipeline.memory.base",
+      "docstring_summary": "Delete a memory item by its unique ID.",
+      "signature": "(self, memory_id)",
+      "is_public": true,
+      "is_async": true,
+      "class": "BaseMemoryProvider"
+    },
+    {
+      "id": "etsy_pipeline.memory.base.BaseMemoryProvider.health",
+      "kind": "function",
+      "module": "etsy_pipeline.memory.base",
+      "docstring_summary": "Check provider health and connectivity status.",
+      "signature": "(self)",
+      "is_public": true,
+      "is_async": true,
+      "class": "BaseMemoryProvider"
+    },
+    {
+      "id": "etsy_pipeline.memory.base.BaseMemoryProvider.recall",
+      "kind": "function",
+      "module": "etsy_pipeline.memory.base",
+      "docstring_summary": "Recall relevant memory items matching a search query.",
+      "signature": "(self, query, limit)",
+      "is_public": true,
+      "is_async": true,
+      "class": "BaseMemoryProvider"
+    },
+    {
+      "id": "etsy_pipeline.memory.base.BaseMemoryProvider.search",
+      "kind": "function",
+      "module": "etsy_pipeline.memory.base",
+      "docstring_summary": "Search memory items with optional category filtering.",
+      "signature": "(self, query, category, limit)",
+      "is_public": true,
+      "is_async": true,
+      "class": "BaseMemoryProvider"
+    },
+    {
+      "id": "etsy_pipeline.memory.base.MemoryCategory",
+      "kind": "class",
+      "module": "etsy_pipeline.memory.base",
+      "docstring_summary": "Categorization categories for developer memory entries.",
+      "methods": [],
+      "public_methods": []
+    },
+    {
+      "id": "etsy_pipeline.memory.base.MemoryEntry",
+      "kind": "class",
+      "module": "etsy_pipeline.memory.base",
+      "docstring_summary": "Data model representing a single memory item.",
+      "methods": [],
+      "public_methods": []
+    },
+    {
+      "id": "etsy_pipeline.memory.filter",
+      "kind": "module",
+      "path": "etsy_pipeline/memory/filter.py",
+      "docstring_summary": "High-signal memory noise filter module.",
+      "children": [
+        "etsy_pipeline.memory.filter.MemoryFilter"
+      ]
+    },
+    {
+      "id": "etsy_pipeline.memory.filter.MemoryFilter",
+      "kind": "class",
+      "module": "etsy_pipeline.memory.filter",
+      "docstring_summary": "Filters incoming text to determine whether it is high-signal enough to persist.",
+      "methods": [
+        "__init__",
+        "is_worth_remembering",
+        "extract_keywords"
+      ],
+      "public_methods": [
+        "is_worth_remembering",
+        "extract_keywords"
+      ]
+    },
+    {
+      "id": "etsy_pipeline.memory.filter.MemoryFilter.__init__",
+      "kind": "function",
+      "module": "etsy_pipeline.memory.filter",
+      "docstring_summary": "Initialize the filter settings.",
+      "signature": "(self, min_length, max_length)",
+      "is_public": false,
+      "is_async": false,
+      "class": "MemoryFilter"
+    },
+    {
+      "id": "etsy_pipeline.memory.filter.MemoryFilter.extract_keywords",
+      "kind": "function",
+      "module": "etsy_pipeline.memory.filter",
+      "docstring_summary": "Extract high-signal tags/keywords from text content.",
+      "signature": "(self, content)",
+      "is_public": true,
+      "is_async": false,
+      "class": "MemoryFilter"
+    },
+    {
+      "id": "etsy_pipeline.memory.filter.MemoryFilter.is_worth_remembering",
+      "kind": "function",
+      "module": "etsy_pipeline.memory.filter",
+      "docstring_summary": "Evaluate whether text content is worth capturing into developer memory.",
+      "signature": "(self, content)",
+      "is_public": true,
+      "is_async": false,
+      "class": "MemoryFilter"
+    },
+    {
+      "id": "etsy_pipeline.memory.service",
+      "kind": "module",
+      "path": "etsy_pipeline/memory/service.py",
+      "docstring_summary": "Main MemoryService facade and prompt context formatter module.",
+      "children": [
+        "etsy_pipeline.memory.service.MemoryService"
+      ]
+    },
+    {
+      "id": "etsy_pipeline.memory.service.MemoryService",
+      "kind": "class",
+      "module": "etsy_pipeline.memory.service",
+      "docstring_summary": "High-level facade service for developer memory operations.",
+      "methods": [
+        "__init__",
+        "_ensure_gateway_running",
+        "_get_gcp_access_token",
+        "_try_auto_start_gateway",
+        "is_enabled",
+        "capture",
+        "recall",
+        "search",
+        "delete",
+        "health",
+        "format_for_prompt"
+      ],
+      "public_methods": [
+        "is_enabled",
+        "capture",
+        "recall",
+        "search",
+        "delete",
+        "health",
+        "format_for_prompt"
+      ]
+    },
+    {
+      "id": "etsy_pipeline.memory.service.MemoryService.__init__",
+      "kind": "function",
+      "module": "etsy_pipeline.memory.service",
+      "docstring_summary": "Initialize the MemoryService.",
+      "signature": "(self, provider, settings)",
+      "is_public": false,
+      "is_async": false,
+      "class": "MemoryService"
+    },
+    {
+      "id": "etsy_pipeline.memory.service.MemoryService._ensure_gateway_running",
+      "kind": "function",
+      "module": "etsy_pipeline.memory.service",
+      "docstring_summary": "Verify if the gateway is running; attempt auto-start if offline.",
+      "signature": "(self)",
+      "is_public": false,
+      "is_async": true,
+      "class": "MemoryService"
+    },
+    {
+      "id": "etsy_pipeline.memory.service.MemoryService._get_gcp_access_token",
+      "kind": "function",
+      "module": "etsy_pipeline.memory.service",
+      "docstring_summary": "Obtain a GCP access token and the project ID using google-auth default credentials.",
+      "signature": "(self)",
+      "is_public": false,
+      "is_async": false,
+      "class": "MemoryService"
+    },
+    {
+      "id": "etsy_pipeline.memory.service.MemoryService._try_auto_start_gateway",
+      "kind": "function",
+      "module": "etsy_pipeline.memory.service",
+      "docstring_summary": "Spawn the MemoryCore Gateway Node.js process in the background.",
+      "signature": "(self)",
+      "is_public": false,
+      "is_async": false,
+      "class": "MemoryService"
+    },
+    {
+      "id": "etsy_pipeline.memory.service.MemoryService.capture",
+      "kind": "function",
+      "module": "etsy_pipeline.memory.service",
+      "docstring_summary": "Filter and capture a developer memory item.",
+      "signature": "(self, content, category, tags, metadata, bypass_filter)",
+      "is_public": true,
+      "is_async": true,
+      "class": "MemoryService"
+    },
+    {
+      "id": "etsy_pipeline.memory.service.MemoryService.delete",
+      "kind": "function",
+      "module": "etsy_pipeline.memory.service",
+      "docstring_summary": "Delete a memory item by ID.",
+      "signature": "(self, memory_id)",
+      "is_public": true,
+      "is_async": true,
+      "class": "MemoryService"
+    },
+    {
+      "id": "etsy_pipeline.memory.service.MemoryService.format_for_prompt",
+      "kind": "function",
+      "module": "etsy_pipeline.memory.service",
+      "docstring_summary": "Format retrieved memories into a clean Markdown block for LLM prompt insertion.",
+      "signature": "(memories)",
+      "is_public": true,
+      "is_async": false,
+      "class": "MemoryService"
+    },
+    {
+      "id": "etsy_pipeline.memory.service.MemoryService.health",
+      "kind": "function",
+      "module": "etsy_pipeline.memory.service",
+      "docstring_summary": "Check status of memory provider backend.",
+      "signature": "(self)",
+      "is_public": true,
+      "is_async": true,
+      "class": "MemoryService"
+    },
+    {
+      "id": "etsy_pipeline.memory.service.MemoryService.is_enabled",
+      "kind": "function",
+      "module": "etsy_pipeline.memory.service",
+      "docstring_summary": "Return True if memory feature is enabled in settings.",
+      "signature": "(self)",
+      "is_public": true,
+      "is_async": false,
+      "class": "MemoryService"
+    },
+    {
+      "id": "etsy_pipeline.memory.service.MemoryService.recall",
+      "kind": "function",
+      "module": "etsy_pipeline.memory.service",
+      "docstring_summary": "Recall relevant developer memory items for a query context string.",
+      "signature": "(self, query, limit)",
+      "is_public": true,
+      "is_async": true,
+      "class": "MemoryService"
+    },
+    {
+      "id": "etsy_pipeline.memory.service.MemoryService.search",
+      "kind": "function",
+      "module": "etsy_pipeline.memory.service",
+      "docstring_summary": "Search developer memories with optional category filter.",
+      "signature": "(self, query, category, limit)",
+      "is_public": true,
+      "is_async": true,
+      "class": "MemoryService"
+    },
+    {
+      "id": "etsy_pipeline.memory.tencent_provider",
+      "kind": "module",
+      "path": "etsy_pipeline/memory/tencent_provider.py",
+      "docstring_summary": "TencentDB MemoryCore HTTP provider implementation and Mock provider for testing.",
+      "children": [
+        "etsy_pipeline.memory.tencent_provider.TencentDBMemoryProvider",
+        "etsy_pipeline.memory.tencent_provider.MockMemoryProvider"
+      ]
+    },
+    {
+      "id": "etsy_pipeline.memory.tencent_provider.MockMemoryProvider",
+      "kind": "class",
+      "module": "etsy_pipeline.memory.tencent_provider",
+      "docstring_summary": "In-memory mock provider for testing and offline development.",
+      "methods": [
+        "__init__",
+        "capture",
+        "recall",
+        "search",
+        "delete",
+        "health"
+      ],
+      "public_methods": [
+        "capture",
+        "recall",
+        "search",
+        "delete",
+        "health"
+      ]
+    },
+    {
+      "id": "etsy_pipeline.memory.tencent_provider.MockMemoryProvider.__init__",
+      "kind": "function",
+      "module": "etsy_pipeline.memory.tencent_provider",
+      "docstring_summary": "Initialize mock storage dictionary.",
+      "signature": "(self)",
+      "is_public": false,
+      "is_async": false,
+      "class": "MockMemoryProvider"
+    },
+    {
+      "id": "etsy_pipeline.memory.tencent_provider.MockMemoryProvider.capture",
+      "kind": "function",
+      "module": "etsy_pipeline.memory.tencent_provider",
+      "docstring_summary": "Store memory in local dict.",
+      "signature": "(self, content, category, tags, metadata)",
+      "is_public": true,
+      "is_async": true,
+      "class": "MockMemoryProvider"
+    },
+    {
+      "id": "etsy_pipeline.memory.tencent_provider.MockMemoryProvider.delete",
+      "kind": "function",
+      "module": "etsy_pipeline.memory.tencent_provider",
+      "docstring_summary": "Delete item from mock dict.",
+      "signature": "(self, memory_id)",
+      "is_public": true,
+      "is_async": true,
+      "class": "MockMemoryProvider"
+    },
+    {
+      "id": "etsy_pipeline.memory.tencent_provider.MockMemoryProvider.health",
+      "kind": "function",
+      "module": "etsy_pipeline.memory.tencent_provider",
+      "docstring_summary": "Return healthy status for mock provider.",
+      "signature": "(self)",
+      "is_public": true,
+      "is_async": true,
+      "class": "MockMemoryProvider"
+    },
+    {
+      "id": "etsy_pipeline.memory.tencent_provider.MockMemoryProvider.recall",
+      "kind": "function",
+      "module": "etsy_pipeline.memory.tencent_provider",
+      "docstring_summary": "Return items containing query keywords.",
+      "signature": "(self, query, limit)",
+      "is_public": true,
+      "is_async": true,
+      "class": "MockMemoryProvider"
+    },
+    {
+      "id": "etsy_pipeline.memory.tencent_provider.MockMemoryProvider.search",
+      "kind": "function",
+      "module": "etsy_pipeline.memory.tencent_provider",
+      "docstring_summary": "Search mock memories with category filter.",
+      "signature": "(self, query, category, limit)",
+      "is_public": true,
+      "is_async": true,
+      "class": "MockMemoryProvider"
+    },
+    {
+      "id": "etsy_pipeline.memory.tencent_provider.TencentDBMemoryProvider",
+      "kind": "class",
+      "module": "etsy_pipeline.memory.tencent_provider",
+      "docstring_summary": "Concrete MemoryProvider communicating with TencentDB MemoryCore Gateway over HTTP.",
+      "methods": [
+        "__init__",
+        "_is_in_cooldown",
+        "_record_failure",
+        "_record_success",
+        "_get_headers",
+        "capture",
+        "recall",
+        "search",
+        "delete",
+        "health"
+      ],
+      "public_methods": [
+        "capture",
+        "recall",
+        "search",
+        "delete",
+        "health"
+      ]
+    },
+    {
+      "id": "etsy_pipeline.memory.tencent_provider.TencentDBMemoryProvider.__init__",
+      "kind": "function",
+      "module": "etsy_pipeline.memory.tencent_provider",
+      "docstring_summary": "Initialize the HTTP provider.",
+      "signature": "(self, gateway_url, api_key, namespace, timeout_sec, cooldown_sec)",
+      "is_public": false,
+      "is_async": false,
+      "class": "TencentDBMemoryProvider"
+    },
+    {
+      "id": "etsy_pipeline.memory.tencent_provider.TencentDBMemoryProvider._get_headers",
+      "kind": "function",
+      "module": "etsy_pipeline.memory.tencent_provider",
+      "docstring_summary": "Construct HTTP headers for MemoryCore v3 requests.",
+      "signature": "(self)",
+      "is_public": false,
+      "is_async": false,
+      "class": "TencentDBMemoryProvider"
+    },
+    {
+      "id": "etsy_pipeline.memory.tencent_provider.TencentDBMemoryProvider._is_in_cooldown",
+      "kind": "function",
+      "module": "etsy_pipeline.memory.tencent_provider",
+      "docstring_summary": "Check if circuit breaker is currently in cooldown state.",
+      "signature": "(self)",
+      "is_public": false,
+      "is_async": false,
+      "class": "TencentDBMemoryProvider"
+    },
+    {
+      "id": "etsy_pipeline.memory.tencent_provider.TencentDBMemoryProvider._record_failure",
+      "kind": "function",
+      "module": "etsy_pipeline.memory.tencent_provider",
+      "docstring_summary": "Record a network or service failure.",
+      "signature": "(self)",
+      "is_public": false,
+      "is_async": false,
+      "class": "TencentDBMemoryProvider"
+    },
+    {
+      "id": "etsy_pipeline.memory.tencent_provider.TencentDBMemoryProvider._record_success",
+      "kind": "function",
+      "module": "etsy_pipeline.memory.tencent_provider",
+      "docstring_summary": "Record a successful response and reset circuit breaker.",
+      "signature": "(self)",
+      "is_public": false,
+      "is_async": false,
+      "class": "TencentDBMemoryProvider"
+    },
+    {
+      "id": "etsy_pipeline.memory.tencent_provider.TencentDBMemoryProvider.capture",
+      "kind": "function",
+      "module": "etsy_pipeline.memory.tencent_provider",
+      "docstring_summary": "Capture a memory item via MemoryCore API.",
+      "signature": "(self, content, category, tags, metadata)",
+      "is_public": true,
+      "is_async": true,
+      "class": "TencentDBMemoryProvider"
+    },
+    {
+      "id": "etsy_pipeline.memory.tencent_provider.TencentDBMemoryProvider.delete",
+      "kind": "function",
+      "module": "etsy_pipeline.memory.tencent_provider",
+      "docstring_summary": "Delete a memory item by ID.",
+      "signature": "(self, memory_id)",
+      "is_public": true,
+      "is_async": true,
+      "class": "TencentDBMemoryProvider"
+    },
+    {
+      "id": "etsy_pipeline.memory.tencent_provider.TencentDBMemoryProvider.health",
+      "kind": "function",
+      "module": "etsy_pipeline.memory.tencent_provider",
+      "docstring_summary": "Check status of MemoryCore Gateway.",
+      "signature": "(self)",
+      "is_public": true,
+      "is_async": true,
+      "class": "TencentDBMemoryProvider"
+    },
+    {
+      "id": "etsy_pipeline.memory.tencent_provider.TencentDBMemoryProvider.recall",
+      "kind": "function",
+      "module": "etsy_pipeline.memory.tencent_provider",
+      "docstring_summary": "Recall top-K relevant memories matching a query.",
+      "signature": "(self, query, limit)",
+      "is_public": true,
+      "is_async": true,
+      "class": "TencentDBMemoryProvider"
+    },
+    {
+      "id": "etsy_pipeline.memory.tencent_provider.TencentDBMemoryProvider.search",
+      "kind": "function",
+      "module": "etsy_pipeline.memory.tencent_provider",
+      "docstring_summary": "Search stored memories by query with optional category filtering.",
+      "signature": "(self, query, category, limit)",
+      "is_public": true,
+      "is_async": true,
+      "class": "TencentDBMemoryProvider"
     },
     {
       "id": "etsy_pipeline.models",
@@ -2643,6 +3164,34 @@
       "is_async": true
     },
     {
+      "id": "scripts.memory_cli",
+      "kind": "module",
+      "path": "scripts/memory_cli.py",
+      "docstring_summary": "CLI helper script for developer memory management operations.",
+      "children": [
+        "scripts.memory_cli._run_cli",
+        "scripts.memory_cli.main"
+      ]
+    },
+    {
+      "id": "scripts.memory_cli._run_cli",
+      "kind": "function",
+      "module": "scripts.memory_cli",
+      "docstring_summary": "",
+      "signature": "()",
+      "is_public": false,
+      "is_async": true
+    },
+    {
+      "id": "scripts.memory_cli.main",
+      "kind": "function",
+      "module": "scripts.memory_cli",
+      "docstring_summary": "Main entry point.",
+      "signature": "()",
+      "is_public": true,
+      "is_async": false
+    },
+    {
       "id": "scripts.migrate_etsy_shops_slug",
       "kind": "module",
       "path": "scripts/migrate_etsy_shops_slug.py",
@@ -3044,6 +3593,64 @@
       "signature": "()",
       "is_public": true,
       "is_async": false
+    },
+    {
+      "id": "tests.test_memory_abstraction",
+      "kind": "module",
+      "path": "tests/test_memory_abstraction.py",
+      "docstring_summary": "Unit tests for the Developer Memory Abstraction Layer.",
+      "children": [
+        "tests.test_memory_abstraction.test_mock_memory_provider_operations",
+        "tests.test_memory_abstraction.test_memory_filter_noise_rejection",
+        "tests.test_memory_abstraction.test_memory_service_facade_format_for_prompt",
+        "tests.test_memory_abstraction.test_memory_service_disabled_by_default",
+        "tests.test_memory_abstraction.test_tencent_provider_circuit_cooldown"
+      ]
+    },
+    {
+      "id": "tests.test_memory_abstraction.test_memory_filter_noise_rejection",
+      "kind": "function",
+      "module": "tests.test_memory_abstraction",
+      "docstring_summary": "Verify MemoryFilter rejects low-value noise and stack traces.",
+      "signature": "()",
+      "is_public": true,
+      "is_async": false
+    },
+    {
+      "id": "tests.test_memory_abstraction.test_memory_service_disabled_by_default",
+      "kind": "function",
+      "module": "tests.test_memory_abstraction",
+      "docstring_summary": "Verify MemoryService returns empty lists gracefully when disabled.",
+      "signature": "()",
+      "is_public": true,
+      "is_async": true
+    },
+    {
+      "id": "tests.test_memory_abstraction.test_memory_service_facade_format_for_prompt",
+      "kind": "function",
+      "module": "tests.test_memory_abstraction",
+      "docstring_summary": "Verify MemoryService format_for_prompt produces clean Markdown output.",
+      "signature": "()",
+      "is_public": true,
+      "is_async": true
+    },
+    {
+      "id": "tests.test_memory_abstraction.test_mock_memory_provider_operations",
+      "kind": "function",
+      "module": "tests.test_memory_abstraction",
+      "docstring_summary": "Verify capture, recall, search, and delete operations on MockMemoryProvider.",
+      "signature": "()",
+      "is_public": true,
+      "is_async": true
+    },
+    {
+      "id": "tests.test_memory_abstraction.test_tencent_provider_circuit_cooldown",
+      "kind": "function",
+      "module": "tests.test_memory_abstraction",
+      "docstring_summary": "Verify TencentDBMemoryProvider circuit breaker enters cooldown on failure.",
+      "signature": "()",
+      "is_public": true,
+      "is_async": true
     },
     {
       "id": "tests.test_metadata_prompt_format",
@@ -3550,6 +4157,1045 @@
     {
       "from": "etsy_pipeline.config.settings.get_settings",
       "to": "lru_cache",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory",
+      "to": "__future__.annotations",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.memory",
+      "to": "etsy_pipeline.memory.base.BaseMemoryProvider",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.memory",
+      "to": "etsy_pipeline.memory.base.MemoryCategory",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.memory",
+      "to": "etsy_pipeline.memory.base.MemoryEntry",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.memory",
+      "to": "etsy_pipeline.memory.service.MemoryService",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.memory.base",
+      "to": "__future__.annotations",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.memory.base",
+      "to": "abc.ABC",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.memory.base",
+      "to": "abc.abstractmethod",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.memory.base",
+      "to": "enum.StrEnum",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.memory.base",
+      "to": "pydantic.BaseModel",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.memory.base",
+      "to": "pydantic.Field",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.memory.base",
+      "to": "typing.Any",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.memory.filter",
+      "to": "__future__.annotations",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.memory.filter",
+      "to": "etsy_pipeline.utils.logging.get_logger",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.memory.filter",
+      "to": "re",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.memory.filter.MemoryFilter.extract_keywords",
+      "to": "findall",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.filter.MemoryFilter.extract_keywords",
+      "to": "intersection",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.filter.MemoryFilter.extract_keywords",
+      "to": "list",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.filter.MemoryFilter.extract_keywords",
+      "to": "lower",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.filter.MemoryFilter.extract_keywords",
+      "to": "set",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.filter.MemoryFilter.extract_keywords",
+      "to": "sorted",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.filter.MemoryFilter.is_worth_remembering",
+      "to": "debug",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.filter.MemoryFilter.is_worth_remembering",
+      "to": "isinstance",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.filter.MemoryFilter.is_worth_remembering",
+      "to": "len",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.filter.MemoryFilter.is_worth_remembering",
+      "to": "search",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.filter.MemoryFilter.is_worth_remembering",
+      "to": "strip",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service",
+      "to": "__future__.annotations",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.memory.service",
+      "to": "asyncio",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.memory.service",
+      "to": "etsy_pipeline.config.settings.Settings",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.memory.service",
+      "to": "etsy_pipeline.config.settings.get_settings",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.memory.service",
+      "to": "etsy_pipeline.memory.base.BaseMemoryProvider",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.memory.service",
+      "to": "etsy_pipeline.memory.base.MemoryCategory",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.memory.service",
+      "to": "etsy_pipeline.memory.base.MemoryEntry",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.memory.service",
+      "to": "etsy_pipeline.memory.filter.MemoryFilter",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.memory.service",
+      "to": "etsy_pipeline.memory.tencent_provider.MockMemoryProvider",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.memory.service",
+      "to": "etsy_pipeline.memory.tencent_provider.TencentDBMemoryProvider",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.memory.service",
+      "to": "etsy_pipeline.utils.logging.get_logger",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.memory.service",
+      "to": "os",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.memory.service",
+      "to": "pathlib.Path",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.memory.service",
+      "to": "subprocess",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.memory.service",
+      "to": "sys",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.memory.service",
+      "to": "typing.Any",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.memory.service",
+      "to": "urllib.parse",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService.__init__",
+      "to": "MemoryFilter",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService.__init__",
+      "to": "MockMemoryProvider",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService.__init__",
+      "to": "TencentDBMemoryProvider",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService.__init__",
+      "to": "get_settings",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService.__init__",
+      "to": "info",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService.__init__",
+      "to": "lower",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService._ensure_gateway_running",
+      "to": "_try_auto_start_gateway",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService._ensure_gateway_running",
+      "to": "get",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService._ensure_gateway_running",
+      "to": "health",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService._ensure_gateway_running",
+      "to": "info",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService._ensure_gateway_running",
+      "to": "lower",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService._ensure_gateway_running",
+      "to": "range",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService._ensure_gateway_running",
+      "to": "sleep",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService._ensure_gateway_running",
+      "to": "warning",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService._get_gcp_access_token",
+      "to": "Request",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService._get_gcp_access_token",
+      "to": "default",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService._get_gcp_access_token",
+      "to": "refresh",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService._get_gcp_access_token",
+      "to": "warning",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService._try_auto_start_gateway",
+      "to": "Path",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService._try_auto_start_gateway",
+      "to": "Popen",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService._try_auto_start_gateway",
+      "to": "_get_gcp_access_token",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService._try_auto_start_gateway",
+      "to": "copy",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService._try_auto_start_gateway",
+      "to": "error",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService._try_auto_start_gateway",
+      "to": "exists",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService._try_auto_start_gateway",
+      "to": "info",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService._try_auto_start_gateway",
+      "to": "run",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService._try_auto_start_gateway",
+      "to": "str",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService._try_auto_start_gateway",
+      "to": "urlparse",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService._try_auto_start_gateway",
+      "to": "warning",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService.capture",
+      "to": "_ensure_gateway_running",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService.capture",
+      "to": "capture",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService.capture",
+      "to": "debug",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService.capture",
+      "to": "extract_keywords",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService.capture",
+      "to": "is_worth_remembering",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService.capture",
+      "to": "list",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService.capture",
+      "to": "set",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService.delete",
+      "to": "delete",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService.delete",
+      "to": "warning",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService.format_for_prompt",
+      "to": "append",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService.format_for_prompt",
+      "to": "enumerate",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService.format_for_prompt",
+      "to": "join",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService.format_for_prompt",
+      "to": "strip",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService.format_for_prompt",
+      "to": "upper",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService.health",
+      "to": "_ensure_gateway_running",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService.health",
+      "to": "health",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService.health",
+      "to": "str",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService.recall",
+      "to": "_ensure_gateway_running",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService.recall",
+      "to": "recall",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService.recall",
+      "to": "warning",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService.search",
+      "to": "_ensure_gateway_running",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService.search",
+      "to": "search",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService.search",
+      "to": "warning",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.tencent_provider",
+      "to": "__future__.annotations",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.memory.tencent_provider",
+      "to": "etsy_pipeline.memory.base.BaseMemoryProvider",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.memory.tencent_provider",
+      "to": "etsy_pipeline.memory.base.MemoryCategory",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.memory.tencent_provider",
+      "to": "etsy_pipeline.memory.base.MemoryEntry",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.memory.tencent_provider",
+      "to": "etsy_pipeline.utils.logging.get_logger",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.memory.tencent_provider",
+      "to": "time",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.memory.tencent_provider",
+      "to": "typing.Any",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "etsy_pipeline.memory.tencent_provider.MockMemoryProvider.capture",
+      "to": "MemoryEntry",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.tencent_provider.MockMemoryProvider.delete",
+      "to": "pop",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.tencent_provider.MockMemoryProvider.health",
+      "to": "len",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.tencent_provider.MockMemoryProvider.recall",
+      "to": "any",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.tencent_provider.MockMemoryProvider.recall",
+      "to": "append",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.tencent_provider.MockMemoryProvider.recall",
+      "to": "lower",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.tencent_provider.MockMemoryProvider.recall",
+      "to": "values",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.tencent_provider.MockMemoryProvider.search",
+      "to": "recall",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.tencent_provider.TencentDBMemoryProvider.__init__",
+      "to": "rstrip",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.tencent_provider.TencentDBMemoryProvider._is_in_cooldown",
+      "to": "time",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.tencent_provider.TencentDBMemoryProvider._record_failure",
+      "to": "time",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.tencent_provider.TencentDBMemoryProvider._record_failure",
+      "to": "warning",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.tencent_provider.TencentDBMemoryProvider.capture",
+      "to": "AsyncClient",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.tencent_provider.TencentDBMemoryProvider.capture",
+      "to": "_get_headers",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.tencent_provider.TencentDBMemoryProvider.capture",
+      "to": "_is_in_cooldown",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.tencent_provider.TencentDBMemoryProvider.capture",
+      "to": "_record_failure",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.tencent_provider.TencentDBMemoryProvider.capture",
+      "to": "_record_success",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.tencent_provider.TencentDBMemoryProvider.capture",
+      "to": "debug",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.tencent_provider.TencentDBMemoryProvider.capture",
+      "to": "info",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.tencent_provider.TencentDBMemoryProvider.capture",
+      "to": "post",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.tencent_provider.TencentDBMemoryProvider.capture",
+      "to": "str",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.tencent_provider.TencentDBMemoryProvider.capture",
+      "to": "warning",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.tencent_provider.TencentDBMemoryProvider.delete",
+      "to": "AsyncClient",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.tencent_provider.TencentDBMemoryProvider.delete",
+      "to": "_get_headers",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.tencent_provider.TencentDBMemoryProvider.delete",
+      "to": "_is_in_cooldown",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.tencent_provider.TencentDBMemoryProvider.delete",
+      "to": "_record_failure",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.tencent_provider.TencentDBMemoryProvider.delete",
+      "to": "_record_success",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.tencent_provider.TencentDBMemoryProvider.delete",
+      "to": "delete",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.tencent_provider.TencentDBMemoryProvider.delete",
+      "to": "warning",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.tencent_provider.TencentDBMemoryProvider.health",
+      "to": "AsyncClient",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.tencent_provider.TencentDBMemoryProvider.health",
+      "to": "_record_success",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.tencent_provider.TencentDBMemoryProvider.health",
+      "to": "debug",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.tencent_provider.TencentDBMemoryProvider.health",
+      "to": "get",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.tencent_provider.TencentDBMemoryProvider.recall",
+      "to": "AsyncClient",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.tencent_provider.TencentDBMemoryProvider.recall",
+      "to": "MemoryCategory",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.tencent_provider.TencentDBMemoryProvider.recall",
+      "to": "MemoryEntry",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.tencent_provider.TencentDBMemoryProvider.recall",
+      "to": "_get_headers",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.tencent_provider.TencentDBMemoryProvider.recall",
+      "to": "_is_in_cooldown",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.tencent_provider.TencentDBMemoryProvider.recall",
+      "to": "_record_failure",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.tencent_provider.TencentDBMemoryProvider.recall",
+      "to": "_record_success",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.tencent_provider.TencentDBMemoryProvider.recall",
+      "to": "append",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.tencent_provider.TencentDBMemoryProvider.recall",
+      "to": "debug",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.tencent_provider.TencentDBMemoryProvider.recall",
+      "to": "float",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.tencent_provider.TencentDBMemoryProvider.recall",
+      "to": "get",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.tencent_provider.TencentDBMemoryProvider.recall",
+      "to": "info",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.tencent_provider.TencentDBMemoryProvider.recall",
+      "to": "isinstance",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.tencent_provider.TencentDBMemoryProvider.recall",
+      "to": "json",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.tencent_provider.TencentDBMemoryProvider.recall",
+      "to": "len",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.tencent_provider.TencentDBMemoryProvider.recall",
+      "to": "post",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.tencent_provider.TencentDBMemoryProvider.recall",
+      "to": "str",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.tencent_provider.TencentDBMemoryProvider.recall",
+      "to": "warning",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.tencent_provider.TencentDBMemoryProvider.search",
+      "to": "recall",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
@@ -12806,6 +14452,173 @@
       "note": "name-only; may not resolve to correct module without runtime context"
     },
     {
+      "from": "scripts.memory_cli",
+      "to": "__future__.annotations",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "scripts.memory_cli",
+      "to": "argparse",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "scripts.memory_cli",
+      "to": "asyncio",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "scripts.memory_cli",
+      "to": "etsy_pipeline.config.settings.get_settings",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "scripts.memory_cli",
+      "to": "etsy_pipeline.memory.base.MemoryCategory",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "scripts.memory_cli",
+      "to": "etsy_pipeline.memory.service.MemoryService",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "scripts.memory_cli",
+      "to": "pathlib.Path",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "scripts.memory_cli",
+      "to": "sys",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "scripts.memory_cli._run_cli",
+      "to": "ArgumentParser",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.memory_cli._run_cli",
+      "to": "MemoryCategory",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.memory_cli._run_cli",
+      "to": "MemoryService",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.memory_cli._run_cli",
+      "to": "add_argument",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.memory_cli._run_cli",
+      "to": "add_parser",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.memory_cli._run_cli",
+      "to": "add_subparsers",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.memory_cli._run_cli",
+      "to": "capture",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.memory_cli._run_cli",
+      "to": "format_for_prompt",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.memory_cli._run_cli",
+      "to": "get_settings",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.memory_cli._run_cli",
+      "to": "health",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.memory_cli._run_cli",
+      "to": "items",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.memory_cli._run_cli",
+      "to": "len",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.memory_cli._run_cli",
+      "to": "parse_args",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.memory_cli._run_cli",
+      "to": "print",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.memory_cli._run_cli",
+      "to": "recall",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.memory_cli.main",
+      "to": "_run_cli",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "scripts.memory_cli.main",
+      "to": "run",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
       "from": "scripts.migrate_etsy_shops_slug",
       "to": "__future__.annotations",
       "kind": "import",
@@ -15350,6 +17163,193 @@
     {
       "from": "tests.test_etsy_worker.test_get_api_key_header_without_secret",
       "to": "_get_api_key_header",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_memory_abstraction",
+      "to": "__future__.annotations",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "tests.test_memory_abstraction",
+      "to": "etsy_pipeline.config.settings.Settings",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "tests.test_memory_abstraction",
+      "to": "etsy_pipeline.memory.base.MemoryCategory",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "tests.test_memory_abstraction",
+      "to": "etsy_pipeline.memory.base.MemoryEntry",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "tests.test_memory_abstraction",
+      "to": "etsy_pipeline.memory.filter.MemoryFilter",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "tests.test_memory_abstraction",
+      "to": "etsy_pipeline.memory.service.MemoryService",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "tests.test_memory_abstraction",
+      "to": "etsy_pipeline.memory.tencent_provider.MockMemoryProvider",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "tests.test_memory_abstraction",
+      "to": "etsy_pipeline.memory.tencent_provider.TencentDBMemoryProvider",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "tests.test_memory_abstraction",
+      "to": "pytest",
+      "kind": "import",
+      "static_only": true
+    },
+    {
+      "from": "tests.test_memory_abstraction.test_memory_filter_noise_rejection",
+      "to": "MemoryFilter",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_memory_abstraction.test_memory_filter_noise_rejection",
+      "to": "is_worth_remembering",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_memory_abstraction.test_memory_service_disabled_by_default",
+      "to": "MemoryService",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_memory_abstraction.test_memory_service_disabled_by_default",
+      "to": "Settings",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_memory_abstraction.test_memory_service_disabled_by_default",
+      "to": "capture",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_memory_abstraction.test_memory_service_disabled_by_default",
+      "to": "recall",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_memory_abstraction.test_memory_service_facade_format_for_prompt",
+      "to": "MemoryEntry",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_memory_abstraction.test_memory_service_facade_format_for_prompt",
+      "to": "format_for_prompt",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_memory_abstraction.test_mock_memory_provider_operations",
+      "to": "MockMemoryProvider",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_memory_abstraction.test_mock_memory_provider_operations",
+      "to": "capture",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_memory_abstraction.test_mock_memory_provider_operations",
+      "to": "delete",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_memory_abstraction.test_mock_memory_provider_operations",
+      "to": "health",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_memory_abstraction.test_mock_memory_provider_operations",
+      "to": "len",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_memory_abstraction.test_mock_memory_provider_operations",
+      "to": "recall",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_memory_abstraction.test_mock_memory_provider_operations",
+      "to": "search",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_memory_abstraction.test_tencent_provider_circuit_cooldown",
+      "to": "TencentDBMemoryProvider",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_memory_abstraction.test_tencent_provider_circuit_cooldown",
+      "to": "_is_in_cooldown",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_memory_abstraction.test_tencent_provider_circuit_cooldown",
+      "to": "range",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "tests.test_memory_abstraction.test_tencent_provider_circuit_cooldown",
+      "to": "recall",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"

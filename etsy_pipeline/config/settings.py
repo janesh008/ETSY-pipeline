@@ -148,6 +148,36 @@ class Settings(BaseSettings):
         description="Maximum output tokens for Gemini response",
     )
 
+    # --- Developer Memory Settings (MemoryCore Integration) ---
+    memory_enabled: bool = Field(
+        default=False,
+        description="Feature flag for developer memory abstraction layer",
+    )
+    memory_provider: str = Field(
+        default="tencentdb",
+        description="Memory backend provider ('tencentdb', 'mock')",
+    )
+    memory_gateway_url: str = Field(
+        default="http://127.0.0.1:8420",
+        description="Base URL of the MemoryCore Gateway container/server",
+    )
+    memory_api_key: str = Field(
+        default="",
+        description="Optional Bearer token for MemoryCore Gateway",
+    )
+    memory_namespace_dev: str = Field(
+        default="craftdesk-dev",
+        description="MemoryCore service-id namespace for developer memory",
+    )
+    memory_timeout_sec: float = Field(
+        default=1.5,
+        description="HTTP timeout in seconds for memory API calls",
+    )
+    memory_server_dir: str = Field(
+        default=str(_PROJECT_ROOT / "TencentDB-Agent-Memory"),
+        description="Directory path where TencentDB-Agent-Memory repo is cloned",
+    )
+
     @property
     def project_root(self) -> Path:
         """Return the resolved project root path."""

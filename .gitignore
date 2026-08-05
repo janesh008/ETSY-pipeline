@@ -48,6 +48,7 @@ output/
 
 # Sibling repositories — ignored so this repo is only for etsy_pipeline
 /ETSY_main_colab/
+/TencentDB-Agent-Memory/
 
 # Credentials / Keys — NEVER commit these
 *.json

@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  memory-core:
+    build: https://github.com/TencentCloud/TencentDB-Agent-Memory.git#main:MemoryCore
+    container_name: craftdesk-memory-core
+    ports:
+      - "8420:8420"
+    environment:
+      - TDAI_GATEWAY_HOST=0.0.0.0
+      - TDAI_GATEWAY_PORT=8420
+      - TDAI_GATEWAY_API_KEY=${MEMORY_API_KEY:-}
+      - TDAI_LLM_API_KEY=${TDAI_LLM_API_KEY:-}
+      - TDAI_DATA_DIR=/data/tdai-memory
+    volumes:
+      - memory_data:/data/tdai-memory
+    restart: unless-stopped
+
+volumes:
+  memory_data:
