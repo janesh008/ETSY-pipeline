@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-08-05T13:16:21.813536+00:00",
+  "generated_at": "2026-08-05T15:13:44.637998+00:00",
   "generator": "scripts/build_graph.py",
   "static_only": true,
   "scan_roots": [
@@ -9,7 +9,7 @@
     "tests"
   ],
   "node_count": 391,
-  "edge_count": 2035,
+  "edge_count": 2049,
   "nodes": [
     {
       "id": "etsy_pipeline",
@@ -285,7 +285,7 @@
       "id": "etsy_pipeline.memory.service.MemoryService._get_gcp_access_token",
       "kind": "function",
       "module": "etsy_pipeline.memory.service",
-      "docstring_summary": "Obtain a GCP access token and the project ID using google-auth default credentials.",
+      "docstring_summary": "Obtain a GCP access token and the project ID using google-auth default credentials with local cache.",
       "signature": "(self)",
       "is_public": false,
       "is_async": false,
@@ -501,7 +501,7 @@
       "id": "etsy_pipeline.memory.tencent_provider.TencentDBMemoryProvider._get_headers",
       "kind": "function",
       "module": "etsy_pipeline.memory.tencent_provider",
-      "docstring_summary": "Construct HTTP headers for MemoryCore v3 requests.",
+      "docstring_summary": "Construct HTTP headers for MemoryCore requests.",
       "signature": "(self)",
       "is_public": false,
       "is_async": false,
@@ -4481,6 +4481,13 @@
     },
     {
       "from": "etsy_pipeline.memory.service.MemoryService._ensure_gateway_running",
+      "to": "check_output",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService._ensure_gateway_running",
       "to": "get",
       "kind": "call",
       "static_only": true,
@@ -4523,7 +4530,21 @@
     },
     {
       "from": "etsy_pipeline.memory.service.MemoryService._ensure_gateway_running",
+      "to": "strip",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService._ensure_gateway_running",
       "to": "warning",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService._get_gcp_access_token",
+      "to": "Path",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
@@ -4544,7 +4565,63 @@
     },
     {
       "from": "etsy_pipeline.memory.service.MemoryService._get_gcp_access_token",
+      "to": "dump",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService._get_gcp_access_token",
+      "to": "exists",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService._get_gcp_access_token",
+      "to": "get",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService._get_gcp_access_token",
+      "to": "info",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService._get_gcp_access_token",
+      "to": "load",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService._get_gcp_access_token",
+      "to": "mkdir",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService._get_gcp_access_token",
+      "to": "open",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService._get_gcp_access_token",
       "to": "refresh",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService._get_gcp_access_token",
+      "to": "time",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
@@ -4579,6 +4656,13 @@
     },
     {
       "from": "etsy_pipeline.memory.service.MemoryService._try_auto_start_gateway",
+      "to": "close",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService._try_auto_start_gateway",
       "to": "copy",
       "kind": "call",
       "static_only": true,
@@ -4607,7 +4691,21 @@
     },
     {
       "from": "etsy_pipeline.memory.service.MemoryService._try_auto_start_gateway",
+      "to": "open",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService._try_auto_start_gateway",
       "to": "run",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.service.MemoryService._try_auto_start_gateway",
+      "to": "startswith",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
@@ -4978,13 +5076,6 @@
     },
     {
       "from": "etsy_pipeline.memory.tencent_provider.TencentDBMemoryProvider.capture",
-      "to": "str",
-      "kind": "call",
-      "static_only": true,
-      "note": "name-only; may not resolve to correct module without runtime context"
-    },
-    {
-      "from": "etsy_pipeline.memory.tencent_provider.TencentDBMemoryProvider.capture",
       "to": "warning",
       "kind": "call",
       "static_only": true,
@@ -5027,7 +5118,7 @@
     },
     {
       "from": "etsy_pipeline.memory.tencent_provider.TencentDBMemoryProvider.delete",
-      "to": "delete",
+      "to": "post",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
@@ -5126,6 +5217,13 @@
     {
       "from": "etsy_pipeline.memory.tencent_provider.TencentDBMemoryProvider.recall",
       "to": "debug",
+      "kind": "call",
+      "static_only": true,
+      "note": "name-only; may not resolve to correct module without runtime context"
+    },
+    {
+      "from": "etsy_pipeline.memory.tencent_provider.TencentDBMemoryProvider.recall",
+      "to": "exception",
       "kind": "call",
       "static_only": true,
       "note": "name-only; may not resolve to correct module without runtime context"
