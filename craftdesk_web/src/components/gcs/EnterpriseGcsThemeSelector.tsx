@@ -36,7 +36,11 @@ interface EnterpriseGcsThemeSelectorProps {
   onSelectionChange: (selectedPrefixes: string[]) => void;
   isLoading?: boolean;
   onBatchPublish?: (selectedFolders: GcsFolderItem[]) => void;
-  onBatchRunPipeline?: (selectedFolders: GcsFolderItem[]) => void;
+  onBatchRunPipeline?: (
+    selectedFolders: GcsFolderItem[],
+    pipelineProfile?: string,
+    selectedShops?: string[]
+  ) => void;
 }
 
 export function EnterpriseGcsThemeSelector({
@@ -50,6 +54,12 @@ export function EnterpriseGcsThemeSelector({
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDateFilter, setSelectedDateFilter] = useState<string>("ALL");
   const [hasMockupsOnly, setHasMockupsOnly] = useState(false);
+  const [pipelineProfile, setPipelineProfile] = useState<string>("single_shop");
+  const [selectedShops, setSelectedShops] = useState<string[]>([
+    "pixelbarstudio",
+    "luna_cliparts",
+    "crisp_png_co",
+  ]);
 
   // Calendar Popover State
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
@@ -533,14 +543,26 @@ export function EnterpriseGcsThemeSelector({
           </div>
 
           {onBatchRunPipeline ? (
-            <button
-              type="button"
-              onClick={() => onBatchRunPipeline(selectedFolderObjects)}
-              className="px-3.5 py-1.5 bg-[#0D5C46] hover:bg-[#094534] text-white font-bold text-xs rounded-lg transition shadow-xs cursor-pointer flex items-center gap-1.5"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Run Pipeline ({selectedPrefixes.length} Theme{selectedPrefixes.length > 1 ? "s" : ""})</span>
-            </button>
+            <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2">
+              <select
+                value={pipelineProfile}
+                onChange={(e) => setPipelineProfile(e.target.value)}
+                className="bg-[#2B3531] border border-gray-600 text-white text-[11px] font-medium rounded-lg px-2.5 py-1 focus:outline-none cursor-pointer"
+                title="Select pipeline execution profile"
+              >
+                <option value="single_shop">Single Shop (PixelBarStudio)</option>
+                <option value="multi_shop">Multi-Shop Pipeline (All 3 Shops)</option>
+              </select>
+
+              <button
+                type="button"
+                onClick={() => onBatchRunPipeline(selectedFolderObjects, pipelineProfile, selectedShops)}
+                className="px-3.5 py-1.5 bg-[#0D5C46] hover:bg-[#094534] text-white font-bold text-xs rounded-lg transition shadow-xs cursor-pointer flex items-center gap-1.5"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Run Pipeline ({selectedPrefixes.length} Theme{selectedPrefixes.length > 1 ? "s" : ""})</span>
+              </button>
+            </div>
           ) : onBatchPublish ? (
             <button
               type="button"

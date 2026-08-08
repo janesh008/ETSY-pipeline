@@ -61,6 +61,18 @@ def main():
         default=None,
         help="Optional theme display name to override folder name inference for text interpolation"
     )
+    parser.add_argument(
+        "--template-override",
+        type=str,
+        default=None,
+        help="Optional explicit template_id to bypass automatic compatibility selection"
+    )
+    parser.add_argument(
+        "--upscaled-dir",
+        type=str,
+        default=None,
+        help="Optional path to 4K upscaled PNG assets directory for lifestyle mockup photo rendering"
+    )
 
     args = parser.parse_args()
 
@@ -110,7 +122,8 @@ def main():
                         theme_dir=theme_path,
                         templates_dir=args.templates,
                         output_dir=output_path,
-                        theme_name=args.theme_name
+                        theme_name=args.theme_name,
+                        template_override=args.template_override,
                     )
                     success_count += 1
                 except Exception as e:
@@ -122,7 +135,8 @@ def main():
                 theme_dir=args.theme,
                 templates_dir=args.templates,
                 output_dir=args.output,
-                theme_name=args.theme_name
+                theme_name=args.theme_name,
+                template_override=args.template_override,
             )
     except Exception as e:
         print(f"Execution failed: {e}")

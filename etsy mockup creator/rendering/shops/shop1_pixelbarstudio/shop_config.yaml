@@ -1,0 +1,20 @@
+shop_id: pixelbarstudio
+shop_name: PixelBarStudio
+etsy_shop_name: pixelbarstudio
+
+# --- MOCKUP SETTINGS ---
+mockups:
+  hero:
+    # Points to this shop's own templates/ folder (the original 25 templates)
+    templates_dir: rendering/shops/shop1_pixelbarstudio/templates/
+  lifestyle:
+    enabled: false  # Not needed for Shop 1
+
+# --- METADATA SETTINGS ---
+metadata:
+  prompt_file: null      # Uses the existing default Gemini prompt (unchanged)
+  seo_mode: true         # SEO-ranked titles enforced
+
+# --- NOTES ---
+# This is the original production shop. All 24 hero/category templates live in templates/.
+# Nothing changes in the rendering behavior for this shop.

@@ -128,5 +128,24 @@
       "y": 1662
     }
   ],
-  "name": "invitation_element Showcase"
+  "name": "invitation_element Showcase",
+  "compatibility_metadata": {
+    "template_id": "invitation_element",
+    "product_type": "tshirt",
+    "product_color": "white",
+    "background_tone": "neutral",
+    "lighting": "soft",
+    "print_area": "center_chest",
+    "print_area_ratio": 0.55,
+    "contrast_profile": "dark_or_colorful_art",
+    "compatible_brightness": [
+      "dark",
+      "medium"
+    ],
+    "compatible_saturation": [
+      "medium",
+      "high",
+      "low"
+    ]
+  }
 }

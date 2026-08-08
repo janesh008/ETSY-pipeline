@@ -34,6 +34,14 @@ class PipelineStartRequest(BaseModel):
         None, description="Local or GCS prompt .txt file path"
     )
     prompts: list[str] = Field(default_factory=list)
+    pipeline_profile: str = Field(
+        default="single_shop",
+        description="Named pipeline profile ('single_shop', 'multi_shop', etc.)",
+    )
+    selected_shops: list[str] = Field(
+        default_factory=lambda: ["pixelbarstudio"],
+        description="List of shop IDs for multi-shop runs",
+    )
 
 
 class PipelineJobResponse(BaseModel):

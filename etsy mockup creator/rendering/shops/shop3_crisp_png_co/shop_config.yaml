@@ -1,0 +1,16 @@
+shop_id: crisp_png_co
+shop_name: CrispPNGCo
+etsy_shop_name: crispPNGco
+
+# --- MOCKUP SETTINGS ---
+mockups:
+  hero:
+    templates_dir: rendering/shops/shop3_crisp_png_co/templates/
+  lifestyle:
+    enabled: false
+    products: []
+
+# --- METADATA SETTINGS ---
+metadata:
+  prompt_file: rendering/shops/shop3_crisp_png_co/metadata_prompt.txt
+  seo_mode: true  # Strict SEO: title must rank, based on input images

@@ -2,6 +2,9 @@
 
 An object-oriented, highly configurable Python tool built to automatically generate premium Etsy mockup listings from transparent PNG assets and JSON templates. No more Canva manual workflows!
 
+> 📖 **[CLICK HERE: Complete Guide for Adding Shops, Templates & Lifestyle Surface Mockups](doc/SHOP_AND_TEMPLATE_GUIDE.md)**  
+> *Step-by-step guide for non-technical & technical users on adding new shops, hero templates, lifestyle surfaces, and wall art configurations.*
+
 ## Key Features
 
 - **Decoupled Configuration**: All layout, text positions, typography, borders, drop shadows, and category mapping are configured in JSON. Zero Python code modifications needed to add or modify templates.

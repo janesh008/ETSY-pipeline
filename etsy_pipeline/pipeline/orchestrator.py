@@ -189,6 +189,7 @@ class Pipeline:
             "bg_removal": self._bg_removal_worker,
             "upscaling": self._upscale_worker,
             "mockups": self._mockup_worker,
+            "multi_shop_mockups": self._mockup_worker,
             "metadata_generation": self._metadata_worker,
             "listing_record": self._listing_record_worker,
             "etsy_upload": self._etsy_worker,

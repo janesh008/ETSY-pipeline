@@ -77,6 +77,14 @@ class MockupGenerationError(PipelineError):
         super().__init__(message, stage="mockups", job_id=job_id)
 
 
+class RenderingPluginError(MockupGenerationError):
+    """Raised when a specific rendering plugin (hero, lifestyle, etc.) fails."""
+
+    def __init__(self, plugin_name: str, message: str, job_id: str | None = None):
+        self.plugin_name = plugin_name
+        super().__init__(f"Plugin '{plugin_name}' failed: {message}", job_id=job_id)
+
+
 class MetadataGenerationError(PipelineError):
     """Raised when Etsy metadata generation fails."""
 
@@ -117,3 +125,40 @@ class SkillFileError(PipelineError):
 
     def __init__(self, message: str):
         super().__init__(message, stage="skill_loading")
+
+
+class InsufficientMockupCoverageError(PipelineError):
+    """Raised when lifestyle mockup surface coverage is below threshold (< 6 surfaces)."""
+
+    def __init__(
+        self,
+        theme_slug: str,
+        theme_group: str,
+        surfaces_available: int,
+        surfaces_needed: int = 6,
+        missing_surface_specs: list[dict] | None = None,
+        job_id: str | None = None,
+    ):
+        message = (
+            f"Insufficient lifestyle surface coverage for theme '{theme_slug}' (group: '{theme_group}'): "
+            f"{surfaces_available}/{surfaces_needed} surfaces available."
+        )
+        super().__init__(message, stage="mockups", job_id=job_id)
+        self.theme_slug = theme_slug
+        self.theme_group = theme_group
+        self.surfaces_available = surfaces_available
+        self.surfaces_needed = surfaces_needed
+        self.missing_surface_specs = missing_surface_specs or []
+
+
+class MissingSurfaceGroupError(PipelineError):
+    """Raised when a lifestyle product surface metadata.json is missing compatibility_groups."""
+
+    def __init__(self, surface_name: str, metadata_path: str):
+        message = (
+            f"Lifestyle product surface '{surface_name}' at {metadata_path} "
+            "is missing required 'compatibility_groups' field in metadata.json."
+        )
+        super().__init__(message, stage="mockups")
+        self.surface_name = surface_name
+        self.metadata_path = metadata_path

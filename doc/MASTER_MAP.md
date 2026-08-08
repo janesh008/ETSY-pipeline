@@ -96,3 +96,15 @@ Use these links to jump directly to any directory or file in the codebase:
     *   [**📁 workers/**](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy_pipeline/workers) — Stage implementations (`prompt_worker`, `image_worker`, `bg_removal_worker`, `upscale_worker`).
     *   [📄 doc/MEMORY_ARCHITECTURE.md](file:///d:/Janesh/ETSY/ETSY-pipeline/doc/MEMORY_ARCHITECTURE.md) — Developer Memory Abstraction technical architecture guide.
 
+*   [**📁 Etsy Mockup Creator (`etsy mockup creator`)**](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy%20mockup%20creator)
+    *   [**📁 doc/**](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy%20mockup%20creator/doc) — Documentation Layer
+        *   [📄 HIGH_LEVEL.md](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy%20mockup%20creator/doc/HIGH_LEVEL.md) — Non-technical high-level scope, engine architecture, and data flow.
+        *   [📄 SKILL.md](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy%20mockup%20creator/doc/SKILL.md) — Design patterns, strategy rules, zero fallback error handling, and GOTCHAS.
+        *   [📄 DETAILED.md](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy%20mockup%20creator/doc/DETAILED.md) — Complete module-by-module technical specs (`rendering/`, `src/`, `templates/`, `web_editor/`).
+        *   [📄 SHOP_AND_TEMPLATE_GUIDE.md](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy%20mockup%20creator/doc/SHOP_AND_TEMPLATE_GUIDE.md) — Step-by-step beginner guide for adding new shops, hero templates, lifestyle surfaces, and wall art.
+    *   [**📁 rendering/**](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy%20mockup%20creator/rendering) — Multi-shop rendering engine, lifestyle surfaces, and layout strategies.
+    *   [**📁 src/**](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy%20mockup%20creator/src) — Core PIL canvas composition, effects, and generator CLI.
+    *   [**📁 templates/**](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy%20mockup%20creator/templates) — Standard JSON layout specifications.
+    *   [**📁 web_editor/**](file:///d:/Janesh/ETSY/ETSY-pipeline/etsy%20mockup%20creator/web_editor) — Flask API server & drag-and-drop web UI editor.
+
+

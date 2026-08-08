@@ -128,5 +128,24 @@
       "y": 1662
     }
   ],
-  "name": "character Showcase"
+  "name": "character Showcase",
+  "compatibility_metadata": {
+    "template_id": "main_character_2",
+    "product_type": "tshirt",
+    "product_color": "white",
+    "background_tone": "neutral",
+    "lighting": "soft",
+    "print_area": "center_chest",
+    "print_area_ratio": 0.55,
+    "contrast_profile": "dark_or_colorful_art",
+    "compatible_brightness": [
+      "dark",
+      "medium"
+    ],
+    "compatible_saturation": [
+      "medium",
+      "high",
+      "low"
+    ]
+  }
 }

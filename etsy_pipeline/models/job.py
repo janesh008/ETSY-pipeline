@@ -173,6 +173,14 @@ class Job(BaseModel):
         default=None,
         description="Optional list of specific sections to generate (default = full bundle)",
     )
+    pipeline_profile: str = Field(
+        default="single_shop",
+        description="Named pipeline profile ('single_shop', 'multi_shop', 'wallart_pipeline', etc.)",
+    )
+    selected_shops: list[str] = Field(
+        default_factory=lambda: ["pixelbarstudio"],
+        description="List of shop IDs to render mockups and metadata for (e.g. ['pixelbarstudio', 'luna_cliparts', 'crisp_png_co'])",
+    )
 
     # --- Stage Outputs ---
     # Prompt Generation

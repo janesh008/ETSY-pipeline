@@ -138,15 +138,37 @@ class MockupWorker:
                 drive_service=self._drive,
             )
 
+        # Ensure upscaled 4K transparent PNGs locally for lifestyle photo rendering (from Drive main_data)
+        upscaled_dir = local_base_dir / "upscaled"
+        gcs_upscaled_prefix = f"Clipart/{job.date_folder}/{theme_slug}/upscaled/"
+        drive_upscaled_parts = ["Clipart", "main_data", job.date_folder, theme_slug]
+
+        ensure_local_assets(
+            local_dir=upscaled_dir,
+            gcs_prefix=gcs_upscaled_prefix,
+            drive_path_parts=drive_upscaled_parts,
+            settings=self._settings,
+            gcs_store=self._gcs,
+            drive_service=self._drive,
+        )
+
         job.stages[self.STAGE_NAME].update_progress(1, 5)
 
         # Find first image for PDF preview before processing
         preview_image = self._find_first_image(no_bg_dir)
 
-        # 2. Run Mockup Subprocess
+        # 2. Run Mockup Subprocess / Rendering Engine
         theme_display_name = job.theme or theme_slug.replace("_", " ")
+        target_shops = getattr(job, "selected_shops", None) or ["pixelbarstudio"]
+        if getattr(job, "pipeline_profile", "") == "single_shop":
+            target_shops = ["pixelbarstudio"]
+
         self._run_mockup_creator(
-            no_bg_dir, mockups_local_dir, theme_name=theme_display_name
+            no_bg_dir,
+            mockups_local_dir,
+            theme_name=theme_display_name,
+            upscaled_dir=upscaled_dir,
+            shops=target_shops,
         )
         job.stages[self.STAGE_NAME].update_progress(2, 5)
 
@@ -257,46 +279,81 @@ class MockupWorker:
         return job
 
     def _run_mockup_creator(
-        self, input_dir: Path, output_dir: Path, theme_name: str | None = None
-    ) -> None:
-        """Run the 'etsy mockup creator' subprocess."""
+        self,
+        input_dir: Path,
+        output_dir: Path,
+        theme_name: str | None = None,
+        upscaled_dir: Path | None = None,
+        shops: list[str] | None = None,
+    ) -> list[Path]:
+        """Run mockup generation using RenderingOrchestrator across target shops.
+
+        Args:
+            input_dir: Path to no_bg/ transparent PNGs directory.
+            output_dir: Path to root mockups/ directory.
+            theme_name: Optional human-readable theme display name.
+            upscaled_dir: Optional path to 4K upscaled PNGs directory.
+            shops: List of shop IDs to process (default: ['pixelbarstudio']).
+
+        Returns:
+            List of all rendered output file paths.
+        """
         mockup_creator_dir = Path(self._settings.project_root) / "etsy mockup creator"
-        if not mockup_creator_dir.exists():
+        rendering_root = mockup_creator_dir / "rendering"
+        if not rendering_root.exists():
             raise MockupError(
-                f"Mockup creator directory not found at: {mockup_creator_dir}"
+                f"Mockup creator rendering directory not found at: {rendering_root}"
             )
+
+        target_shops = shops or ["pixelbarstudio"]
+        theme_display = theme_name.strip() if theme_name else input_dir.parent.name
 
         logger.info(
-            f"[mockups] Running mockup generator subprocess. Input: {input_dir}"
+            f"[mockups] Running RenderingOrchestrator for shops {target_shops}. Input: {input_dir}, Upscaled: {upscaled_dir}"
         )
-        try:
-            cmd = [
-                sys.executable,
-                "-m",
-                "src.main",
-                "--theme",
-                str(input_dir.resolve()),
-                "--output",
-                str(output_dir.resolve()),
-                "--templates",
-                str((mockup_creator_dir / "templates").resolve()),
-            ]
-            if theme_name and theme_name.strip():
-                cmd.extend(["--theme-name", theme_name.strip()])
 
-            result = subprocess.run(
-                cmd,
-                cwd=str(mockup_creator_dir),
-                capture_output=True,
-                text=True,
-                check=True,
+        try:
+            from rendering.plugins.orchestrator import RenderingOrchestrator
+
+            orchestrator = RenderingOrchestrator(rendering_root=rendering_root)
+        except ImportError as exc:
+            raise MockupError(f"Failed to import RenderingOrchestrator: {exc}") from exc
+
+        all_outputs: list[Path] = []
+        failed_shops: list[str] = []
+
+        for shop_id in target_shops:
+            # If running multiple shops, nest outputs under mockups/<shop_id>/
+            # If running single shop, write directly to output_dir
+            shop_out_dir = (
+                output_dir / shop_id if len(target_shops) > 1 else output_dir
             )
-            logger.info("[mockups] Mockup creator subprocess completed successfully.")
-            logger.debug(result.stdout)
-        except subprocess.CalledProcessError as exc:
-            error_msg = f"Mockup creator subprocess failed: {exc.stderr or exc.stdout}"
-            logger.error(f"[mockups] {error_msg}")
-            raise MockupError(error_msg) from exc
+            try:
+                logger.info(
+                    f"[mockups] Generating mockups for shop '{shop_id}' -> {shop_out_dir}"
+                )
+                shop_outputs = orchestrator.run(
+                    shop_id=shop_id,
+                    asset_dir=input_dir,
+                    output_dir=shop_out_dir,
+                    theme_name=theme_display,
+                    upscaled_asset_dir=upscaled_dir,
+                )
+                all_outputs.extend(shop_outputs)
+                logger.info(
+                    f"[mockups] Shop '{shop_id}' generated {len(shop_outputs)} mockup file(s)"
+                )
+            except Exception as exc:
+                logger.error(
+                    f"[mockups] Failed to render mockups for shop '{shop_id}': {exc}",
+                    exc_info=True,
+                )
+                failed_shops.append(shop_id)
+
+        if len(failed_shops) == len(target_shops):
+            raise MockupError(f"Mockup generation failed for all target shops: {failed_shops}")
+
+        return all_outputs
 
     def _create_clickable_folder_pdf(
         self, image_path: Path, folder_link: str, output_pdf: Path

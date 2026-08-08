@@ -1,0 +1,52 @@
+# Pipeline Profiles
+# -----------------
+# Each profile is a named recipe that defines which pipeline stages to run.
+# The orchestrator reads this file and builds the stage list dynamically.
+#
+# Rules:
+#   - Stage names must match keys in Pipeline._worker_map in orchestrator.py
+#   - Adding a new profile = add a new block here. Zero code changes.
+#   - The UI pipeline picker reads the 'label' and 'description' fields.
+
+single_shop:
+  label: "Single Shop (PixelBarStudio)"
+  description: "Original pipeline. Generates mockups + metadata for PixelBarStudio only. Production-tested."
+  stages:
+    - prompt_generation
+    - image_generation
+    - bg_removal
+    - upscaling
+    - mockups
+    - metadata_generation
+    - listing_record
+    - etsy_upload
+
+multi_shop:
+  label: "Multi-Shop (Selectable Shops)"
+  description: "Generates mockups + metadata for selected shops from one asset batch."
+  shops:           # User selects a subset of these in the UI
+    - pixelbarstudio
+    - luna_cliparts
+    - crisp_png_co
+  stages:
+    - prompt_generation
+    - image_generation
+    - bg_removal
+    - upscaling
+    - multi_shop_mockups        # renders for each selected shop
+    - multi_shop_metadata       # generates SEO metadata per shop
+    - multi_shop_listing_record # saves listing.json per shop to GCS + Drive
+
+# --- Future Pipelines (add here, no code changes needed) ---
+
+wallart_pipeline:
+  label: "Wall Art Pipeline"
+  description: "Skips background removal — keeps original backgrounds."
+  stages:
+    - prompt_generation
+    - image_generation
+    - upscaling               # bg_removal intentionally absent
+    - mockups
+    - metadata_generation
+    - listing_record
+    - etsy_upload

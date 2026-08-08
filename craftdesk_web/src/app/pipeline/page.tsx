@@ -133,9 +133,13 @@ export default function PipelinePage() {
     fetchGcsFolders(false);
   }, [fetchGcsFolders]);
 
-  const handleRunBatchPipeline = (selectedFolders: GcsFolderItem[]) => {
+  const handleRunBatchPipeline = (
+    selectedFolders: GcsFolderItem[],
+    pipelineProfile?: string,
+    selectedShops?: string[]
+  ) => {
     if (!selectedFolders.length) return;
-    startBatch(selectedFolders);
+    startBatch(selectedFolders, pipelineProfile, selectedShops);
   };
 
   const totalBatchProgress = activeJob ? activeJob.total_progress : 0;

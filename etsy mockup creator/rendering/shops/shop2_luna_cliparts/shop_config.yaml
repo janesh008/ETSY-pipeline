@@ -1,0 +1,40 @@
+shop_id: luna_cliparts
+shop_name: LunaClipArts
+etsy_shop_name: lunaclipArts
+
+# --- MOCKUP SETTINGS ---
+mockups:
+  hero:
+    templates_dir: rendering/shops/shop2_luna_cliparts/templates/
+  lifestyle:
+    enabled: true
+    products:
+      - name: black_t-shirt_1
+        layout: single_product
+      - name: brown_tshirt_1
+        layout: single_product
+      - name: mug_1
+        layout: single_product
+      - name: mug_2
+        layout: single_product
+      - name: pillow_1
+        layout: single_product
+      - name: pillow_2
+        layout: single_product
+      - name: pillow_3
+        layout: single_product
+      - name: wallart_1
+        layout: single_product
+      - name: wallart_2
+        layout: single_product
+      - name: white_tshirt_1
+        layout: single_product
+      - name: white_tshirt_2
+        layout: single_product
+      - name: tshirt_girl_stylish
+        layout: single_product
+
+# --- METADATA SETTINGS ---
+metadata:
+  prompt_file: rendering/shops/shop2_luna_cliparts/metadata_prompt.txt
+  seo_mode: true  # Strict SEO: title must rank, based on input images

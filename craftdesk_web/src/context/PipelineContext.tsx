@@ -51,6 +51,8 @@ export interface PipelineJobItem {
   pdf_drive_link: string | null;
   pdf_local_path: string | null;
   error_msg: string | null;
+  pipeline_profile?: string;
+  selected_shops?: string[];
 }
 
 interface PipelineContextType {
@@ -74,7 +76,11 @@ interface PipelineContextType {
   activeJob: PipelineJobItem | null;
 
   // Actions
-  startBatch: (folders: GcsFolderItem[]) => Promise<void>;
+  startBatch: (
+    folders: GcsFolderItem[],
+    pipelineProfile?: string,
+    selectedShops?: string[]
+  ) => Promise<void>;
   pauseBatch: () => void;
   resumeBatch: () => void;
   cancelBatch: () => void;
@@ -403,6 +409,8 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
         body: JSON.stringify({
           prompt_file_path: targetJob.gcs_prefix,
           theme_name: targetJob.display_name,
+          pipeline_profile: targetJob.pipeline_profile || "single_shop",
+          selected_shops: targetJob.selected_shops || ["pixelbarstudio"],
         }),
       });
 
@@ -495,28 +503,35 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
 
   // ── Actions ──────────────────────────────────────────────────────────────
 
-  const startBatch = useCallback(async (folders: GcsFolderItem[]) => {
-    if (!folders.length) return;
+  const startBatch = useCallback(
+    async (
+      folders: GcsFolderItem[],
+      pipelineProfile: string = "single_shop",
+      selectedShops: string[] = ["pixelbarstudio"]
+    ) => {
+      if (!folders.length) return;
 
-    // FULL REPLACEMENT — old cancelled jobs cannot persist
-    const newJobs: PipelineJobItem[] = folders.map((f, idx) => ({
-      job_id: `pending-${idx}-${Date.now()}`,
-      theme_slug: f.theme_slug,
-      display_name: f.display_name,
-      date_folder: f.date_folder,
-      gcs_prefix: f.gcs_prefix,
-      status: "queued",
-      current_stage: null,
-      stages: INITIAL_STAGES.map((s) => ({ ...s })),
-      total_progress: 0,
-      elapsed_seconds: 0,
-      estimated_eta_sec: null,
-      hero_image_url: null,
-      mockups: [],
-      pdf_drive_link: null,
-      pdf_local_path: null,
-      error_msg: null,
-    }));
+      // FULL REPLACEMENT — old cancelled jobs cannot persist
+      const newJobs: PipelineJobItem[] = folders.map((f, idx) => ({
+        job_id: `pending-${idx}-${Date.now()}`,
+        theme_slug: f.theme_slug,
+        display_name: f.display_name,
+        date_folder: f.date_folder,
+        gcs_prefix: f.gcs_prefix,
+        status: "queued",
+        current_stage: null,
+        stages: INITIAL_STAGES.map((s) => ({ ...s })),
+        total_progress: 0,
+        elapsed_seconds: 0,
+        estimated_eta_sec: null,
+        hero_image_url: null,
+        mockups: [],
+        pdf_drive_link: null,
+        pdf_local_path: null,
+        error_msg: null,
+        pipeline_profile: pipelineProfile,
+        selected_shops: selectedShops,
+      }));
 
     // Clear any sync suppression from previous cancel
     suppressSyncUntilRef.current = 0;

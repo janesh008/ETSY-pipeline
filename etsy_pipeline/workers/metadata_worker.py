@@ -108,7 +108,8 @@ class MetadataWorker:
             raise MetadataGenerationError(error_msg, job_id=job.job_id)
 
         # 2. Load Master Prompt
-        system_instruction = self._load_master_prompt()
+        shop_id = getattr(job, "shop_id", None) or (job.selected_shops[0] if getattr(job, "selected_shops", None) else None)
+        system_instruction = self._load_master_prompt(shop_id=shop_id)
 
         # 3. Call Gemini Vision
         raw_response = self._call_gemini_vision(
@@ -156,8 +157,33 @@ class MetadataWorker:
         )
         return job
 
-    def _load_master_prompt(self) -> str:
-        """Load Deepseek Etsy listing master prompt file."""
+    def _load_master_prompt(self, shop_id: str | None = None) -> str:
+        """Load Deepseek Etsy listing master prompt file or shop-specific prompt file."""
+        if shop_id:
+            try:
+                import sys
+                mockup_creator_dir = Path(self._settings.project_root) / "etsy mockup creator"
+                if str(mockup_creator_dir) not in sys.path:
+                    sys.path.insert(0, str(mockup_creator_dir))
+
+                rendering_root = mockup_creator_dir / "rendering"
+                from rendering.plugins.orchestrator import RenderingOrchestrator
+
+                orch = RenderingOrchestrator(rendering_root)
+                cfg = orch._load_shop_config(shop_id)
+                if cfg.metadata and cfg.metadata.prompt_file:
+                    custom_path = mockup_creator_dir / cfg.metadata.prompt_file
+                    if custom_path.exists():
+                        logger.info(
+                            f"[metadata] Using shop-specific SEO prompt for '{shop_id}': {custom_path}"
+                        )
+                        return custom_path.read_text(encoding="utf-8")
+            except Exception as exc:
+                logger.warning(
+                    f"[metadata] Could not load shop prompt for '{shop_id}': {exc}. "
+                    "Falling back to default master prompt."
+                )
+
         prompt_path = self._settings.project_root / MASTER_PROMPT_PATH
         if not prompt_path.exists():
             raise MetadataGenerationError(

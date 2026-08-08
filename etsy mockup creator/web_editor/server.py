@@ -441,6 +441,61 @@ def run_batch_generate():
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
+
+@app.route("/api/compatibility/analyze", methods=["POST"])
+def analyze_compatibility():
+    """Endpoint for visual clipart analysis and template compatibility selection."""
+    try:
+        data = request.json or {}
+        img_path = data.get("image_path")
+        override_template_id = data.get("template_override")
+
+        if not img_path or not os.path.exists(img_path):
+            return jsonify({"error": "Valid image_path parameter is required"}), 400
+
+        from rendering.compatibility.clipart_analyzer import ClipartAnalyzer
+        from rendering.compatibility.compatibility_engine import (
+            CompatibilityEngine,
+            NoCompatibleTemplateFoundError,
+        )
+        from src.template_loader import TemplateLoader
+
+        analysis = ClipartAnalyzer.analyze_clipart(img_path)
+
+        templates_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "templates"))
+        loaded_tuples = []
+        for entry in os.scandir(templates_dir):
+            if entry.is_file() and entry.name.lower().endswith(".json"):
+                try:
+                    t_dict = TemplateLoader.load_template(entry.path)
+                    loaded_tuples.append((entry.name, t_dict))
+                except Exception as e:
+                    print(f"Error loading template {entry.name}: {e}")
+
+        try:
+            result = CompatibilityEngine.rank_templates(
+                analysis=analysis,
+                templates=loaded_tuples,
+                min_score_threshold=0.50,
+                override_template_id=override_template_id,
+            )
+            return jsonify({
+                "success": True,
+                "result": result.to_dict()
+            })
+        except NoCompatibleTemplateFoundError as err:
+            return jsonify({
+                "success": False,
+                "error": str(err),
+                "required_surface_recommendation": err.required_surface_recommendation,
+                "clipart_analysis": err.clipart_analysis.to_dict(),
+            }), 422
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
 def time_now():
     import time
     return int(time.time())

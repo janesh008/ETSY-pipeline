@@ -808,7 +808,12 @@ class PipelineRunnerService:
             worker = UpscaleWorker(settings=settings)
             return worker.run(job)
 
-        elif stage_name in ("mockup_creation", "pdf_generation"):
+        elif stage_name in (
+            "mockup_creation",
+            "pdf_generation",
+            "mockups",
+            "multi_shop_mockups",
+        ):
             from etsy_pipeline.workers.mockup_worker import MockupWorker
 
             worker = MockupWorker(settings=settings)

@@ -1,0 +1,35 @@
+{
+  "name": "Hero Dark Charcoal T-Shirt",
+  "canvas_size": [2000, 2000],
+  "background": {
+    "color": "#1A1A1A",
+    "type": "solid"
+  },
+  "compatibility_metadata": {
+    "template_id": "hero_dark_charcoal",
+    "product_type": "tshirt",
+    "product_color": "black",
+    "background_tone": "dark",
+    "lighting": "soft",
+    "print_area": "center_chest",
+    "print_area_ratio": 0.55,
+    "contrast_profile": "light_or_pastel_art",
+    "compatible_brightness": ["light", "medium"],
+    "compatible_saturation": ["low", "medium", "high"]
+  },
+  "elements": [
+    {
+      "anchor": "center",
+      "height": 400,
+      "rotation": 0,
+      "source": {
+        "category": "character",
+        "index": 0
+      },
+      "type": "image",
+      "width": 400,
+      "x": 1000,
+      "y": 1000
+    }
+  ]
+}
