@@ -636,37 +636,45 @@ class PipelineRunnerService:
             # Local VM disk check removed for upscaling because upscaled files are delivered exclusively to Google Drive and purged locally.
             return False
 
-        elif stage_name in ("mockup_creation", "pdf_generation"):
+        elif stage_name in (
+            "mockup_creation",
+            "pdf_generation",
+            "mockups",
+            "multi_shop_mockups",
+        ):
             local_base = Path(settings.output_root) / date_folder / theme_slug
             pdf_file = local_base / f"{theme_slug}.pdf"
             mockup_dir = local_base / "mockups"
+            supported_exts = {".png", ".jpg", ".jpeg", ".webp"}
 
             # 1. Local VM Disk Check
             local_complete = False
-            local_mockup_pngs = []
+            local_mockup_files = []
             if pdf_file.exists() and mockup_dir.exists():
-                local_mockup_pngs = sorted(
+                local_mockup_files = sorted(
                     [
                         str(f)
-                        for f in mockup_dir.glob("*.png")
-                        if f.stat().st_size > 10240
+                        for f in mockup_dir.rglob("*")
+                        if f.is_file()
+                        and f.suffix.lower() in supported_exts
+                        and f.stat().st_size > 512
                     ]
                 )
-                if stage_name == "mockup_creation":
-                    local_complete = len(local_mockup_pngs) >= 4
-                else:  # pdf_generation
-                    local_complete = pdf_file.stat().st_size > 10240
+                if stage_name == "pdf_generation":
+                    local_complete = pdf_file.stat().st_size > 512
+                else:  # mockup_creation, mockups, multi_shop_mockups
+                    local_complete = len(local_mockup_files) >= 4
 
             if local_complete:
-                if stage_name == "mockup_creation":
-                    job.mockups = local_mockup_pngs
-                    if local_mockup_pngs:
-                        job.hero_image_url = local_mockup_pngs[0]
+                if stage_name != "pdf_generation":
+                    job.mockups = local_mockup_files
+                    if local_mockup_files:
+                        job.hero_image_url = local_mockup_files[0]
                     stored_job = _PIPELINE_JOBS_STORE.get(job.job_id)
                     if stored_job:
-                        stored_job["mockups"] = local_mockup_pngs
-                        if local_mockup_pngs:
-                            stored_job["hero_image_url"] = local_mockup_pngs[0]
+                        stored_job["mockups"] = local_mockup_files
+                        if local_mockup_files:
+                            stored_job["hero_image_url"] = local_mockup_files[0]
                 else:  # pdf_generation
                     job.pdf_path = str(pdf_file)
                     stored_job = _PIPELINE_JOBS_STORE.get(job.job_id)
@@ -681,16 +689,20 @@ class PipelineRunnerService:
 
                     gcs = GCSStore(settings=settings)
 
-                    if stage_name == "mockup_creation":
+                    if stage_name != "pdf_generation":
                         gcs_mockup_prefix = (
                             f"Clipart/{date_folder}/{theme_slug}/mockups/"
                         )
                         objs = gcs.list_objects(gcs_mockup_prefix)
-                        png_objs = [o for o in objs if o.lower().endswith(".png")]
-                        if len(png_objs) >= 4:
+                        img_objs = [
+                            o
+                            for o in objs
+                            if Path(o).suffix.lower() in supported_exts
+                        ]
+                        if len(img_objs) >= 4:
                             mockups_urls = [
                                 f"/api/v1/etsy/gcs-media?object_key={o}"
-                                for o in sorted(png_objs)
+                                for o in sorted(img_objs)
                             ]
                             job.mockups = mockups_urls
                             job.hero_image_url = mockups_urls[0]

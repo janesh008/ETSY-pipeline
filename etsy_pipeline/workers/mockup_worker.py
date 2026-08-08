@@ -213,8 +213,13 @@ class MockupWorker:
         # Update job fields
         job.pdf_path = str(pdf_local_path)
         job.pdf_drive_link = public_folder_link
+        supported_exts = {".png", ".jpg", ".jpeg", ".webp"}
         mockup_files_sorted = sorted(
-            [str(f) for f in mockups_local_dir.rglob("*.png") if f.is_file()]
+            [
+                str(f)
+                for f in mockups_local_dir.rglob("*")
+                if f.is_file() and f.suffix.lower() in supported_exts
+            ]
         )
         job.mockups = mockup_files_sorted
         if mockup_files_sorted:
@@ -254,14 +259,20 @@ class MockupWorker:
                 )
                 gcs.upload_file(pdf_local_path, gcs_pdf_key)
 
-                # Upload Mockups
-                mockup_files = list(mockups_local_dir.rglob("*.png"))
+                # Upload Mockups (PNG, JPG, JPEG, WEBP)
+                mockup_files = [
+                    f
+                    for f in mockups_local_dir.rglob("*")
+                    if f.is_file() and f.suffix.lower() in supported_exts
+                ]
                 for file_path in mockup_files:
                     relative_path = file_path.relative_to(mockups_local_dir)
-                    gcs_key = f"Clipart/{job.date_folder}/{theme_slug}/mockups/{relative_path}"
+                    gcs_key = f"Clipart/{job.date_folder}/{theme_slug}/mockups/{relative_path.as_posix()}"
                     gcs.upload_file(file_path, gcs_key)
 
-                logger.info("[mockups] GCS backup delivery complete.")
+                logger.info(
+                    f"[mockups] GCS backup delivery complete — uploaded {len(mockup_files)} file(s)."
+                )
             except Exception as exc:
                 logger.warning(f"[mockups] GCS upload failed: {exc}")
 
